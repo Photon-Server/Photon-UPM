@@ -1,8 +1,8 @@
 {
-  "name": "com.photon.fusion-fsm",
-  "displayName": "Fusion FSM",
-  "version": "2.0.4",
-  "documentationUrl": "https://doc.photonengine.com/fusion/current/addons/fsm",
-  "description": "Fusion FSM addon description.",
-  "author": ""
+    "name": "com.photon.fusion-fsm",
+    "displayName": "Fusion FSM",
+    "version": "2.0.5",
+    "documentationUrl": "https://doc.photonengine.com/fusion/current/addons/fsm",
+    "description": "Fusion FSM addon description.",
+    "author": ""
 }

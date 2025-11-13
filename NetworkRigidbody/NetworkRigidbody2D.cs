@@ -94,9 +94,9 @@ namespace Fusion.Addons.Physics {
       data.Drag              = rb.drag;
       data.AngularDrag       = rb.angularDrag;
       data.LinearVelocity    = rb.velocity;
+#endif
       data.AngularVelocity2D = rb.angularVelocity;
       data.GravityScale2D    = rb.gravityScale;
-#endif
     }
 
     /// <inheritdoc/>

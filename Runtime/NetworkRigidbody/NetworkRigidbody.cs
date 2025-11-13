@@ -192,15 +192,11 @@ namespace Fusion.Addons.Physics {
     private void CaptureExtras(ref NetworkPhysicsData data) {
       data.LinearVelocity = _physicsBody.LinearVelocity;
       data.AngularVelocity = _physicsBody.AngularVelocity;
-      data.Drag = _physicsBody.Drag;
-      data.Mass = _physicsBody.Mass;
     }
 
     private void ApplyExtras(ref NetworkPhysicsData data) {
       _physicsBody.LinearVelocity = data.LinearVelocity;
       _physicsBody.AngularVelocity = data.AngularVelocity;
-      _physicsBody.Mass = data.Mass;
-      _physicsBody.Drag = data.Drag;
       _physicsBody.EncodedConstraints = data.Constraints;
     }
 
@@ -404,9 +400,10 @@ namespace Fusion.Addons.Physics {
     /// <summary>
     /// Returns true if the passed NetworkPhysicsData velocity energies are below the sleep threshold.
     /// </summary>
-    private bool IsStateBelowSleepingThresholds(NetworkPhysicsData data) {
+    private bool IsStateBelowSleepingThresholds(AbstractPhysicsBody physicsBody, NetworkPhysicsData data) {
       if (Is3D) {
-        var energy = data.Mass * ((Vector3)data.LinearVelocity).sqrMagnitude;
+        var mass = physicsBody.Mass;
+        var energy = mass * ((Vector3)data.LinearVelocity).sqrMagnitude;
         var angVel = ((Vector3)data.AngularVelocity);
         var inertia = _physicsBody.InertiaTensor;
 
@@ -415,7 +412,7 @@ namespace Fusion.Addons.Physics {
         energy += inertia.z * (angVel.z * angVel.z);
 
         // Mass-normalized
-        energy /= 2.0f * data.Mass;
+        energy /= 2.0f * mass;
 
         return energy <= UnityEngine.Physics.sleepThreshold;
       }
@@ -534,7 +531,7 @@ namespace Fusion.Addons.Physics {
         }
 
         // Check thresholds to see if this object is coming to a rest, and stop interpolation to allow for sleep to occur.
-        if (IsStateBelowSleepingThresholds(_physicsData)) {
+        if (IsStateBelowSleepingThresholds(_physicsBody, _physicsData)) {
           return;
         }
         

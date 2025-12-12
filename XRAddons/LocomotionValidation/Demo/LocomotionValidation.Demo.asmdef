@@ -1,0 +1,19 @@
+{
+    "name": "LocomotionValidation.Demo",
+    "rootNamespace": "",
+    "references": [
+        "GUID:ab20f7af6962a37488e81f810d9dd545",
+        "GUID:d8ad1aaf422161b4f96d9d7f0da8d62c"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "FUSION_WEAVER"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

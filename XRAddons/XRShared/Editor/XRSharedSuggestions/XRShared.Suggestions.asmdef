@@ -1,0 +1,39 @@
+{
+    "name": "XRShared.Suggestions",
+    "rootNamespace": "",
+    "references": [
+        "GUID:84969bac824196a428b7fdde6b4bb710",
+        "GUID:e40ba710768534012815d3193fa296cb",
+        "GUID:5c8d44f06e6b8d449b33072069500441",
+        "GUID:f9fe0089ec81f4079af78eb2287a6163",
+        "GUID:d5536e3dc15ece740a3df0017031404a",
+        "GUID:4847341ff46394e83bb78fbd0652937e",
+        "GUID:ce522b6ed64c8be4c989a1d26d0e3275",
+        "GUID:96aa6ba065960476598f8f643e7252b6",
+        "GUID:9c4bd2aabfb03254da92fd00b56d0a32"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "FUSION_WEAVER"
+    ],
+    "versionDefines": [
+        {
+            "name": "com.unity.xr.openxr",
+            "expression": "[1,10000]",
+            "define": "OPENXR_PACKAGE_AVAILABLE"
+        },
+        {
+            "name": "com.unity.xr.hands",
+            "expression": "[1,10000]",
+            "define": "XRHANDS_AVAILABLE"
+        }
+    ],
+    "noEngineReferences": false
+}

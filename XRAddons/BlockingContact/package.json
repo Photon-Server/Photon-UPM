@@ -1,0 +1,28 @@
+{
+    "name": "com.photonengine.prototyping.addon.blockingcontact",
+    "version": "2.1.0",
+    "displayName": "BlockingContact",
+    "description": "This module extends the hardware grabbing system available in the VRShared sample, to allow surfaces to block some objects with a tip (pen ,...) while also blocking the hand grabbing it.",
+    "unity": "6.0",
+    "documentationUrl": "https://doc.photonengine.com/fusion/current/industries-samples/industries-addons/fusion-industries-addons-blocking-contact",
+    "dependencies": {
+
+    },
+   "keywords": [
+      "Fusion",
+      "Photon",
+      "Network"
+    ],
+    "author": {
+      "name": "XR prototyping add-ons for Fusion",
+      "email": "sebastien.poivre@exitgames.com",
+      "url": "https://doc.photonengine.com/fusion/current/industries-samples/industries-addons/fusion-industries-addons-xrshared"
+    },
+    "samples": [
+      {
+          "displayName": "BlockingContact",
+          "description": "BlockingContact sample",
+          "path": "Samples~/BlockingContact/Scenes"
+      }
+    ]
+  }

@@ -1,0 +1,21 @@
+{
+    "name": "XRITIntegration.Editor",
+    "rootNamespace": "",
+    "references": [
+        "GUID:a7688288d5f78fa4b8db6fd01c2a22ed",
+        "GUID:5c8d44f06e6b8d449b33072069500441"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "FUSION_WEAVER"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

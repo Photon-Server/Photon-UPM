@@ -1,0 +1,28 @@
+{
+    "name": "com.photonengine.prototyping.addon.screensharing",
+    "version": "2.4.3",
+    "displayName": "Screensharing",
+    "description": "This module demonstrates how to use the Photon Video SDK to share the user screen, captured through the uWindowCapture third party module.",
+    "unity": "6.0",
+    "documentationUrl": "https://doc.photonengine.com/fusion/current/industries-samples/industries-addons/fusion-industries-addons-screensharing",
+    "dependencies": {
+
+    },
+   "keywords": [
+      "Fusion",
+      "Photon",
+      "Network"
+    ],
+    "author": {
+      "name": "XR prototyping add-ons for Fusion",
+      "email": "sebastien.poivre@exitgames.com",
+      "url": "https://doc.photonengine.com/fusion/current/industries-samples/industries-addons/fusion-industries-addons-xrshared"
+    },
+    "samples": [
+      {
+          "displayName": "Screensharing",
+          "description": "Screensharing sample",
+          "path": "Samples~/Screensharing/Scenes"
+      }
+    ]
+  }

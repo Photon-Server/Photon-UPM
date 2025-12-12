@@ -1,0 +1,20 @@
+{
+    "name": "XRShared.DesktopSimulation.Editor",
+    "rootNamespace": "",
+    "references": [
+        "XRShared.DesktopSimulation"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "FUSION_WEAVER"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

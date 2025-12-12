@@ -1,0 +1,31 @@
+{
+    "name": "StructureCohesion.Demo",
+    "rootNamespace": "",
+    "references": [
+        "GUID:d77b198b5623c9844a5ce7be6e086141",
+        "GUID:0ec767aaf69684941aa07196c194c4f9"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "FUSION_WEAVER",
+        "!XRSHARED_PACKAGE_AVAILABLE || MAGNETS_PACKAGE_AVAILABLE"
+    ],
+    "versionDefines": [
+        {
+            "name": "com.photonengine.prototyping.addon.xrshared",
+            "expression": "[1,10000]",
+            "define": "XRSHARED_PACKAGE_AVAILABLE"
+        },
+        {
+            "name": "com.photonengine.prototyping.addon.magnets",
+            "expression": "[1,10000]",
+            "define": "MAGNETS_PACKAGE_AVAILABLE"
+        }
+    ],
+    "noEngineReferences": false
+}

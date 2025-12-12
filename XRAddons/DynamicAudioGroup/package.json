@@ -1,0 +1,28 @@
+{
+    "name": "com.photonengine.prototyping.addon.dynamicaudiogroup",
+    "version": "2.1.3",
+    "displayName": "DynamicAudioGroup",
+    "description": "The dynamic audio group feature allows to discuss with all the remote users around the local one, without using bandwidth or adding noise from user afar.",
+    "unity": "6.0",
+    "documentationUrl": "https://doc.photonengine.com/fusion/current/industries-samples/industries-addons/fusion-industries-addons-dynamic-audio-group",
+    "dependencies": {
+
+    },
+   "keywords": [
+      "Fusion",
+      "Photon",
+      "Network"
+    ],
+    "author": {
+      "name": "XR prototyping add-ons for Fusion",
+      "email": "sebastien.poivre@exitgames.com",
+      "url": "https://doc.photonengine.com/fusion/current/industries-samples/industries-addons/fusion-industries-addons-xrshared"
+    },
+    "samples": [
+      {
+          "displayName": "DynamicAudioGroup",
+          "description": "DynamicAudioGroup sample",
+          "path": "Samples~/DynamicAudioGroup/Scenes"
+      }
+    ]
+  }

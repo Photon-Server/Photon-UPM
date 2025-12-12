@@ -1,0 +1,28 @@
+{
+    "name": "com.photonengine.prototyping.addon.metacoreintegration",
+    "version": "2.3.0-preview.1",
+    "displayName": "MetaCoreIntegration",
+    "description": "",
+    "unity": "6.0",
+    "documentationUrl": "https://doc.photonengine.com/fusion/current/industries-samples/industries-addons/fusion-industries-addons-metacoreintegration",
+    "dependencies": {
+        "com.meta.xr.sdk.core": "81.0.0"
+    },
+   "keywords": [
+      "Fusion",
+      "Photon",
+      "Network"
+    ],
+    "author": {
+      "name": "XR prototyping add-ons for Fusion",
+      "email": "sebastien.poivre@exitgames.com",
+      "url": "https://doc.photonengine.com/fusion/current/industries-samples/industries-addons/fusion-industries-addons-xrshared"
+    },
+    "samples": [
+      {
+          "displayName": "MetaCoreIntegration Samples",
+          "description": "Demo scenes",
+          "path": "Samples~/MetaCoreIntegration/Scenes"
+      }
+    ]    
+  }

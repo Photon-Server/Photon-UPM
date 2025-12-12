@@ -1,0 +1,27 @@
+{
+    "name": "com.photonengine.prototyping.addon.mxinkintegration",
+    "version": "2.1.2-preview.1",
+    "displayName": "MXInkIntegration",
+    "description": "This addon demonstrates how to integrate the Logitech MX Ink pen into a Fusion project.",
+    "unity": "6.0",
+    "documentationUrl": "https://doc.photonengine.com/fusion/current/industries-samples/industries-addons/fusion-industries-addons-mxinkintegration",
+    "dependencies": {
+    },
+   "keywords": [
+      "Fusion",
+      "Photon",
+      "Network"
+    ],
+    "author": {
+      "name": "XR prototyping add-ons for Fusion",
+      "email": "sebastien.poivre@exitgames.com",
+      "url": "https://doc.photonengine.com/fusion/current/industries-samples/industries-addons/fusion-industries-addons-xrshared"
+    },
+    "samples": [
+      {
+          "displayName": "Demo scene with MX Ink",
+          "description": "Demo scenes",
+          "path": "Samples~/DemoMXInk/Scenes"
+      }
+    ]    
+  }

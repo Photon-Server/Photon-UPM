@@ -1,0 +1,28 @@
+{
+    "name": "com.photonengine.prototyping.addon.texturedrawing",
+    "version": "2.2.0",
+    "displayName": "TextureDrawing",
+    "description": "This addon provides a solution to synchronize a texture modification.",
+    "unity": "6.0",
+    "documentationUrl": "https://doc.photonengine.com/fusion/current/industries-samples/industries-addons/fusion-industries-addons-texturedrawing",
+    "dependencies": {
+
+    },
+   "keywords": [
+      "Fusion",
+      "Photon",
+      "Network"
+    ],
+    "author": {
+      "name": "XR prototyping add-ons for Fusion",
+      "email": "sebastien.poivre@exitgames.com",
+      "url": "https://doc.photonengine.com/fusion/current/industries-samples/industries-addons/fusion-industries-addons-xrshared"
+    },
+    "samples": [
+      {
+          "displayName": "TextureDrawing",
+          "description": "TextureDrawing sample",
+          "path": "Samples~/TextureDrawing/Scenes"
+      }
+    ]
+  }

@@ -1,0 +1,18 @@
+{
+    "name": "WatchMenu.Demo",
+    "rootNamespace": "",
+    "references": [
+        "GUID:747420962272700468e1c53e9809e72d"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "FUSION_WEAVER"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

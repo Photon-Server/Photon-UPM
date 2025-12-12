@@ -1,0 +1,28 @@
+{
+    "name": "com.photonengine.prototyping.addon.visionoshelpers",
+    "version": "2.1.0",
+    "displayName": "VisionOsHelpers",
+    "description": "This module provides some components to help building vision OS application with Unity's Polyspatial, and make them cross-platform. It relies notably on the XRHands addon, to provide proper hand tracking synchronization and gesture detection in Polyspatial unbounded mode.",
+    "unity": "6.0",
+    "documentationUrl": "https://doc.photonengine.com/fusion/current/industries-samples/industries-addons/fusion-industries-addons-visionoshelpers",
+    "dependencies": {
+
+    },
+   "keywords": [
+      "Fusion",
+      "Photon",
+      "Network"
+    ],
+    "author": {
+      "name": "XR prototyping add-ons for Fusion",
+      "email": "sebastien.poivre@exitgames.com",
+      "url": "https://doc.photonengine.com/fusion/current/industries-samples/industries-addons/fusion-industries-addons-xrshared"
+    },
+    "samples": [
+      {
+          "displayName": "VisionOsHelpers",
+          "description": "VisionOsHelpers sample",
+          "path": "Samples~/VisionOsHelpers/Scenes"
+      }
+    ]
+  }

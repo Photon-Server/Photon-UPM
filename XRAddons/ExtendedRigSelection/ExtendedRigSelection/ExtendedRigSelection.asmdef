@@ -1,0 +1,32 @@
+{
+    "name": "ExtendedRigSelection",
+    "rootNamespace": "",
+    "references": [
+        "GUID:84969bac824196a428b7fdde6b4bb710",
+        "GUID:5127c72e9a58f92448e60305c04d5c1c",
+        "GUID:dd27059c5d9ba004c8f167208b122f60"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "!XRSHARED_PACKAGE_AVAILABLE || CONNECTIONMANAGER_PACKAGE_AVAILABLE",
+        "FUSION_WEAVER"
+    ],
+    "versionDefines": [
+        {
+            "name": "com.photonengine.prototyping.addon.xrshared",
+            "expression": "[1,10000]",
+            "define": "XRSHARED_PACKAGE_AVAILABLE"
+        },
+        {
+            "name": "com.photonengine.prototyping.addon.connectionmanager",
+            "expression": "[1,10000]",
+            "define": "CONNECTIONMANAGER_PACKAGE_AVAILABLE"
+        }
+    ],
+    "noEngineReferences": false
+}

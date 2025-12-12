@@ -1,0 +1,28 @@
+{
+    "name": "com.photonengine.prototyping.addon.magnets",
+    "version": "2.3.0",
+    "displayName": "Magnets",
+    "description": "The Magnets addon provides a simple way to attract an object to others when it has been ungrabbed.",
+    "unity": "6.0",
+    "documentationUrl": "https://doc.photonengine.com/fusion/current/industries-samples/industries-addons/fusion-industries-addons-magnets",
+    "dependencies": {
+
+    },
+   "keywords": [
+      "Fusion",
+      "Photon",
+      "Network"
+    ],
+    "author": {
+      "name": "XR prototyping add-ons for Fusion",
+      "email": "sebastien.poivre@exitgames.com",
+      "url": "https://doc.photonengine.com/fusion/current/industries-samples/industries-addons/fusion-industries-addons-xrshared"
+    },
+    "samples": [
+      {
+          "displayName": "Magnets",
+          "description": "Magnets sample",
+          "path": "Samples~/Magnets/Scenes"
+      }
+    ]
+  }

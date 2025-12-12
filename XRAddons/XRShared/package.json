@@ -1,0 +1,45 @@
+{
+    "name": "com.photonengine.prototyping.addon.xrshared",
+    "version": "2.1.8-preview.3",
+    "displayName": "XRShared",
+    "description": "Prototyping base for XR project using Fusion in shared topology",
+    "unity": "6.0",
+    "documentationUrl": "https://doc.photonengine.com/fusion/current/industries-samples/industries-addons/fusion-industries-addons-xrshared",
+    "dependencies": {
+        "com.unity.inputsystem":"1.7.0",
+        "com.unity.xr.management":"4.4.1",
+        "com.unity.xr.hands":"1.5.1"
+    },
+   "keywords": [
+      "Fusion",
+      "Photon",
+      "Network"
+    ],
+    "author": {
+      "name": "XR prototyping add-ons for Fusion",
+      "email": "sebastien.poivre@exitgames.com",
+      "url": "https://doc.photonengine.com/fusion/current/industries-samples/industries-addons/fusion-industries-addons-xrshared"
+    },
+    "samples": [
+      {
+          "displayName": "Default rig setup",
+          "description": "Base HardwareRig/NetworkRig setup",
+          "path": "Samples~/DefaultRig/Scenes"
+      },
+      {
+          "displayName": "BeamerTouch",
+          "description": "Beamers with touch and hover",
+          "path": "Samples~/Interactions_Beamer/Scenes"
+      },
+      {
+          "displayName": "NetworkedRayPointers",
+          "description": "Demo of networked beamers (RayPointers)",
+          "path": "Samples~/RayPointers/Scenes"
+      },
+      {
+          "displayName": "XRHandsSynchronization beamers",
+          "description": "Demo of beamers triggered by hand posture  (L-shaped pose between thumb and index fingers)",
+          "path": "Samples~/RayPointers/Scenes"
+      }
+    ]
+  }

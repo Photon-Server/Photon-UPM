@@ -1,0 +1,32 @@
+{
+    "name": "StructureCohesion.HardwareBasedGrabbing",
+    "rootNamespace": "",
+    "references": [
+        "GUID:f597b6dfa692c0e48a7f878957c693f8",
+        "GUID:d77b198b5623c9844a5ce7be6e086141",
+        "GUID:84969bac824196a428b7fdde6b4bb710"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "!XRSHARED_PACKAGE_AVAILABLE || MAGNETS_PACKAGE_AVAILABLE",
+        "FUSION_WEAVER"
+    ],
+    "versionDefines": [
+        {
+            "name": "com.photonengine.prototyping.addon.xrshared",
+            "expression": "[1,10000]",
+            "define": "XRSHARED_PACKAGE_AVAILABLE"
+        },
+        {
+            "name": "com.photonengine.prototyping.addon.magnets",
+            "expression": "[1,10000]",
+            "define": "MAGNETS_PACKAGE_AVAILABLE"
+        }
+    ],
+    "noEngineReferences": false
+}

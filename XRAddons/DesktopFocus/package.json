@@ -1,0 +1,28 @@
+{
+    "name": "com.photonengine.prototyping.addon.desktopfocus",
+    "version": "2.1.1",
+    "displayName": "DesktopFocus",
+    "description": "DesktopFocus XR addon for Fusion",
+    "unity": "6.0",
+    "documentationUrl": "https://doc.photonengine.com/fusion/current/industries-samples/industries-addons/fusion-industries-addons-desktop-focus-mode",
+    "dependencies": {
+
+    },
+   "keywords": [
+      "Fusion",
+      "Photon",
+      "Network"
+    ],
+    "author": {
+      "name": "XR prototyping add-ons for Fusion",
+      "email": "sebastien.poivre@exitgames.com",
+      "url": "https://doc.photonengine.com/fusion/current/industries-samples/industries-addons/fusion-industries-addons-xrshared"
+    },
+    "samples": [
+      {
+          "displayName": "DesktopFocus",
+          "description": "DesktopFocus sample",
+          "path": "Samples~/DesktopFocus/Scenes"
+      }
+    ]
+  }

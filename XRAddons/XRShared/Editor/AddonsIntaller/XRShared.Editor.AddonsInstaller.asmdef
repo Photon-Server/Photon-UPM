@@ -1,0 +1,27 @@
+{
+    "name": "XRShared.Editor.AddonsInstaller",
+    "rootNamespace": "",
+    "references": [
+        "GUID:d5536e3dc15ece740a3df0017031404a",
+        "GUID:0fcb95827765196489d66b076928288d"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "FUSION_WEAVER"
+    ],
+    "versionDefines": [
+        {
+            "name": "com.photonengine.prototyping.addon.xrshared",
+            "expression": "[1,10000]",
+            "define": "XRSHARED_PACKAGE_AVAILABLE"
+        }
+    ],
+    "noEngineReferences": false
+}

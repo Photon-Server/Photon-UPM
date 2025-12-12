@@ -1,0 +1,30 @@
+{
+    "name": "AudioRoom.Demo",
+    "rootNamespace": "",
+    "references": [
+        "GUID:5ad671ffeabcd2a478f287ee38434e8d"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "!XRSHARED_PACKAGE_AVAILABLE || DYNAMICAUDIOGROUP_PACKAGE_AVAILABLE",
+        "FUSION_WEAVER"
+    ],
+    "versionDefines": [
+        {
+            "name": "com.photonengine.prototyping.addon.xrshared",
+            "expression": "[1,10000]",
+            "define": "XRSHARED_PACKAGE_AVAILABLE"
+        },
+        {
+            "name": "com.photonengine.prototyping.addon.dynamicaudiogroup",
+            "expression": "[1,10000]",
+            "define": "DYNAMICAUDIOGROUP_PACKAGE_AVAILABLE"
+        }
+    ],
+    "noEngineReferences": false
+}

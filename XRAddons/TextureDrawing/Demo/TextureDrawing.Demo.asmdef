@@ -1,0 +1,37 @@
+{
+    "name": "TextureDrawing.Demo",
+    "rootNamespace": "",
+    "references": [
+        "GUID:b062f56b47d1d7448a765458f71f7a4c",
+        "GUID:80373fbf710f4f142be660c3aec96815"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "FUSION_WEAVER",
+        "!XRSHARED_PACKAGE_AVAILABLE || DATASYNCHELPERS_PACKAGE_AVAILABLE",
+        "!XRSHARED_PACKAGE_AVAILABLE || BLOCKINGCONTACT_PACKAGE_AVAILABLE"
+    ],
+    "versionDefines": [
+        {
+            "name": "com.photonengine.prototyping.addon.xrshared",
+            "expression": "[1,10000]",
+            "define": "XRSHARED_PACKAGE_AVAILABLE"
+        },
+        {
+            "name": "com.photonengine.prototyping.addon.datasynchelpers",
+            "expression": "[1,10000]",
+            "define": "DATASYNCHELPERS_PACKAGE_AVAILABLE"
+        },
+        {
+            "name": "com.photonengine.prototyping.addon.blockingcontact",
+            "expression": "[1,10000]",
+            "define": "BLOCKINGCONTACT_PACKAGE_AVAILABLE"
+        }
+    ],
+    "noEngineReferences": false
+}

@@ -1,0 +1,28 @@
+{
+    "name": "com.photonengine.prototyping.addon.audioroom",
+    "version": "2.1.1",
+    "displayName": "AudioRoom",
+    "description": "https://doc.photonengine.com/fusion/current/industries-samples/industries-addons/fusion-industries-addons-audio-room",
+    "unity": "6.0",
+    "documentationUrl": "Allows to divide the players into different audio 'rooms', regardless of the distance between them",
+    "dependencies": {
+
+    },
+   "keywords": [
+      "Fusion",
+      "Photon",
+      "Network"
+    ],
+    "author": {
+      "name": "XR prototyping add-ons for Fusion",
+      "email": "sebastien.poivre@exitgames.com",
+      "url": "https://doc.photonengine.com/fusion/current/industries-samples/industries-addons/fusion-industries-addons-xrshared"
+    },
+    "samples": [
+      {
+          "displayName": "AudioRoom",
+          "description": "AudioRoom sample",
+          "path": "Samples~/AudioRoom/Scenes"
+      }
+    ]
+  }

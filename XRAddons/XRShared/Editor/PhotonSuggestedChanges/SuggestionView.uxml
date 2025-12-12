@@ -1,0 +1,31 @@
+<ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../../../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <ui:VisualElement style="flex-grow: 1; margin-top: 8px; margin-right: 8px; margin-bottom: 8px; margin-left: 8px;">
+        <ui:VisualElement style="flex-grow: 1;">
+            <ui:VisualElement style="flex-grow: 1; flex-direction: row; height: 50px; max-height: 30px; justify-content: flex-start;">
+                <ui:Label text="Suggested changes:" style="-unity-font-style: bold;" />
+                <ui:VisualElement style="flex-grow: 1; flex-direction: row; justify-content: flex-end;">
+                    <ui:Button text="Apply all" name="apply-all-button" style="flex-direction: row-reverse; justify-content: flex-start; min-width: auto; align-items: stretch; align-content: flex-start; align-self: flex-start;" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:VisualElement name="VisualElement" style="flex-grow: 1;">
+                <ui:ListView name="suggestion-list" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:VisualElement style="flex-grow: 1; margin-top: 10px;">
+            <ui:VisualElement style="flex-grow: 1; flex-direction: row; height: 50px; max-height: 30px; justify-content: flex-start;">
+                <ui:Label text="Non-applicable changes:" style="-unity-font-style: bold;" />
+            </ui:VisualElement>
+            <ui:VisualElement name="VisualElement" style="flex-grow: 1;">
+                <ui:ListView name="nonapplicable-suggestion-list" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:VisualElement style="flex-grow: 1; margin-top: 10px;">
+            <ui:VisualElement style="flex-grow: 1; flex-direction: row; height: 50px; max-height: 30px; justify-content: flex-start;">
+                <ui:Label text="Applied changes:" style="-unity-font-style: bold;" />
+            </ui:VisualElement>
+            <ui:VisualElement name="VisualElement" style="flex-grow: 1;">
+                <ui:ListView name="applied-suggestion-list" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

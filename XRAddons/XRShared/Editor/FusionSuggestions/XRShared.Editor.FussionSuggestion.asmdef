@@ -1,0 +1,21 @@
+{
+    "name": "XRShared.Editor.FussionSuggestion",
+    "rootNamespace": "",
+    "references": [
+        "GUID:9c4bd2aabfb03254da92fd00b56d0a32",
+        "GUID:343deaaf83e0cee4ca978e7df0b80d21"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "!FUSION_WEAVER"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

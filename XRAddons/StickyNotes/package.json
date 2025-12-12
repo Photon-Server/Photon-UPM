@@ -1,0 +1,28 @@
+{
+    "name": "com.photonengine.prototyping.addon.stickynotes",
+    "version": "2.1.0",
+    "displayName": "StickyNotes",
+    "description": "This addon provides a ready to use sticky notes dispenser. A pen can be used to modify the sticky note texture, and each sticky note can be snapped to a magnetic surface.",
+    "unity": "6.0",
+    "documentationUrl": "https://doc.photonengine.com/fusion/current/industries-samples/industries-addons/fusion-industries-addons-stickynotes",
+    "dependencies": {
+
+    },
+   "keywords": [
+      "Fusion",
+      "Photon",
+      "Network"
+    ],
+    "author": {
+      "name": "XR prototyping add-ons for Fusion",
+      "email": "sebastien.poivre@exitgames.com",
+      "url": "https://doc.photonengine.com/fusion/current/industries-samples/industries-addons/fusion-industries-addons-xrshared"
+    },
+    "samples": [
+      {
+          "displayName": "StickyNotes",
+          "description": "StickyNotes sample",
+          "path": "Samples~/StickyNotes/Scenes"
+      }
+    ]
+  }

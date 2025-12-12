@@ -1,0 +1,32 @@
+{
+    "name": "ChatBubble.Demo",
+    "rootNamespace": "",
+    "references": [
+        "GUID:658c862d39d1f844baed9451ebd831c0",
+        "GUID:5ad671ffeabcd2a478f287ee38434e8d",
+        "GUID:6055be8ebefd69e48b49212b09b47b2f"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "!XRSHARED_PACKAGE_AVAILABLE || AUDIOROOM_PACKAGE_AVAILABLE",
+        "FUSION_WEAVER"
+    ],
+    "versionDefines": [
+        {
+            "name": "com.photonengine.prototyping.addon.xrshared",
+            "expression": "[1,10000]",
+            "define": "XRSHARED_PACKAGE_AVAILABLE"
+        },
+        {
+            "name": "com.photonengine.prototyping.addon.audioroom",
+            "expression": "[1,10000]",
+            "define": "AUDIOROOM_PACKAGE_AVAILABLE"
+        }
+    ],
+    "noEngineReferences": false
+}

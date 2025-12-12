@@ -1,0 +1,27 @@
+{
+    "name": "com.photonengine.prototyping.addon.linedrawing",
+    "version": "2.1.6-preview.1",
+    "displayName": "LineDrawing",
+    "description": "This addon demonstrate how to use the DataSyncHelpers add-on to create 3D drawings, that later joiner can receive too.",
+    "unity": "6.0",
+    "documentationUrl": "https://doc.photonengine.com/fusion/current/industries-samples/industries-addons/fusion-industries-addons-linedrawing",
+    "dependencies": {
+    },
+   "keywords": [
+      "Fusion",
+      "Photon",
+      "Network"
+    ],
+    "author": {
+      "name": "XR prototyping add-ons for Fusion",
+      "email": "sebastien.poivre@exitgames.com",
+      "url": "https://doc.photonengine.com/fusion/current/industries-samples/industries-addons/fusion-industries-addons-xrshared"
+    },
+    "samples": [
+      {
+          "displayName": "Demo line drawing",
+          "description": "Simple scene with a 3D pen, creating grabbable drawings",
+          "path": "Demo/Scenes"
+      }
+    ]
+  }

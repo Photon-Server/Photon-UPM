@@ -1,0 +1,28 @@
+{
+    "name": "com.photonengine.prototyping.addon.drawing",
+    "version": "2.1.0",
+    "displayName": "Drawing",
+    "description": "This module demonstrates how to synchronize 3D points to create 3D drawings made with line renderers.",
+    "unity": "6.0",
+    "documentationUrl": "https://doc.photonengine.com/fusion/current/industries-samples/industries-addons/fusion-industries-addons-3d-2d-drawing",
+    "dependencies": {
+
+    },
+   "keywords": [
+      "Fusion",
+      "Photon",
+      "Network"
+    ],
+    "author": {
+      "name": "XR prototyping add-ons for Fusion",
+      "email": "sebastien.poivre@exitgames.com",
+      "url": "https://doc.photonengine.com/fusion/current/industries-samples/industries-addons/fusion-industries-addons-xrshared"
+    },
+    "samples": [
+      {
+          "displayName": "Drawing",
+          "description": "Drawing sample",
+          "path": "Samples~/Drawing/Scenes"
+      }
+    ]
+  }

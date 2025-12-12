@@ -1,0 +1,20 @@
+{
+    "name": "com.photonengine.prototyping.addon.datasynchelpers",
+    "version": "2.1.1-preview.1",
+    "displayName": "DataSyncHelpers",
+    "description": "The Data Sync Helpers addon provides some helpers classes that simplify synchronizing data for use cases with special needs.",
+    "documentationUrl": "https://doc.photonengine.com/fusion/current/industries-samples/industries-addons/fusion-industries-addons-datasynchelpers",
+    "unity": "6.0",
+    "dependencies": {
+    },
+   "keywords": [
+      "Fusion",
+      "Photon",
+      "Network"
+    ],
+    "author": {
+      "name": "XR prototyping add-ons for Fusion",
+      "email": "sebastien.poivre@exitgames.com",
+      "url": "https://doc.photonengine.com/fusion/current/industries-samples/industries-addons/fusion-industries-addons-xrshared"
+    }
+  }

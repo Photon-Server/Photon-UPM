@@ -1,0 +1,28 @@
+{
+    "name": "com.photonengine.prototyping.addon.physics",
+    "version": "2.1.8-preview.3",
+    "displayName": "Physics",
+    "description": "Physics XR addon for Fusion",
+    "unity": "6.0",
+    "documentationUrl": "",
+    "dependencies": {
+
+    },
+   "keywords": [
+      "Fusion",
+      "Photon",
+      "Network"
+    ],
+    "author": {
+      "name": "XR prototyping add-ons for Fusion",
+      "email": "sebastien.poivre@exitgames.com",
+      "url": "https://doc.photonengine.com/fusion/current/industries-samples/industries-addons/fusion-industries-addons-xrshared"
+    },
+    "samples": [
+      {
+          "displayName": "Physics",
+          "description": "Physics sample",
+          "path": "Samples~/Physics/Scenes"
+      }
+    ]
+  }

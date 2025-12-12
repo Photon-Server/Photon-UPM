@@ -1,0 +1,18 @@
+{
+    "name": "PositionDebugging.Demo",
+    "rootNamespace": "",
+    "references": [
+        "GUID:4aa448848b48d324592359f57c961a81"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "FUSION_WEAVER"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

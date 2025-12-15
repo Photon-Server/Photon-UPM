@@ -46,7 +46,7 @@ namespace Fusion.Addons.XRHandsSync
                     {
                         root = skeletonDriver.rootTransform;
                     }
-                    else if(overrideRoot == null)
+                    else if(overrideRoot != null)
                     {
                         root = overrideRoot;
                     }

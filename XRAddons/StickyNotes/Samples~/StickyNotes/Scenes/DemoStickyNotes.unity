@@ -536,6 +536,22 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 6320650311634732426, guid: d4969c23583fe1340a6ebf1d09e5dd9c, type: 3}
+      propertyPath: m_BackGroundColor.a
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6320650311634732426, guid: d4969c23583fe1340a6ebf1d09e5dd9c, type: 3}
+      propertyPath: m_BackGroundColor.b
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6320650311634732426, guid: d4969c23583fe1340a6ebf1d09e5dd9c, type: 3}
+      propertyPath: m_BackGroundColor.g
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6320650311634732426, guid: d4969c23583fe1340a6ebf1d09e5dd9c, type: 3}
+      propertyPath: m_BackGroundColor.r
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 7555535233938922541, guid: d4969c23583fe1340a6ebf1d09e5dd9c, type: 3}
       propertyPath: m_Name
       value: HardwareRig
@@ -597,7 +613,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   SortKey: 1681631600
   ObjectInterest: 1
-  Flags: 262145
+  Flags: 524289
   NestedObjects: []
   NetworkedBehaviours:
   - {fileID: 1137402613}

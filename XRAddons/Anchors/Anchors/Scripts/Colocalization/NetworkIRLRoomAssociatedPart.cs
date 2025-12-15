@@ -17,8 +17,9 @@ using UnityEngine;
 [DefaultExecutionOrder(NetworkIRLRoomAssociatedPart.EXECUTION_ORDER)]
 public class NetworkIRLRoomAssociatedPart : NetworkBehaviour
 {
-    const int EXECUTION_ORDER = 10_000;
+    public const int EXECUTION_ORDER = 10_000;
 
+    [Tooltip("If true, will ensure to preserve the offset with its local user")]
     public bool attachedToLocalUser = false;
     public bool previewRoomRequesterMoves = true;
     public bool applyLayerIfNotStateAuthority = false;
@@ -26,7 +27,7 @@ public class NetworkIRLRoomAssociatedPart : NetworkBehaviour
 
     [Networked]
     public NetworkIRLRoomMember ReferenceRoomMember { get; set; }
-    IRLRoomManager roomManager;
+    protected IRLRoomManager roomManager;
 
     [Header("Visualisation")]
     public bool adaptRendersToRoomManagerMode = false;
@@ -34,13 +35,20 @@ public class NetworkIRLRoomAssociatedPart : NetworkBehaviour
 
     bool lastDisplayState = true;
 
-    private void Awake()
+    NetworkTransform nt;
+
+    protected virtual void Awake()
     {
         roomManager = FindAnyObjectByType<IRLRoomManager>();
+        if (roomManager == null)
+        {
+            Debug.LogError("Missing IRLRoomManager");
+        }
         if (renderers == null || renderers.Count == 0)
         {
             renderers = new List<Renderer>(GetComponentsInChildren<Renderer>());
         }
+        nt = GetComponent<NetworkTransform>();
     }
 
     NetworkIRLRoomMember localMember = null;
@@ -65,6 +73,11 @@ public class NetworkIRLRoomAssociatedPart : NetworkBehaviour
         {
             if (localMember == null)
             {
+                if (roomManager == null)
+                {
+                    Debug.LogError($"[{name}] No room manager");
+                    return;
+                }
                 localMember = roomManager.localNetworkIRLRoomMember;
                 if (localMember != null)
                 {
@@ -91,8 +104,20 @@ public class NetworkIRLRoomAssociatedPart : NetworkBehaviour
             }
             if (localMember)
             {
-                transform.position = localMember.transform.TransformPoint(offsetPositionToLocalMember);
-                transform.rotation = localMember.transform.rotation * offsetRotationToLocalMember;
+                var expectedPosition = localMember.transform.TransformPoint(offsetPositionToLocalMember);
+                var expectedRotation = localMember.transform.rotation * offsetRotationToLocalMember;
+                if ((expectedPosition - transform.position).sqrMagnitude > 0.01f)
+                {
+                    // We teleport to ensure that it is a direct move, without intermediary positions
+                    //Debug.LogError($"Teleport NetworkIRLRoomAssociatedPart {name} {transform.position} -> {expectedPosition}");
+                    nt.Teleport(expectedPosition, expectedRotation);
+                }
+                else
+                {
+                    // In case of just a rotation or a very small move
+                    transform.position = expectedPosition;
+                    transform.rotation = expectedRotation;
+                }
             }
         }
     }

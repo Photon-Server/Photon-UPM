@@ -47,6 +47,7 @@ MonoBehaviour:
   knowRooms: []
   knowTagIds: []
   knowMembers: []
+  knowMoveRequesters: []
   predefinedRoomSuffixSeparator: -Room-
   predefinedTagRoomMappings: []
   requiredAnchorContentToUseForColocalization: 
@@ -58,6 +59,7 @@ MonoBehaviour:
   fixPositionError: 0
   minimumPositionErrorToRestartColocalization: 1
   minimumAngleErrorToRestartColocalization: 30
+  roomAssociatedPartDisplayMode: 3
   anchorFollowLogic: 0
   debugLog: 0
   visibleLongStableAnchorsInfo: []

@@ -30,20 +30,19 @@ public class UISync_Toggle : UISync_Core
         {
             Debug.LogError("Toggle not found");
         }
-        toggle.onValueChanged.AddListener(OnToggleValueChanged);
-    }
-
-
-    public override void FixedUpdateNetwork()
-    {
-        base.FixedUpdateNetwork();
-        if (toggleIsInitialized == false)
+        else
         {
-            UpdateToggleUIComponentWithNetworkedValue();
-            toggleIsInitialized = true;
+            toggle.onValueChanged.AddListener(OnToggleValueChanged);
         }
     }
 
+    public override void Spawned()
+    {
+        base.Spawned();
+        UpdateToggleUIComponentWithNetworkedValue();
+        toggleIsInitialized = true;
+    }
+ 
     private void UpdateToggleUIComponentWithNetworkedValue()
     {
         toggle.SetIsOnWithoutNotify(ToggleIsOn);

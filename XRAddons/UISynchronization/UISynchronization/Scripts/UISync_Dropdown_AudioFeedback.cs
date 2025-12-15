@@ -20,7 +20,10 @@ public class UISync_Dropdown_AudioFeedback : MonoBehaviour
         {
             Debug.LogError("UISync_Dropdown not found");
         }
-        networked_dropdown.onDropdownValueChanged.AddListener(OnDropdownValueChanged);
+        else
+        {
+            networked_dropdown.onDropdownValueChanged.AddListener(OnDropdownValueChanged);
+        }
 
         if (feedback == null)
         {

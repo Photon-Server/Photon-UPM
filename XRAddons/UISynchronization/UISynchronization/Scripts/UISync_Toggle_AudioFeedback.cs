@@ -20,7 +20,10 @@ public class UISync_Toggle_AudioFeedback : MonoBehaviour
         {
             Debug.LogError("UISync_Toggle not found");
         }
-        networked_toggle.onToogleValueChanged.AddListener(OnToogleValueChanged);
+        else
+        {
+            networked_toggle.onToogleValueChanged.AddListener(OnToogleValueChanged);
+        }
 
         if (feedback == null)
         {

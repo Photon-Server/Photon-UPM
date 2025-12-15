@@ -16,6 +16,7 @@ namespace Fusion.XR.Shared.XRHands {
     {
         [Header("Automatic rigParts detection and configuration")]
         [SerializeField] bool autodetectandConfigureRigParts = true;
+        [SerializeField] bool neverDetectHands = false;
 
 #if XRIT_ENABLED
         [SerializeField] RigPartVisualizer.Mode controllerVisualizationMode = RigPartVisualizer.Mode.DisplayWhileOffline;
@@ -31,100 +32,151 @@ namespace Fusion.XR.Shared.XRHands {
             "But, to allow animations to run properly on android (to have in the hardware rig usable finger positions), instead of hidding the renderer we can use an invisible material")]
         public Material materialWhenOnline;
 
+
+        bool leftControllerXRInteractionGroupFound = false;
+        bool rightControllerXRInteractionGroupFound = false;
+        bool leftHandSkeletonDriverFound = false;
+        bool rightHandSkeletonDriverFound = false;
+        bool cameraRigFound = false;
+
+
         protected virtual void Awake()
         {
             if(autodetectandConfigureRigParts) AutomaticRigPartsDetection();
         }
 
+
+        private void Update()
+        {
+            if (autodetectandConfigureRigParts) AutomaticRigPartsDetection();
+        }
+
+
         protected void AutomaticRigPartsDetection()
         {
 #if XRIT_ENABLED
-            foreach (var interactionGroup in GetComponentsInChildren<XRInteractionGroup>(true))
+            if (leftControllerXRInteractionGroupFound == false || rightControllerXRInteractionGroupFound == false)
             {
-                if (interactionGroup.GetComponent<IHardwareRigPart>() != null)
+                foreach (var interactionGroup in GetComponentsInChildren<XRInteractionGroup>())
                 {
-                    // Already set up, nothing to do
-                    continue;
-                }
-                bool isLeftHand = false;
-                if (interactionGroup.name.Contains("Left", System.StringComparison.InvariantCultureIgnoreCase))
-                {
-                    isLeftHand = true;
-                }
-                if (interactionGroup.name.Contains("Controller", System.StringComparison.InvariantCultureIgnoreCase))
-                {
-                    // Controller
-                    var part = interactionGroup.gameObject.AddComponent<HardwareController>();
-                    part.Side = isLeftHand ? RigPartSide.Left : RigPartSide.Right;
-                    // XRIT already manages gameobject active status
-                    part.disabledGameObjectWhenNotTracked = false;
-                    // visualizer
-                    var visualizer = AddVisualizer(part.gameObject, controllerVisualizationMode);
-                    
-                    // Controller command
-                    part.gameObject.AddComponent<HardwareControllerCommand>();
-
-                    var handPrefab = isLeftHand ? leftHandPrefab : rightHandPrefab;
-                    if (simulateHandForControllers && handPrefab != null)
+                    if (interactionGroup.GetComponent<IHardwareRigPart>() != null)
                     {
-                        var leftHand = GameObject.Instantiate(handPrefab);
-                        leftHand.transform.parent = part.transform;
-                        leftHand.transform.localPosition = Vector3.zero;
-                        leftHand.transform.localRotation = Quaternion.identity;
-                        visualizer.materialWhileShouldNotDisplay = materialWhenOnline;
+                        // Already set up, nothing to do
+                        continue;
+                    }
+                    bool isLeftHand = false;
+                    if (interactionGroup.name.Contains("Left", System.StringComparison.InvariantCultureIgnoreCase))
+                    {
+                        isLeftHand = true;
+                    }
+                    if (interactionGroup.name.Contains("Controller", System.StringComparison.InvariantCultureIgnoreCase))
+                    {
+                        if (isLeftHand == true && leftControllerXRInteractionGroupFound) continue;
+                        if (isLeftHand == false && rightControllerXRInteractionGroupFound) continue;
 
-                        var indexMarker = part.GetComponentInChildren<IndexTipMarker>();
-                        if (indexMarker)
+                        // Controller
+                        var part = interactionGroup.gameObject.AddComponent<HardwareController>();
+                        part.Side = isLeftHand ? RigPartSide.Left : RigPartSide.Right;
+                        // XRIT already manages gameobject active status
+                        part.disabledGameObjectWhenNotTracked = false;
+                        // visualizer
+                        var visualizer = AddVisualizer(part.gameObject, controllerVisualizationMode);
+
+                        // Controller command
+                        part.gameObject.AddComponent<HardwareControllerCommand>();
+
+                        var handPrefab = isLeftHand ? leftHandPrefab : rightHandPrefab;
+                        if (simulateHandForControllers && handPrefab != null)
                         {
-                            // Move poke interaction poke point ot index of the model
-                            var pokeInteractor = part.GetComponentInChildren<XRPokeInteractor>(true);
-                            if (pokeInteractor)
+                            var leftHand = GameObject.Instantiate(handPrefab);
+                            leftHand.transform.parent = part.transform;
+                            leftHand.transform.localPosition = Vector3.zero;
+                            leftHand.transform.localRotation = Quaternion.identity;
+                            visualizer.materialWhileShouldNotDisplay = materialWhenOnline;
+
+                            var indexMarker = part.GetComponentInChildren<IndexTipMarker>();
+                            if (indexMarker)
                             {
-                                pokeInteractor.attachTransform = indexMarker.transform;
+                                // Move poke interaction poke point ot index of the model
+                                var pokeInteractor = part.GetComponentInChildren<XRPokeInteractor>(true);
+                                if (pokeInteractor)
+                                {
+                                    pokeInteractor.attachTransform = indexMarker.transform;
+                                }
                             }
                         }
+
+                        if (isLeftHand)
+                        {
+                            leftControllerXRInteractionGroupFound = true;
+                        }
+                        else
+                        {
+                            rightControllerXRInteractionGroupFound = true;
+                        }
+
                     }
                 }
-
             }
 
 #if XRHANDS_ENABLED
-            foreach (var interactionGroup in GetComponentsInChildren<XRHandSkeletonDriver>(true))
+            if (neverDetectHands == false && (leftHandSkeletonDriverFound == false || rightHandSkeletonDriverFound == false))
             {
-                if (interactionGroup.GetComponent<IHardwareRigPart>() != null)
+                foreach (var interactionGroup in GetComponentsInChildren<XRHandSkeletonDriver>())
                 {
-                    // Already set up, nothing to do
-                    continue;
-                }
-                bool isLeftHand = false;
-                if (interactionGroup.name.Contains("Left", System.StringComparison.InvariantCultureIgnoreCase))
-                {
-                    isLeftHand = true;
-                }
-                if (interactionGroup.name.Contains("Hand", System.StringComparison.InvariantCultureIgnoreCase))
-                {
-                    // Hand
-                    var part = interactionGroup.gameObject.AddComponent<XRHandsHardwareHand>();
-                    // XRIT already manages gameobject active status
-                    part.disabledGameObjectWhenNotTracked = false;
-                    var visualizer = AddVisualizer(part.gameObject, handVisualizationMode);
-                    part.Side = isLeftHand ? RigPartSide.Left : RigPartSide.Right;
+                    if (interactionGroup.GetComponent<IHardwareRigPart>() != null)
+                    {
+                        // Already set up, nothing to do
+                        continue;
+                    }
+                    bool isLeftHand = false;
+                    if (interactionGroup.name.Contains("Left", System.StringComparison.InvariantCultureIgnoreCase))
+                    {
+                        isLeftHand = true;
+                    }
+                    if (interactionGroup.name.Contains("Hand", System.StringComparison.InvariantCultureIgnoreCase))
+                    {
+                        if (isLeftHand == true && leftHandSkeletonDriverFound) continue;
+                        if (isLeftHand == false && rightHandSkeletonDriverFound) continue;
+
+                        // Hand
+                        var part = interactionGroup.gameObject.AddComponent<XRHandsHardwareHand>();
+                        // XRIT already manages gameobject active status
+                        part.disabledGameObjectWhenNotTracked = false;
+                        var visualizer = AddVisualizer(part.gameObject, handVisualizationMode);
+                        part.Side = isLeftHand ? RigPartSide.Left : RigPartSide.Right;
+
+                        if (isLeftHand)
+                        {
+                            leftHandSkeletonDriverFound = true;
+                        }
+                        else
+                        {
+                            rightHandSkeletonDriverFound = true;
+                        }
+                    }
                 }
             }
 #endif
-
-            foreach (var camera in GetComponentsInChildren<Camera>())
+            if(cameraRigFound == false)
             {
-                if (camera.GetComponent<IHardwareRigPart>() != null)
+                foreach (var camera in GetComponentsInChildren<Camera>())
                 {
-                    // Already set up, nothing to do
-                    continue;
-                }
+                    if (camera.GetComponent<IHardwareRigPart>() != null)
+                    {
+                        // Already set up, nothing to do
+                        continue;
+                    }
 
-                var part = camera.gameObject.AddComponent<HardwareHeadset>();
-                // XRIT already manages gameobject active status
-                part.disabledGameObjectWhenNotTracked = false;
+                    if (camera.isActiveAndEnabled == false) continue;
+
+                    var part = camera.gameObject.AddComponent<HardwareHeadset>();
+                    // XRIT already manages gameobject active status
+                    part.disabledGameObjectWhenNotTracked = false;
+                    cameraRigFound = true;
+                }
             }
+            
 #endif
         }
 

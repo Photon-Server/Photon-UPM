@@ -20,7 +20,6 @@ public class UISync_Slider : UISync_Core
 
     private bool sliderIsInitialized = false;
 
-
     protected override void Awake()
     {
         base.Awake();
@@ -33,19 +32,20 @@ public class UISync_Slider : UISync_Core
         {
             Debug.LogError("slider not found");
         }
-        slider.onValueChanged.AddListener(OnSliderValueChanged);
+        else
+        {
+            slider.onValueChanged.AddListener(OnSliderValueChanged);
+        }
 
         if (sliderTMP == null)
         {
-            Debug.LogError("sliderTMP not set");
+            Debug.LogWarning("sliderTMP not set");
         }
     }
 
-  
-    public override void FixedUpdateNetwork()
+    public override void Spawned()
     {
-        base.FixedUpdateNetwork();
-        if(sliderIsInitialized == false)
+        base.Spawned();
         {
             if (Object.HasStateAuthority)
             {
@@ -54,8 +54,8 @@ public class UISync_Slider : UISync_Core
             UpdateSliderUIComponentWithNetworkedValue();
             sliderIsInitialized = true;
         }
-
     }
+
 
     // OnSliderValueChanged is called when the local user interacts with the slider
     private async void OnSliderValueChanged(float value)

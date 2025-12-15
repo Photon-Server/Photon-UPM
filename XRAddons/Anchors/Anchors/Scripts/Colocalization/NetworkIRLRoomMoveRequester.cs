@@ -244,7 +244,7 @@ namespace Fusion.Addons.AnchorsAddon.Colocalization
                     Runner.Despawn(Object);
                 }
             }
-            if (Object.HasStateAuthority && roomManager.knowRoomByRoomIds.ContainsKey(roomId) == false)
+            if (Object && Object.HasStateAuthority && roomManager.knowRoomByRoomIds.ContainsKey(roomId) == false)
             {
                 // Our room does not exist anymore
                 Runner.Despawn(Object);

@@ -20,7 +20,10 @@ public class UISync_Button_AudioFeedback : MonoBehaviour
         {
             Debug.LogError("UISync_Button not found");
         }
-        networked_button.onButtonTouched.AddListener(OnButtonTouched);
+        else
+        {
+            networked_button.onButtonTouched.AddListener(OnButtonTouched);
+        }
 
         if (feedback == null)
         {

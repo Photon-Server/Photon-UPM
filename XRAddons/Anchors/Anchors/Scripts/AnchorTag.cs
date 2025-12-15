@@ -142,6 +142,16 @@ namespace Fusion.Addons.AnchorsAddon
                     visualLocalScale = new Vector3(rect.width, rect.height, 0.01f);
                 }
             }
+
+            // Security, in case of v78 SDK x v83 OS incompatibility
+            if (float.IsNaN(visualLocalPosition.x) || float.IsNaN(visualLocalPosition.y) || float.IsNaN(visualLocalPosition.z))
+            {
+                if (anchorVisual)
+                {
+                    visualLocalPosition = anchorVisual.transform.localPosition;
+                    visualLocalScale = anchorVisual.transform.localScale;
+                }
+            }
 #endif
 
             if (anchorVisual)

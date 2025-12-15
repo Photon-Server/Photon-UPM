@@ -103,11 +103,21 @@ namespace Fusion.XR.Shared.Utils
         /// <returns></returns>
         public static (Vector3 offset, Quaternion rotationOffset) UnscaledOffset(Vector3 referenceTransformPosition, Quaternion referenceTransformRotation, Transform transformToOffset)
         {
-            var referenceTransformMatrix = Matrix4x4.TRS(referenceTransformPosition, referenceTransformRotation, Vector3.one);
-            var offset = referenceTransformMatrix.inverse.MultiplyPoint(transformToOffset.position);
-
+            var offset = UnscaledOffset(referenceTransformPosition, referenceTransformRotation, transformToOffset.position);
             var rotationOffset = Quaternion.Inverse(referenceTransformRotation) * transformToOffset.rotation;
             return (offset, rotationOffset);
+        }
+
+        /// <summary>
+        /// Return a position offset relative to another virtual transform, with referenceTransform.position=referenceTransformPosition, referenceTransform.rotation=referenceTransformRotation, referenceTransform.scale=Vector3.one (as well as its parents' scales)
+        /// For the position, equivalent to "offsetPosition = referenceTransform.InverseTransformPoint(transformToOffset.position)" when the referenceTransform scale is Vector3.one, as well as the ones of its parents
+        /// </summary>
+        public static Vector3 UnscaledOffset(Vector3 referenceTransformPosition, Quaternion referenceTransformRotation, Vector3 positionToOffset)
+        {
+            var referenceTransformMatrix = Matrix4x4.TRS(referenceTransformPosition, referenceTransformRotation, Vector3.one);
+            var offset = referenceTransformMatrix.inverse.MultiplyPoint(positionToOffset);
+
+            return offset;
         }
 
         /// <summary>

@@ -20,7 +20,10 @@ public class UISync_ScrollRect_AudioFeedback : MonoBehaviour
         {
             Debug.LogError("UISync_ScrollRect not found");
         }
-        networked_scrollRect.onScrollRectValueChanged.AddListener(OnScrollRectValueChanged);
+        else
+        {
+            networked_scrollRect.onScrollRectValueChanged.AddListener(OnScrollRectValueChanged);
+        }
 
         if (feedback == null)
         {

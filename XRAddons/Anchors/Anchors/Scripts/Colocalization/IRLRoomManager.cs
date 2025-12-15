@@ -165,7 +165,7 @@ public class IRLRoomManager : MonoBehaviour, IRLAnchorTracking.IIRLAnchorTrackin
     public NetworkIRLRoomMember RoomMainMember(string roomId)
     {
         NetworkIRLRoomMember mainMember = null;
-        if (knowRoomByRoomIds.ContainsKey(roomId))
+        if (roomId != null && knowRoomByRoomIds.ContainsKey(roomId))
         {
             int lowestId = int.MaxValue;
             foreach(var m in knowRoomByRoomIds[roomId].members)
@@ -592,7 +592,7 @@ public class IRLRoomManager : MonoBehaviour, IRLAnchorTracking.IIRLAnchorTrackin
                         anchor.Runner.Despawn(anchor.Object);
                     }
                 }
-                if (moveRequesterToDelete)
+                if (moveRequesterToDelete && moveRequesterToDelete.Runner && moveRequesterToDelete.Object)
                 {
                     moveRequesterToDelete.Runner.Despawn(moveRequesterToDelete.Object);
                 }

@@ -33,19 +33,20 @@ public class UISync_Dropdown : UISync_Core
         {
             Debug.LogError("Dropdown not found");
         }
-        dropdown.onValueChanged.AddListener(OnDropdownValueChanged);
-    }
-
-
-    public override void FixedUpdateNetwork()
-    {
-        base.FixedUpdateNetwork();
-        if (dropdownIsInitialized == false)
+        else
         {
-            UpdateDropdownUIComponentWithNetworkedValue();
-            dropdownIsInitialized = true;
+            dropdown.onValueChanged.AddListener(OnDropdownValueChanged);
         }
     }
+
+    public override void Spawned()
+    {
+        base.Spawned();
+        UpdateDropdownUIComponentWithNetworkedValue();
+        dropdownIsInitialized = true;
+    }
+
+
     private async void UpdateDropdownUIComponentWithNetworkedValue()
     {
         dropdown.SetValueWithoutNotify(DropdownValue);

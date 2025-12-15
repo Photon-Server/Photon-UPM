@@ -20,7 +20,10 @@ public class UISync_Slider_AudioFeedback : MonoBehaviour
         {
             Debug.LogError("UISync_Slider not found");
         }
-        networked_slider.onSliderValueChanged.AddListener(OnSliderValueChanged);
+        else
+        {
+            networked_slider.onSliderValueChanged.AddListener(OnSliderValueChanged);
+        }
 
         if (feedback == null)
         {

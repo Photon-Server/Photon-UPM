@@ -10,7 +10,6 @@ public class UISync_Core : NetworkBehaviour, IStateAuthorityChanged
     [SerializeField] protected int pressVisualFeedbackDuration = 150;
 
     public bool disableInteractionWhenNotStateAuthority = false;
-    private bool coreIsInitialized = false;
 
     [Header("Selectable")]
     [Tooltip("Make sure that selectable is true when we have State Authority")]
@@ -28,15 +27,12 @@ public class UISync_Core : NetworkBehaviour, IStateAuthorityChanged
         }
     }
 
-   public override void FixedUpdateNetwork()
+    public override void Spawned()
     {
-        base.FixedUpdateNetwork();
-        if (coreIsInitialized == false)
-        {
-            ConfigureSelectableInteractionBasedOnStateAuthority();
-            coreIsInitialized = true;
-        }
+        base.Spawned();
+        ConfigureSelectableInteractionBasedOnStateAuthority();
     }
+
     public virtual void StateAuthorityChanged()
     {
         ConfigureSelectableInteractionBasedOnStateAuthority();

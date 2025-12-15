@@ -30,22 +30,21 @@ public class UISync_ScrollRect : NetworkBehaviour
         {
             Debug.LogError("ScrollRect not found");
         }
-        scrollRect.onValueChanged.AddListener(OnScrollRectValueChanged);
+        else
+        {
+            scrollRect.onValueChanged.AddListener(OnScrollRectValueChanged);
+        }
     }
 
-
-    public override void FixedUpdateNetwork()
+    public override void Spawned()
     {
-        base.FixedUpdateNetwork();
-        if (scrollRectIsInitialized == false)
+        base.Spawned();
+        if (Object.HasStateAuthority)
         {
-            if (Object.HasStateAuthority)
-            {
-                ScrollRectPosition = Vector2.one;
-            }
-            UpdateScrollRectUIComponentWithNetworkedValue();
-            scrollRectIsInitialized = true;
+            ScrollRectPosition = Vector2.one;
         }
+        UpdateScrollRectUIComponentWithNetworkedValue();
+        scrollRectIsInitialized = true;
     }
 
     // OnScrollRectValueChanged is called when the local user interacts with the scroll view

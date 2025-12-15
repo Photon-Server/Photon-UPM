@@ -23,6 +23,11 @@
           "displayName": "XRITIntegration",
           "description": "This demo scene is a ready-to-use modified version of the Unity XRIT Starter demo scene",
           "path": "Samples~/XRITIntegration/Scenes"
+      },
+      {
+          "displayName": "XRITIntegration with UI synchronization",
+          "description": "This demo scene is a ready-to-use modified version of the Unity XRIT Starter demo scene, also including the toggle button and UI sync (requires the UIsynchronization add-on)",
+          "path": "Samples~/UIsynchronization/Scenes"
       }
     ]
   }

@@ -13,10 +13,6 @@ public class UISync_Button : UISync_Core
     [Networked, OnChangedRender(nameof(OnNetworkedButtonClickValueChanged))]
     public int ButtonClickValue { get; set; } = 0;
 
-    private int _buttonClickValue = 0;
-    private bool buttonIsInitialized = false;
-
-
     [Header("Event")]
     public UnityEvent onButtonTouched = new UnityEvent();
 
@@ -32,18 +28,18 @@ public class UISync_Button : UISync_Core
         {
             Debug.LogError("button not found");
         }
-        button.onClick.AddListener(OnButtonClick);
-    }
-
-    public override void FixedUpdateNetwork()
-    {
-        base.FixedUpdateNetwork();
-        if (buttonIsInitialized == false)
+        else
         {
-            UpdateButtonUIComponentWithNetworkedValue();
-            buttonIsInitialized = true;
+            button.onClick.AddListener(OnButtonClick);
         }
     }
+
+    public override void Spawned()
+    {
+        base.Spawned();
+        UpdateButtonUIComponentWithNetworkedValue();
+    }
+
 
     // OnButtonClick is called when the local user interacts with the button
     private async void OnButtonClick()
@@ -51,8 +47,7 @@ public class UISync_Button : UISync_Core
         // The state authority inform proxies of the button has been pressed
         if (Object && Object.HasStateAuthority)
         {
-           _buttonClickValue += 1;
-           ButtonClickValue = _buttonClickValue;
+            ButtonClickValue += 1;
         }
         else
         {
@@ -60,16 +55,13 @@ public class UISync_Button : UISync_Core
             if (disableInteractionWhenNotStateAuthority == false)
             {
                 await Object.WaitForStateAuthority();
-                _buttonClickValue += 1;
-                ButtonClickValue = _buttonClickValue;
+                ButtonClickValue += 1;
             }
         }
     }
 
     private async void UpdateButtonUIComponentWithNetworkedValue()
     {
-        _buttonClickValue = ButtonClickValue;
-
         // click effect
         ExecuteEvents.Execute(button.gameObject,new PointerEventData(EventSystem.current),ExecuteEvents.pointerDownHandler);
         await AsyncTask.Delay(pressVisualFeedbackDuration);

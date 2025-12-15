@@ -64,6 +64,11 @@ namespace Meta.XR.MRUtilityKitSamples.QRCodeDetection
             UnityEngine.Assertions.Assert.IsTrue(_trackable.PlaneRect.HasValue);
             _box = _trackable.PlaneRect.Value;
 
+            if (float.IsNaN(_box.center.x) || float.IsNaN(_box.yMin))
+            {
+                return;
+            }
+
             UpdateBoundingBox();
 
             if (!_canvasRect)
@@ -71,11 +76,18 @@ namespace Meta.XR.MRUtilityKitSamples.QRCodeDetection
                 return;
             }
 
-            _canvasRect.localPosition = new Vector3(
+
+            var canvasPos = new Vector3(
                 x: _box.center.x + _canvasOffset.x * _canvasRect.localScale.x,
                 y: _box.yMin + _canvasOffset.y * _canvasRect.localScale.y,
                 z: _canvasOffset.z * _canvasRect.localScale.z
             );
+
+            if (float.IsNaN(canvasPos.x) || float.IsNaN(canvasPos.y) || float.IsNaN(canvasPos.z))
+            {
+                return;
+            }
+            _canvasRect.localPosition = canvasPos;
         }
 
         void UpdateBoundingBox()

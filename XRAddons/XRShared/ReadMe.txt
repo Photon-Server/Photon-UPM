@@ -7,6 +7,11 @@ https://doc.photonengine.com/fusion/current/industries-samples/industries-addons
 
 ## Version & Changelog
 
+- Version 2.1.9:
+    - Fix bug in XRHandCollectableSkeletonDriverHelper when searching for the root transform
+	- Add helper method to TransformManipulation to compute position offset without scale
+	- Add OrientedBounds to compute a bounds with an orientation
+	- UI interaction: fix toogle prefab (enable raycast target on images)
 - Version 2.1.8:
 	- add automatic locomotion setup options on RigLocomotion
 	- fix typo in IFeedbackHandler
@@ -20,14 +25,10 @@ https://doc.photonengine.com/fusion/current/industries-samples/industries-addons
 	- Add AuthorityVisualization to debug state authority visualy with a material
 	- Add physics grabbable and authroity transfer on collision for 2.1 forecast physics
 	- Add new UI prefabs
-- Version 2.1.5:
-	- Add canvasesToIgnore option to RigPartVisualizer
-- Version 2.1.4:
-	- Add IColocalizationRoomProvider to add interoperability between addons in colocalization scenario
-- Version 2.1.3:
-	- Various assembly tooling fixes, to handle edge cases (first install, ...)
-- Version 2.1.2:
-	- Improve Fader shader presence in builds detection and warning message
+- Version 2.1.5: Add canvasesToIgnore option to RigPartVisualizer
+- Version 2.1.4: Add IColocalizationRoomProvider to add interoperability between addons in colocalization scenario
+- Version 2.1.3: Various assembly tooling fixes, to handle edge cases (first install, ...)
+- Version 2.1.2: Improve Fader shader presence in builds detection and warning message
 - Version 2.1.1:
 	- Add way to position automaticaly transforms to match wrist and index positions
 	- Add method in LocalInputTracker to check if a button is pressed no matter on which controller

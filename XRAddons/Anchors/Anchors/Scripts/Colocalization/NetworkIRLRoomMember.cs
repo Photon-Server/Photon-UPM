@@ -14,6 +14,7 @@ public class NetworkIRLRoomMember : NetworkBehaviour, IColocalizationRoomProvide
     public const int MAX_ROOMID_LENGTH = 32;
     [Networked, OnChangedRender(nameof(OnRoomIdChange))]
     public NetworkString<_32> RoomId { get; set; }
+    public INetworkRig rig;
 
     NetworkIRLRoomAnchor _roomAnchorToFollow = null;
     public NetworkIRLRoomAnchor RoomAnchorToFollow
@@ -72,6 +73,7 @@ public class NetworkIRLRoomMember : NetworkBehaviour, IColocalizationRoomProvide
     private void Awake()
     {
         roomManager = FindAnyObjectByType<IRLRoomManager>();
+        rig = GetComponentInParent<INetworkRig>();
     }
 
     private void Start()
@@ -191,11 +193,9 @@ public class NetworkIRLRoomMember : NetworkBehaviour, IColocalizationRoomProvide
         roomManager?.OnNetworkIRLRoomMemberRoomChange(this, previousRoomId.ToString());
     }
 
-
-#if OCULUS_SDK_AVAILABLE
     bool roomResetRequired = false;
 
-
+#if OCULUS_SDK_AVAILABLE
     private void OnOVRManagerHMDMounted()
     {
         if (roomResetRequired && leaveIRLRoomOnHDMReturn)

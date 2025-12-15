@@ -9,8 +9,6 @@ public class UISync_CanvasGroup : NetworkBehaviour, IStateAuthorityChanged
     public float alphaAppliedOnCanvasGroupForStateAuthority = 1f;
     public float alphaAppliedOnCanvasGroupForProxies = 0.6f;
 
-    private bool canvasGroupIsInitialized = false;
-
     private void Awake()
     {
         if (canvasGroup == null)
@@ -24,16 +22,13 @@ public class UISync_CanvasGroup : NetworkBehaviour, IStateAuthorityChanged
         }
     }
 
-
-    public override void FixedUpdateNetwork()
+    public override void Spawned()
     {
-        base.FixedUpdateNetwork();
-        if (canvasGroupIsInitialized == false)
-        {
-            ConfigureSelectableInteractionBasedOnStateAuthority();
-            canvasGroupIsInitialized = true;
-        }
+        base.Spawned();
+        ConfigureSelectableInteractionBasedOnStateAuthority();
     }
+
+
     public void StateAuthorityChanged()
     {
         ConfigureSelectableInteractionBasedOnStateAuthority();

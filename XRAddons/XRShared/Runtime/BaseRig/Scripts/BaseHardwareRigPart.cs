@@ -116,6 +116,10 @@ namespace Fusion.XR.Shared.Base
         public RigPartSide _side;
 
         #region ILateralizedRigPart
+
+        /// <summary>
+        /// If the side is not defined for the rig part in the inspector (rig built during runtime), when affecting the side, we consider to have enough data to at least register it to the rig
+        /// </summary>
         public RigPartSide Side
         {
             get

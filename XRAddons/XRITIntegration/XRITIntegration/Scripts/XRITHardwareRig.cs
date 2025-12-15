@@ -51,7 +51,6 @@ namespace Fusion.XR.Shared.XRHands {
             if (autodetectandConfigureRigParts) AutomaticRigPartsDetection();
         }
 
-
         protected void AutomaticRigPartsDetection()
         {
 #if XRIT_ENABLED
@@ -76,14 +75,9 @@ namespace Fusion.XR.Shared.XRHands {
 
                         // Controller
                         var part = interactionGroup.gameObject.AddComponent<HardwareController>();
-                        part.Side = isLeftHand ? RigPartSide.Left : RigPartSide.Right;
                         // XRIT already manages gameobject active status
                         part.disabledGameObjectWhenNotTracked = false;
-                        // visualizer
-                        var visualizer = AddVisualizer(part.gameObject, controllerVisualizationMode);
-
-                        // Controller command
-                        part.gameObject.AddComponent<HardwareControllerCommand>();
+                        part.Side = isLeftHand ? RigPartSide.Left : RigPartSide.Right;
 
                         var handPrefab = isLeftHand ? leftHandPrefab : rightHandPrefab;
                         if (simulateHandForControllers && handPrefab != null)
@@ -92,7 +86,6 @@ namespace Fusion.XR.Shared.XRHands {
                             leftHand.transform.parent = part.transform;
                             leftHand.transform.localPosition = Vector3.zero;
                             leftHand.transform.localRotation = Quaternion.identity;
-                            visualizer.materialWhileShouldNotDisplay = materialWhenOnline;
 
                             var indexMarker = part.GetComponentInChildren<IndexTipMarker>();
                             if (indexMarker)
@@ -104,6 +97,16 @@ namespace Fusion.XR.Shared.XRHands {
                                     pokeInteractor.attachTransform = indexMarker.transform;
                                 }
                             }
+                        }
+
+                        // Controller command
+                        part.gameObject.AddComponent<HardwareControllerCommand>();
+
+                        // visualizer
+                        var visualizer = AddVisualizer(part.gameObject, controllerVisualizationMode);
+                        if (simulateHandForControllers)
+                        {
+                            visualizer.materialWhileShouldNotDisplay = materialWhenOnline;
                         }
 
                         if (isLeftHand)

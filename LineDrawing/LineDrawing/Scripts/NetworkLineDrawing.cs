@@ -21,7 +21,7 @@ namespace Fusion.Addons.LineDrawing
 
 
         [Networked]
-        [SerializeField] NetworkBool IsFinished { get; set; }
+        public NetworkBool IsFinished { get; set; }
 
         [System.Serializable]
         [ByteArraySize(16)]

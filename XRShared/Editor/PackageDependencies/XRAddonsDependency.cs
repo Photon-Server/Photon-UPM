@@ -36,7 +36,7 @@ namespace Fusion.Addons.Automatization
                 {
                     if (string.IsNullOrEmpty(packageInstallInfo.downloadUrl) && string.IsNullOrEmpty(addonName) == false)
                     {
-                        return "https://git.exitgames.com/fusion-samples/fusion-industries-addons.git?path=/Assets/Photon/FusionAddons/" + addonName + "#release/upm";
+                        return "https://github.com/Photon-Server/Photon-UPM.git?path=/" + addonName  + "#fusion/v2/fusion-xr";
                     }
 
                     return packageInstallInfo.downloadUrl;

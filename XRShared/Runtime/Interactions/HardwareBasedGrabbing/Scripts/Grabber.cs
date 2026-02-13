@@ -38,6 +38,10 @@ namespace Fusion.XR.Shared.Core.HardwareBasedGrabbing {
         {
             rigPart = GetComponentInParent<IGrabbingProvider>();
             if (rigPart == null) Debug.LogError("Grabber should be placed next to an IGrabbingProviderHardwareRigPart");
+        }
+
+        private void Start()
+        {
             if (GetComponentInParent<Rigidbody>() == null)
             {
                 Debug.LogError("A rigid body (and a trigger collider) is required for the Grabber to be sure to trigger the OnTrigger callback");

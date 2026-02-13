@@ -6,7 +6,7 @@ https://doc.photonengine.com/fusion/current/industries-samples/industries-addons
 
 ## Version & Changelog
 
-- version 2.1.0: Add MRUKPermissionWaiter and PassthroughCameraAccessPermissionWaiter to support PermissionsRequester system (useful when several components try to access Android permission request system)
+- version 2.3.4: Add MRUKPermissionWaiter and PassthroughCameraAccessPermissionWaiter to support PermissionsRequester system (useful when several components try to access Android permission request system)
 - version 2.3.3: Add workaround for hand tracking jumps in MetaBridgeHardwareHand
 - version 2.3.2: Remove Meta Camera sample assets (not relevant with Meta SDK v81 and further)
 - version 2.3.1: Make some internal properties/methods public, to fix a build issue for Android

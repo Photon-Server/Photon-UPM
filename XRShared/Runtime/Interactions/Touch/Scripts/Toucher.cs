@@ -25,7 +25,7 @@ namespace Fusion.XR.Shared.Core.Touch
         [Header("Network context usage")]
         public bool onlyTriggerCallbacksWhenStateAuthority = true;
 
-        protected virtual void Awake()
+        protected virtual void Start()
         {
             rigPart = GetComponentInParent<IRigPart>();
         }

@@ -78,6 +78,8 @@ namespace Fusion.XR.Shared.Core
     public interface IHandCommandProvider
     {
         public HandCommand HandCommand { get; }
+        public void RegisterCommandHandler(IHandCommandHandler handler);
+        public void UnregisterCommandHandler(IHandCommandHandler handler);
     }
 
     public interface IHandCommandHandler

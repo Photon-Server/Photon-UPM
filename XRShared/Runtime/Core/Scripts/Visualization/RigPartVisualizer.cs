@@ -40,6 +40,7 @@ namespace Fusion.XR.Shared.Core
             " - on Android, a disabled renderer would not animate the skeleton")]
         public Material materialWhileShouldNotDisplay;
         protected Dictionary<Renderer, Material> overridenRendererInitialMaterial = new Dictionary<Renderer, Material>();
+        protected Dictionary<Renderer, bool> renderersInitialEnabled = new Dictionary<Renderer, bool>();
 
         [Header("Canvas adaptation configuraiton")]
         [Tooltip("If true, automatically fills canvasesToAdapt (unless canvasesToAdapt is not empty)")]
@@ -121,6 +122,7 @@ namespace Fusion.XR.Shared.Core
             foreach (var r in renderersToAdapt)
             {
                 if (renderersToIgnore.Contains(r)) continue;
+                if (renderersInitialEnabled.ContainsKey(r) == false) renderersInitialEnabled[r] = r.enabled;
                 bool shouldBeIgnoredDuetoCustomizer = false;
                 foreach (var customizer in customizers)
                 {
@@ -138,6 +140,12 @@ namespace Fusion.XR.Shared.Core
 
                 if (materialWhileShouldNotDisplay != null)
                 {
+                    // Restore renderer initial state if the material was not set before hand the renderer had the time to be disabled
+                    if (r.enabled != renderersInitialEnabled[r])
+                    {
+                        r.enabled = renderersInitialEnabled[r];
+                    }
+
                     // Adat renderer material to shouldDisplay
                     if (shouldDisplay == false && overridenRendererInitialMaterial.ContainsKey(r) == false)
                     {

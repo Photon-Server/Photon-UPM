@@ -25,6 +25,8 @@ namespace Fusion.XR.Shared.Core.SimpleHands
         public string pointAnimationLayer = "Point Layer";
         public string thumbAnimationLayer = "Thumb Layer";
         public float maxGripToPinch = 0.05f;
+        IHandCommandProvider commandProvider;
+
         public bool isVisible { get; set; } = false;
 
         private void Awake()
@@ -37,6 +39,23 @@ namespace Fusion.XR.Shared.Core.SimpleHands
             {
                 // OnBecameVisible not triggered on Polyspatial visionOs
                 isVisible = true;
+            }
+        }
+
+        private void Start()
+        {
+            var commandProvider = GetComponentInParent<IHandCommandProvider>();
+            if (commandProvider != null)
+            {
+                commandProvider.RegisterCommandHandler(this);
+            }
+        }
+
+        private void OnDestroy()
+        {
+            if (commandProvider != null)
+            {
+                commandProvider.UnregisterCommandHandler(this);
             }
         }
 

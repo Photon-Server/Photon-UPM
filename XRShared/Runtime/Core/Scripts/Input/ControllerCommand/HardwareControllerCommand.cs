@@ -24,6 +24,8 @@ namespace Fusion.XR.Shared.Core
         public List<IHandCommandHandler> commandHandlers = new List<IHandCommandHandler>();
 
         HandCommand _handCommand;
+
+        #region IHandCommandProvider
         public HandCommand HandCommand
         {
             get
@@ -35,6 +37,22 @@ namespace Fusion.XR.Shared.Core
                 _handCommand = value;
             }
         }
+        public void RegisterCommandHandler(IHandCommandHandler handler) {
+            if (commandHandlers.Contains(handler) == false)
+            {
+                commandHandlers.Add(handler);
+            }
+        }
+
+        public void UnregisterCommandHandler(IHandCommandHandler handler)
+        {
+            if (commandHandlers.Contains(handler))
+            {
+                commandHandlers.Remove(handler);
+            }
+        }
+
+        #endregion
 
         protected virtual void Awake()
         {
@@ -48,7 +66,10 @@ namespace Fusion.XR.Shared.Core
 #else
             Debug.LogError("Missing com.unity.inputsystem package");
 #endif
-            commandHandlers = new List<IHandCommandHandler>(GetComponentsInChildren<IHandCommandHandler>());
+            foreach (var handler in GetComponentsInChildren<IHandCommandHandler>())
+            {
+                RegisterCommandHandler(handler);
+            }
         }
 
         private void Update()

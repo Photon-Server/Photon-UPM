@@ -18,6 +18,8 @@ namespace Fusion.Addons.Meta
         [Header("Visual adaptation")]
         public RigPartVisualizer.Mode hardwareHandRenderersVisualizationMode = RigPartVisualizer.Mode.DisplayWhileOffline;
         public RigPartVisualizer.Mode hardwareControllersRenderersVisualizationMode = RigPartVisualizer.Mode.DisplayWhileOffline;
+        public Material hardwareControllerMaterialWhileShouldNotDisplay;
+        public Material hardwareHandTrackingMaterialWhileShouldNotDisplay;
 
         [Header("Hand tracking follower")]
         public Transform leftIndexTipFollower = null;
@@ -127,6 +129,7 @@ namespace Fusion.Addons.Meta
                     {
                         rigPartVisualizer = controller.gameObject.AddComponent<RigPartVisualizer>();
                         rigPartVisualizer.mode = hardwareControllersRenderersVisualizationMode;
+                        rigPartVisualizer.materialWhileShouldNotDisplay = hardwareControllerMaterialWhileShouldNotDisplay;
                     }
                 }
                 if (ovrControllerHelper.GetComponent<HardwareControllerCommand>() == null)
@@ -189,6 +192,7 @@ namespace Fusion.Addons.Meta
             {
                 rigPartVisualizer = hand.gameObject.AddComponent<RigPartVisualizer>();
                 rigPartVisualizer.mode = hardwareHandRenderersVisualizationMode;
+                rigPartVisualizer.materialWhileShouldNotDisplay = hardwareHandTrackingMaterialWhileShouldNotDisplay;
             }
         }
 

@@ -12,6 +12,8 @@ https://doc.photonengine.com/fusion/current/industries-samples/industries-addons
 	- Changes for Unity 6.3 Compatibility
 	- Fix on Grabbable.pauseGrabbability usage to work in a network context
 	- Add non networked visibility group handling in Visibility class
+	- Add TouchingSetup to add Toucher automatically to an hardware rig
+	- Add SimulatedHandSetup to add simulated hand to controllers in an hardware rig
 
 - Version 2.1.10:
     - Add DisableForDesktop

@@ -1,6 +1,6 @@
 {
     "name": "com.photonengine.prototyping.addon.structurecohesion",
-    "version": "2.0.2",
+    "version": "2.1.2",
     "displayName": "StructureCohesion",
     "description": "This module allows to collaboratively build a network object made a several parts, forming a common structure.",
     "unity": "6.0",

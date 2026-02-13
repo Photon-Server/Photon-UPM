@@ -1,6 +1,6 @@
 {
     "name": "com.photonengine.prototyping.addon.blockingcontact",
-    "version": "2.0.5",
+    "version": "2.1.0",
     "displayName": "BlockingContact",
     "description": "This module extends the hardware grabbing system available in the VRShared sample, to allow surfaces to block some objects with a tip (pen ,...) while also blocking the hand grabbing it.",
     "unity": "6.0",

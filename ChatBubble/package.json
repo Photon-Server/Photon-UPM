@@ -1,6 +1,6 @@
 {
     "name": "com.photonengine.prototyping.addon.chatbubble",
-    "version": "2.0.2",
+    "version": "2.1.0",
     "displayName": "ChatBubble",
     "description": "This addon provides ready-to-use chat bubbles. People in the same bubble can discuss with other members.",
     "unity": "6.0",

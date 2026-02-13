@@ -1,6 +1,6 @@
 {
     "name": "com.photonengine.prototyping.addon.drawing",
-    "version": "2.0.12",
+    "version": "2.1.0",
     "displayName": "Drawing",
     "description": "This module demonstrates how to synchronize 3D points to create 3D drawings made with line renderers.",
     "unity": "6.0",

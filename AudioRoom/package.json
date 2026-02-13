@@ -1,6 +1,6 @@
 {
     "name": "com.photonengine.prototyping.addon.audioroom",
-    "version": "2.0.2",
+    "version": "2.1.1",
     "displayName": "AudioRoom",
     "description": "https://doc.photonengine.com/fusion/current/industries-samples/industries-addons/fusion-industries-addons-audio-room",
     "unity": "6.0",

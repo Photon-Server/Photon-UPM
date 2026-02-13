@@ -1,10 +1,10 @@
 
 #if PHOTON_VOICE_AVAILABLE
 using Photon.Voice.Fusion;
+using Photon.Voice.Unity;
 #endif
 using UnityEngine;
 using Fusion.XRShared.Tools;
-using Photon.Voice.Unity;
 using System.Reflection;
 
 namespace Fusion.Addons.VoiceHelpers

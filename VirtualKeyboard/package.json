@@ -1,6 +1,6 @@
 {
     "name": "com.photonengine.prototyping.addon.virtualkeyboard",
-    "version": "2.0.3",
+    "version": "2.2.1",
     "displayName": "VirtualKeyboard",
     "description": "This addon provides a virtual alpha-numeric keyboard with upper and lower case as well as special characters. It can works offline.",
     "unity": "6.0",

@@ -70,7 +70,7 @@ namespace Fusion.Addons.Automatization
             new XRAddonsDependency { addonName = "ChatBubble", requiredDependencies = new List<string> { "AudioRoom"  }, },
             new XRAddonsDependency { addonName = "ConnectionManager", requiredDependencies = new List<string> {  }, },
             new XRAddonsDependency { addonName = "DesktopFocus", requiredDependencies = new List<string> {  }, },
-            new XRAddonsDependency { addonName = "Drawing", requiredDependencies = new List<string> { "InteractiveMenu", "BlockingContact"  }, },
+            new XRAddonsDependency { addonName = "Drawing", requiredDependencies = new List<string> { "InteractiveMenu", "BlockingContact", "DataSyncHelpers"  }, },
             new XRAddonsDependency { addonName = "DynamicAudioGroup", requiredDependencies = new List<string> {  }, },
             new XRAddonsDependency { addonName = "ExtendedRigSelection", requiredDependencies = new List<string> { "ConnectionManager" }, },
             new XRAddonsDependency { addonName = "Feedback", requiredDependencies = new List<string> {  }, },

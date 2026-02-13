@@ -1,6 +1,6 @@
 {
     "name": "com.photonengine.prototyping.addon.texturedrawing",
-    "version": "2.1.3",
+    "version": "2.2.0",
     "displayName": "TextureDrawing",
     "description": "This addon provides a solution to synchronize a texture modification.",
     "unity": "6.0",

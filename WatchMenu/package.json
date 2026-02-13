@@ -1,6 +1,6 @@
 {
     "name": "com.photonengine.prototyping.addon.watchmenu",
-    "version": "2.0.0",
+    "version": "2.0.2",
     "displayName": "WatchMenu",
     "description": "This addons provides classes to create a simple interactable watch menu. The watch menu opens when the user looks at the watch. Buttons appear, and the user can trigger actions by pressing them.",
     "unity": "6.0",

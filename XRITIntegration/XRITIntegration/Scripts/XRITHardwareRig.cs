@@ -11,12 +11,13 @@ using UnityEngine.XR.Interaction.Toolkit.Interactors.Visuals;
 using UnityEngine.XR.Hands;
 #endif
 
-namespace Fusion.XR.Shared.XRHands {
+namespace Fusion.XR.Shared.XRHands
+{
     public class XRITHardwareRig : HardwareRig
     {
         [Header("Automatic rigParts detection and configuration")]
         [SerializeField] bool autodetectandConfigureRigParts = true;
-        [SerializeField] bool neverDetectHands = false;
+
 
 #if XRIT_ENABLED
         [SerializeField] RigPartVisualizer.Mode controllerVisualizationMode = RigPartVisualizer.Mode.DisplayWhileOffline;
@@ -32,17 +33,24 @@ namespace Fusion.XR.Shared.XRHands {
             "But, to allow animations to run properly on android (to have in the hardware rig usable finger positions), instead of hidding the renderer we can use an invisible material")]
         public Material materialWhenOnline;
 
-
+#if XRIT_ENABLED
+        [SerializeField] bool neverDetectHands = false;
         bool leftControllerXRInteractionGroupFound = false;
         bool rightControllerXRInteractionGroupFound = false;
+        bool cameraRigFound = false;
+#endif
+
+#if XRHANDS_ENABLED
         bool leftHandSkeletonDriverFound = false;
         bool rightHandSkeletonDriverFound = false;
-        bool cameraRigFound = false;
+#endif
+
+
 
 
         protected virtual void Awake()
         {
-            if(autodetectandConfigureRigParts) AutomaticRigPartsDetection();
+            if (autodetectandConfigureRigParts) AutomaticRigPartsDetection();
         }
 
 
@@ -161,7 +169,7 @@ namespace Fusion.XR.Shared.XRHands {
                 }
             }
 #endif
-            if(cameraRigFound == false)
+            if (cameraRigFound == false)
             {
                 foreach (var camera in GetComponentsInChildren<Camera>())
                 {
@@ -179,7 +187,7 @@ namespace Fusion.XR.Shared.XRHands {
                     cameraRigFound = true;
                 }
             }
-            
+
 #endif
         }
 
@@ -193,7 +201,7 @@ namespace Fusion.XR.Shared.XRHands {
             {
                 foreach (var renderer in curve.GetComponentsInChildren<Renderer>(true))
                 {
-                    visualizer.renderersToIgnore.Add(renderer);              
+                    visualizer.renderersToIgnore.Add(renderer);
                 }
             }
 #endif

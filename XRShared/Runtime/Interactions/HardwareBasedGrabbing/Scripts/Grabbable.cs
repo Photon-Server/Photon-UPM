@@ -133,7 +133,6 @@ namespace Fusion.XR.Shared.Core.HardwareBasedGrabbing
         protected virtual void Update()
         {
             TrackVelocity();
-            if (pauseGrabbability) return;
 
             if (networkGrabbable == null || networkGrabbable.Object == null)
             {
@@ -226,6 +225,8 @@ namespace Fusion.XR.Shared.Core.HardwareBasedGrabbing
 
         public virtual void Follow(Vector3 followedTransformPosition, Quaternion followedTransformRotation, Vector3 localPositionOffsetToFollowed, Quaternion localRotationOffsetTofollowed)
         {
+            if (pauseGrabbability) return;
+
             (transform.position, transform.rotation) = TransformManipulations.ApplyUnscaledOffset(
                 referenceTransformPosition: followedTransformPosition, referenceTransformRotation: followedTransformRotation,
                 offset: localPositionOffsetToFollowed,

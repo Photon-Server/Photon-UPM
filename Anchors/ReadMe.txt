@@ -7,6 +7,14 @@ https://doc.photonengine.com/fusion/current/industries-samples/industries-addons
 
 ## Version & Changelog
 
+- Version 2.0.7: Add option to change the anchor tag display after a long stability detection 
+- Version 2.0.6:
+    - Update Aruco and OpenCV support update for Meta SDK v83: transition to latest version of https://github.com/TakashiYoshinaga/QuestArUcoMarkerTracking, supporting Meta SDK v83
+    
+- Version 2.0.5:
+	- Add security because of QR Code reading incompatibility between Meta SDK v78 and MetaOS v83
+	- Add security for QR code with long payload
+
 - Version 2.0.4: Update scene to use the new WebCamTextureManager Prefab (to avoid guid collision with Meta SDKs V81)
 
 - Version 2.0.3:

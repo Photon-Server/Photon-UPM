@@ -13,7 +13,7 @@ using UnityEngine;
 [RequireComponent(typeof(NetworkTransform))]
 public class NetworkIRLRoomAnchor : NetworkBehaviour, IStateAuthorityChanged
 {
-    const int MAX_ANCHORID_LENGTH = 64;
+    public const int MAX_ANCHORID_LENGTH = 64;
     [Networked]
     public NetworkString<_64> AnchorId { get; set; }
     [Networked, OnChangedRender(nameof(OnRoomIdChange))]

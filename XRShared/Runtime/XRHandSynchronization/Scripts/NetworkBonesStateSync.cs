@@ -73,7 +73,6 @@ namespace Fusion.Addons.HandsSync
         public float HandScale { get; set; }
 
         const int BONE_DATA_SIZE = 19;          // the size should match handSynchronizationScriptable.BoneInfoByteSize, that you can see in the scriptable inspector in the total byte size field (only existing in the Editor)
-        [SerializeField]
         [Networked, Capacity(BONE_DATA_SIZE)]
         NetworkArray<byte> CompressedBonesRotations { get; }
 

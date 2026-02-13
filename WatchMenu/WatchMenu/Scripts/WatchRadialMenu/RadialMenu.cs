@@ -19,7 +19,9 @@ namespace Fusion.Addons.WatchMenu
         [SerializeField] public float delayBetweenButtonAnimation = 0.15f;
         [SerializeField] float menuActionBounceProtection = 1f;
         [SerializeField] bool animateMenu = true;
-
+         
+        [Range(180f, 360f)]
+        [SerializeField] float angleUsedForButtons = 180f;
 
         [Header("Set automatically")]
         [SerializeField] WatchWindowsHandler watchMenuHandler;
@@ -31,6 +33,8 @@ namespace Fusion.Addons.WatchMenu
         private int numberOfButtons = 0;
         float lastMenuActionTime = -1;
         bool isAntibounceEnabled = false;       // for edge case (switching from hardwarerig to networkrig with headset looking to the watch at start)
+
+        private float angleMultiplier;
 
         private void Awake()
         {
@@ -46,16 +50,20 @@ namespace Fusion.Addons.WatchMenu
                 canvas = GetComponentInChildren<Canvas>();
             if (canvas == null)
                 Debug.LogError("Canvas not defined");
+           
+            SpawnButtons();
+        }
 
+        void UpdateAngleBetweenButtons()
+        {
+            angleMultiplier = Mathf.Lerp(1.33f, 2f, Mathf.InverseLerp(180f, 360f, angleUsedForButtons));
             numberOfButtons = buttonPrefabList.Count;
 
             if (numberOfButtons > 0)
             {
-                angleBetweenButtons = Mathf.PI / numberOfButtons;
+                angleBetweenButtons = angleMultiplier * Mathf.PI / numberOfButtons;
             }
-            SpawnButtons();
         }
-
         private void SpawnButtons()
         {
             for (int i = 0; i < buttonPrefabList.Count; i++)
@@ -74,6 +82,7 @@ namespace Fusion.Addons.WatchMenu
             }
         }
 
+
         [ContextMenu("OpenRadialMenu")]
         public void OpenRadialMenu()
         {
@@ -82,6 +91,7 @@ namespace Fusion.Addons.WatchMenu
             if (lastMenuActionTime + menuActionBounceProtection > Time.time) return;
 
             int nbOfButtonOpenned = 0;
+            UpdateAngleBetweenButtons();
             for (int i = 0; i < radialMenuButtonList.Count; i++)
             {
                 if (radialMenuButtonList[i].shouldBeDisplayed == true)

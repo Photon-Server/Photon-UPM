@@ -67,6 +67,8 @@ namespace Fusion.Addons.AnchorsAddon
         public bool disableIrlAnchorsAtStart = true;
         public bool displayStabilizedAnchor = true;
         public bool displayRepresentationAnchor = true;
+        public bool activateKnownTagDisplayModeAfterLongStabilityDetection = false;
+
         [Tooltip("Smoothing rate of the representation anchor move toward the detected position when the stabilized anchor is not yet stable")]
         public float representationConvergenceToRealtimePoseFactor = 0.05f;
         [Tooltip("Smoothing rate of the representation anchor move toward the stabilized position when the stabilized anchor is stable")]
@@ -101,6 +103,8 @@ namespace Fusion.Addons.AnchorsAddon
 
         public Dictionary<string, IRLAnchorInfo> irlAnchorsInfoById = new Dictionary<string, IRLAnchorInfo>();
         [HideInInspector] public int detectedAnchorsCount = 0;
+
+        List<IRLAnchorInfo> representationIrlAnchorAlreadyDetected = new List<IRLAnchorInfo>();
 
         public bool invalidateStabilityHistoryOnRigMove = true;
 
@@ -361,7 +365,7 @@ namespace Fusion.Addons.AnchorsAddon
 
             }
         }
-
+        
         protected virtual void UpdateAnchorDisplay(IRLAnchorInfo anchorInfo)
         {
             anchorInfo.detectedIrlAnchorTag.SetDetailText("");
@@ -404,6 +408,30 @@ namespace Fusion.Addons.AnchorsAddon
             {
                 anchorInfo.stabilizedIrlAnchorTag?.gameObject.SetActive(displayStabilizedAnchor);
                 anchorInfo.representationIrlAnchorTag?.gameObject.SetActive(displayRepresentationAnchor);
+
+
+                if (anchorInfo.hasLongStability)
+                {
+                    if (representationIrlAnchorAlreadyDetected.Contains(anchorInfo) == false)
+                    {
+                        representationIrlAnchorAlreadyDetected.Add(anchorInfo);
+                        anchorInfo.representationIrlAnchorTag?.ActivateKnownTagDisplayMode(displayRepresentationAnchor && activateKnownTagDisplayModeAfterLongStabilityDetection);
+                    }
+                }
+                else
+                {
+                    if(representationIrlAnchorAlreadyDetected.Contains(anchorInfo))
+                    {
+                        // Tag already known => activate knownTagDisplayMode if needed
+                        anchorInfo.representationIrlAnchorTag?.ActivateKnownTagDisplayMode(displayRepresentationAnchor && activateKnownTagDisplayModeAfterLongStabilityDetection);
+                    }
+                    else
+                    {
+                        // Tag not stable and not known => display default representation
+                        anchorInfo.representationIrlAnchorTag?.ActivateKnownTagDisplayMode(false);
+                    }
+                }
+
 
                 if (anchorInfo.isPoseStable)
                 {
@@ -453,8 +481,8 @@ namespace Fusion.Addons.AnchorsAddon
             }
             else
             {
-                anchorInfo.representationIrlAnchorTag?.SetDetailText("Tag not detected");
-                anchorInfo.representationIrlAnchorTag?.SetDetailText($"Tag not detected");
+                anchorInfo.detectedIrlAnchorTag?.SetDetailText("Tag not detected");
+                anchorInfo.stabilizedIrlAnchorTag?.SetDetailText($"Tag not detected");
                 anchorInfo.representationIrlAnchorTag?.SetDetailText($"Tag not detected");
 
                 anchorInfo.stabilizedIrlAnchorTag?.gameObject.SetActive(displayStabilizedAnchor && recentlyDetected);
@@ -478,8 +506,8 @@ namespace Fusion.Addons.AnchorsAddon
 
             // Stability progress
             anchorInfo.representationIrlAnchorTag?.SetAnchorSecondaryProgress(stability);
-
             anchorInfo.representationIrlAnchorTag?.SetAnchorProgress(anchorInfo.longStabilityProgress);
+
         }
 
         // Upate all anchors info based on inspector changes (for debugging purposes)

@@ -2,10 +2,11 @@
     "name": "Screensharing.MetaWebcam",
     "rootNamespace": "",
     "references": [
+        "GUID:f64c9ebcd7899c3448a08dc9f9ddbe30",
         "GUID:b59fae9c7ebc1574e8690f2570b29d6f",
         "GUID:8e3c55029ca641543bf030857af4d525",
         "GUID:6e08aeb756ec9e24189c875b181c8369",
-        "GUID:8d7988c0861c53f4993cc89e2ca63262"
+        "GUID:f5eda1afa2a1241a59c4db6830e1c890"
     ],
     "includePlatforms": [
         "Android",
@@ -18,8 +19,15 @@
     "autoReferenced": true,
     "defineConstraints": [
         "OCULUS_SDK_AVAILABLE",
+        "MRUK_AVAILABLE",
         "FUSION_WEAVER"
     ],
-    "versionDefines": [],
+    "versionDefines": [
+        {
+            "name": "com.meta.xr.mrutilitykit",
+            "expression": "[81,10000]",
+            "define": "MRUK_AVAILABLE"
+        }
+    ],
     "noEngineReferences": false
 }

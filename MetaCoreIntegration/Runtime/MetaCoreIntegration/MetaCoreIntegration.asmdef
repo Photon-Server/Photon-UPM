@@ -8,7 +8,8 @@
         "GUID:b08c2b33b71cf48448b8fa9a2c8cc959",
         "GUID:0fcb95827765196489d66b076928288d",
         "GUID:b6e047d3c6aa4ec4792b00936ee28799",
-        "GUID:ce522b6ed64c8be4c989a1d26d0e3275"
+        "GUID:ce522b6ed64c8be4c989a1d26d0e3275",
+        "GUID:f5eda1afa2a1241a59c4db6830e1c890"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
@@ -24,6 +25,11 @@
             "name": "com.unity.xr.hands",
             "expression": "[1,10000]",
             "define": "XRHANDS_AVAILABLE"
+        },
+        {
+            "name": "com.meta.xr.mrutilitykit",
+            "expression": "[81,10000]",
+            "define": "MRUK_AVAILABLE"
         }
     ],
     "noEngineReferences": false

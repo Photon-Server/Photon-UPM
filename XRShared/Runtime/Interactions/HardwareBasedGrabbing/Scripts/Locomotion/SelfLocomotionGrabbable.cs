@@ -59,7 +59,7 @@ namespace Fusion.Addon.Colocalization
             // We do not want the object to move (only our rig), so we put it back in place: storing its original position for restoration at the end of the method
             var initialObjectPose = new Pose(transform.position, transform.rotation);
 
-            // We move the trasnform's position/rotation to find where we would have the object, if it was a real grabbing
+            // We move the transform's position/rotation to find where we would have the object, if it was a real grabbing
             // Note that we add constraints here to this target position
 
             base.Follow(followedTransformPosition, followedTransformRotation, localPositionOffsetToFollowed, localRotationOffsetTofollowed);

@@ -21,14 +21,107 @@ namespace Fusion.Addons.Meta
 
         #region IGrabbingProvider
         public bool IsGrabbing => ovrHand != null ? ovrHand.GetFingerIsPinching(OVRHand.HandFinger.Index) : false;
-    #endregion
+        #endregion
 
-        public override Pose RigPartPose => ovrSkeletonBonesCollecter?.WristPose ?? base.RigPartPose;
+        [Header("Hand tracking loss handling")]
+        public bool shouldFixTrackingLossJumps = true;
+        public float invalidPositionJumpThreshold = 0.2f;
+        public float maxInvalidPoseDuration = 0.15f;
+        public bool logHandTrackingLossFixEvents = false; 
+
+        bool lastPositionStored = false;
+        Pose lastLocalPose = default;
+        float invalidPoseDetectionTime = -1;
+        float invalidPositionJumpThresholdSqr = 0f;
+
+        public override Pose RigPartPose
+        {
+            get
+            {
+                var pose = ovrSkeletonBonesCollecter?.WristPose ?? base.RigPartPose;
+                Pose localPose = new Pose(
+                    position: Rig.transform.InverseTransformPoint(pose.position),
+                    rotation: Quaternion.Inverse(Rig.transform.rotation)*pose.rotation
+                    );
+
+                if (shouldFixTrackingLossJumps == false || IsPoseValid(localPose) )
+                {
+                    lastLocalPose = localPose;
+                    lastPositionStored = true;
+                }
+                else
+                {
+                    if(logHandTrackingLossFixEvents) Debug.LogError($"Invalid pose: keeping last pose {lastLocalPose.position} instead of {localPose.position}");
+                    pose = new Pose(
+                        position: Rig.transform.TransformPoint(lastLocalPose.position),
+                        rotation: Rig.transform.rotation * lastLocalPose.rotation
+                        );
+                }
+                return pose;
+            }
+        }
+        
+        protected bool IsPoseValid(Pose localPose)
+        {
+            // When an object is occluding the hand position, the hand can still be tracked officially, but start to jump toward Vector3.zero (in SDK v83 at least)
+            // Detecting such cases
+            bool isValid = true;
+            if (invalidPositionJumpThresholdSqr == 0)
+            {
+                invalidPositionJumpThresholdSqr = invalidPositionJumpThreshold * invalidPositionJumpThreshold;
+            }
+            // Note: if TrackingStatus is already RigPartTrackingstatus.NotTracked, no need to try to fix the position
+            if (lastPositionStored && (localPose.position - lastLocalPose.position).sqrMagnitude > invalidPositionJumpThresholdSqr)
+            {
+                isValid = false;
+                if (invalidPoseDetectionTime == -1)
+                {
+                    if (logHandTrackingLossFixEvents) Debug.LogError("Hand position jump: recent loss of detection ?");
+                    invalidPoseDetectionTime = Time.time;
+                }
+            }
+            if (isValid)
+            {
+                if (invalidPoseDetectionTime != -1)
+                {
+                    if (logHandTrackingLossFixEvents) Debug.LogError("End of invalid pose detection");
+                }
+                invalidPoseDetectionTime = -1;
+            }
+            else if ((Time.time - invalidPoseDetectionTime) >= maxInvalidPoseDuration)
+            {
+                if (logHandTrackingLossFixEvents) Debug.LogError($"Invalid for too long: revalidate it anyway {lastLocalPose.position} => {localPose.position}");
+                isValid = true;
+            }
+            return isValid;
+        }
 
         public override void UpdateTrackingStatus()
         {
             base.UpdateTrackingStatus();
-            TrackingStatus = ovrSkeletonBonesCollecter?.CurrentHandTrackingMode == Addons.HandsSync.HandTrackingMode.FingerTracking ? RigPartTrackingstatus.Tracked : RigPartTrackingstatus.NotTracked;
+            var newTrackingStatus = ovrSkeletonBonesCollecter?.CurrentHandTrackingMode == Addons.HandsSync.HandTrackingMode.FingerTracking ? RigPartTrackingstatus.Tracked : RigPartTrackingstatus.NotTracked;
+            
+            if(newTrackingStatus == RigPartTrackingstatus.Tracked && TrackingStatus == RigPartTrackingstatus.NotTracked)
+            {
+                if (logHandTrackingLossFixEvents && invalidPoseDetectionTime != -1)
+                {
+                    Debug.LogError("Tracked received. Reset invalidPoseDetectionTime");
+                }
+                invalidPoseDetectionTime = -1;
+                lastPositionStored = false;
+
+            }
+            TrackingStatus = newTrackingStatus;
+
+            if (TrackingStatus == RigPartTrackingstatus.NotTracked)
+            { 
+                // Not tracked: if we where supposing a position jump, we can stop now (we were probably right then)
+                if (logHandTrackingLossFixEvents && invalidPoseDetectionTime != -1)
+                {
+                    Debug.LogError("NotTracked received. Reset invalidPoseDetectionTime");
+                }
+                invalidPoseDetectionTime = -1;
+            }
         }
 
         protected override void Awake()

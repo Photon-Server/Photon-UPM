@@ -3,10 +3,16 @@ using UnityEngine;
 
 namespace Fusion.XR.Shared.Core
 {
+    /// <summary>
+    /// Synchronize a controller buttons states over the network
+    /// The button are found on the local hardware rig part, correcponding to the parent network controller 
+    /// 
+    /// During render, the hand command received (either locally, or from the network) are applied to all IHandCommandHandler children, through their SetHandCommand method
+    /// </summary>
     public class NetworkControllerCommand : NetworkBehaviour
     {
         [Networked]
-        [SerializeField] CompressedHandCommand CompressedCommand { get; set; }
+        public CompressedHandCommand CompressedCommand { get; set; }
 
         INetworkController networkController;
         IHandCommandProvider localCommandProvider;

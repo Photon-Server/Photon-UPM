@@ -212,6 +212,11 @@ public class IRLRoomManager : MonoBehaviour, IRLAnchorTracking.IIRLAnchorTrackin
     #region IWorldAnchorTrackingListener
     public void OnIRLAnchorDetectedThisFrame(IRLAnchorTracking worldAnchorTracking, IRLAnchorInfo anchor)
     {
+        if (anchor.anchorId.Length > NetworkIRLRoomAnchor.MAX_ANCHORID_LENGTH)
+        {
+            Debug.LogError($"Unsupported anchor id length, {anchor.anchorId.Length}, more than maximum NetworkIRLRoomAnchor.MAX_ANCHORID_LENGTH ({NetworkIRLRoomAnchor.MAX_ANCHORID_LENGTH}). the anchor id will be trimmed, to avoid that, increase NetworkIRLRoomAnchor.MAX_ANCHORID_LENGTH");
+            anchor.anchorId = anchor.anchorId.Substring(0, NetworkIRLRoomAnchor.MAX_ANCHORID_LENGTH);
+        }
         if (string.IsNullOrEmpty(requiredAnchorContentToUseForColocalization) == false && anchor.anchorId.Contains(requiredAnchorContentToUseForColocalization) == false)
         {
             return;

@@ -15,12 +15,21 @@ namespace Fusion.Addons.WatchMenu
     {
         // We move the menu late, to be sure to follow components after their final moves for the frame (rig parts, ...)
         const int EXECUTION_ORDER = 100_000;
+        [SerializeField] Transform radialMenuCenterPosition;
         [SerializeField] Transform aimObject;
-        [SerializeField] Vector3 aimObjectTranslationOffset = new Vector3(0f, 0.015f, 0f);
-        [SerializeField] Vector3 aimObjectRotationOffset = new Vector3(0f, 0f, 90f);
+        [SerializeField] Vector3 radialMenuTranslationOffset = new Vector3(0f, 0.015f, 0f);
+        [SerializeField] Vector3 radialMenuRotationOffset = new Vector3(0f, 0f, 90f);
         [SerializeField] RadialMenu radialMenu;
-        [SerializeField] float acceptedAngleBetweenHeadsetAndWatch = 15f;
+        [SerializeField] float acceptedAngleBetweenAimObjectAndHeadset = 32f;
         [SerializeField] bool disableWhenOnline = false;
+        [SerializeField] bool radialMenuFollowWatchPosition = true;
+        [SerializeField] float timerBeforeOpeningTheMenu = 0.5f;
+        [SerializeField] float timerBeforeClosingTheMenu = 1f;
+        [SerializeField] float faceDotThreshold = 0.85f;
+
+        float headToTargetObjectDotThreshold = -1;
+        float lastWatchingTime = -1;
+        float startWatchingTime = -1;
 
         [Header("Set automatically")]
         [SerializeField] Transform headsetTransform;
@@ -54,6 +63,9 @@ namespace Fusion.Addons.WatchMenu
                 aimObject = transform;
             }
             SetHeadset();
+
+            headToTargetObjectDotThreshold = Mathf.Cos(acceptedAngleBetweenAimObjectAndHeadset * Mathf.Deg2Rad);
+
         }
 
         [BeforeRenderOrder(WatchAim.EXECUTION_ORDER)]
@@ -83,10 +95,13 @@ namespace Fusion.Addons.WatchMenu
                     Debug.LogError("headsetTransform not set and Headset not found");
                 }
             }
+
+
         }
 
         void WatchMenuHandling()
         {
+
             if (radialMenu == null) return;
             if (networkObject && networkObject.HasStateAuthority == false) return;
 
@@ -108,36 +123,100 @@ namespace Fusion.Addons.WatchMenu
             }
 
             if (hardwareRig == null) return;
-            radialMenu.transform.rotation = aimObject.rotation * Quaternion.Euler(aimObjectRotationOffset);
-            radialMenu.transform.position = aimObject.transform.TransformPoint(aimObjectTranslationOffset);
+
+            if (radialMenuFollowWatchPosition)
+            {
+                ComputeRadialMenuPosition();
+            }
 
             if (headsetTransform == null || radialMenu == null || aimObject == null) return;
 
-            if (IsHeadsetIsTurnedTowardWatch())
+            // open the menu, after a timer, if the user is looking toward the watch 
+            if (radialMenu.menuIsDisplayed == false && IsHeadsetLookingAtTargetObject(aimObject.gameObject))
             {
-                radialMenu.OpenRadialMenu();
+                if (startWatchingTime == -1)
+                {
+                    startWatchingTime = Time.time;
+                }
+
+                if (Time.time - startWatchingTime > timerBeforeOpeningTheMenu)
+                {
+                    ComputeRadialMenuPosition();
+                    radialMenu.OpenRadialMenu();
+                }
             }
-            else
+
+            // Check if the menu should be closed 
+            bool menuShouldBeClosed = false;
+            if (radialMenu.menuIsDisplayed)
             {
-                radialMenu.CloseRadialMenu();
+                // If the menu follow the watch, the menu must be closed if the headset it not toward the watch
+                if (radialMenuFollowWatchPosition)
+                {
+                    if (IsHeadsetLookingAtTargetObject(aimObject.gameObject))
+                    {
+                        lastWatchingTime = Time.time;
+                    }
+                    else
+                    {
+                        menuShouldBeClosed = true;
+                    }
+                }
+                // If the menu doesn't follow the watch, the menu must be closed if the headset it not toward the menu
+                else
+                {
+                    if (IsHeadsetLookingAtTargetObject(radialMenu.gameObject))
+                    {
+                        lastWatchingTime = Time.time;
+                    }
+                    else
+                    {
+                        menuShouldBeClosed = true;
+                    }
+                }
+            }
+
+            // Close the menu if required
+            if (menuShouldBeClosed)
+            {
+                if (Time.time - lastWatchingTime > timerBeforeClosingTheMenu)
+                {
+                    radialMenu.CloseRadialMenu();
+                    startWatchingTime = -1;
+                }
             }
         }
 
-
-
-        private bool IsHeadsetIsTurnedTowardWatch()
+        void ComputeRadialMenuPosition()
         {
-            Vector3 directionToWatch = (radialMenu.transform.position - headsetTransform.position).normalized;
-            float angleBetweenWatchandHeadset = Vector3.Angle(radialMenu.transform.forward, directionToWatch);
+            if (radialMenuCenterPosition == null) radialMenuCenterPosition = aimObject;
+            radialMenu.transform.rotation = radialMenuCenterPosition.rotation * Quaternion.Euler(radialMenuRotationOffset);
+            radialMenu.transform.position = radialMenuCenterPosition.transform.TransformPoint(radialMenuTranslationOffset);
+        }
 
-            if (angleBetweenWatchandHeadset < acceptedAngleBetweenHeadsetAndWatch)
-            {
-                return true;
-            }
-            else
+        private bool IsHeadsetLookingAtTargetObject(GameObject targetObject)
+        {
+            // Check if headset is looking at target object
+            Vector3 headToTargetObjectVector = targetObject.transform.position - headsetTransform.position;
+            Vector3 directionHeadToTargetObject = headToTargetObjectVector.normalized;
+            float headToTargetObjectDot = Vector3.Dot(headsetTransform.forward, directionHeadToTargetObject);
+
+            if (headToTargetObjectDot < headToTargetObjectDotThreshold)
             {
                 return false;
             }
+
+            // Check if target object if oriented toward the head
+            Vector3 targetObjecttoHeadVector = headsetTransform.position - targetObject.transform.position;
+            Vector3 directionAimObjectToHead = targetObjecttoHeadVector.normalized;
+            float targetObjectToHeadDot = -Vector3.Dot(directionAimObjectToHead, targetObject.transform.forward);
+
+            if (targetObjectToHeadDot < headToTargetObjectDotThreshold)
+            {
+                return false;
+            }
+
+            return true;
         }
     }
 }

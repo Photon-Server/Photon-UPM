@@ -159,9 +159,16 @@ namespace Fusion.Addons.ScreenSharing
                 var runner = fusionVoiceClient.GetComponent<NetworkRunner>();
                 if (parsedUserData.networkScreenContainerId != default && runner != null)
                 {
-                    if (runner.TryFindObject(parsedUserData.networkScreenContainerId, out var networkScreenContainer))
+                    try
                     {
-                        screen = networkScreenContainer.GetComponentInChildren<ScreenSharingScreen>();
+                        if (runner.TryFindObject(parsedUserData.networkScreenContainerId, out var networkScreenContainer))
+                        {
+                            screen = networkScreenContainer.GetComponentInChildren<ScreenSharingScreen>();
+                        }
+                    } catch (System.Exception e)
+                    {
+                        Debug.LogError($"Unable to find screen for parsed user data networkScreenContainerId {parsedUserData.networkScreenContainerId} (raw: {parsedUserData.networkScreenContainerId.Raw}/ source userData: {userData})");
+                        Debug.LogException(e);
                     }
                 }
             }
@@ -173,6 +180,28 @@ namespace Fusion.Addons.ScreenSharing
 
             return screen;
         }
+
+
+        public enum VoiceConnectionStatus
+        {
+            PreparingVideoPlayer,
+            VideoPlayerReady,
+            ErrorImpossibleToPrepareMaterialForVideoPlayer,
+            ErrorNoScreenForVideoPlayer
+        }
+
+        [System.Serializable]
+        public class VoiceConnectionInfo
+        {
+            public VoiceInfo voiceInfo;
+            public VoiceConnectionStatus status;
+            public ScreenSharingScreen screen;
+            public ScreenSharingScreenTextureProjection projection;
+        }
+
+
+
+        public List<VoiceConnectionInfo> connectionInfos = new List<VoiceConnectionInfo>();
 
         // Called when a video playing stream is detected
         private void OnRemoteVoiceInfoAction(int channelId, int playerId, byte voiceId, VoiceInfo voiceInfo, ref RemoteVoiceOptions options)
@@ -188,11 +217,15 @@ namespace Fusion.Addons.ScreenSharing
                         Debug.LogError($"[ScreenSharingReceiver] Error: This player {playerId} is already sending a stream");
                         return;
                     }
+                    var connectionInfo = new VoiceConnectionInfo();
+                    connectionInfo.voiceInfo = voiceInfo;
+                    connectionInfo.status = VoiceConnectionStatus.PreparingVideoPlayer;
+                    connectionInfos.Add(connectionInfo);
+
                     IVideoPlayer videoPlayer = Platform.CreateVideoPlayerUnityTexture(logger, voiceInfo, (player) => {
                         videoPlayerByPlayerIds.Add(playerId, player);
                         userDataForPlayer[player] = voiceInfo.UserData;
-                        
-                        OnVideoPlayerReady(player, voiceInfo);
+                        OnVideoPlayerReady(player, voiceInfo, connectionInfo);
                     });
 
                     Debug.Log($"[ScreenSharingReceiver] ScreenSharingReceiver.OnRemoteVoiceInfoAction: Decoder: {videoPlayer.Decoder} / UserData: {voiceInfo.UserData} / playerId: {playerId}");
@@ -210,6 +243,7 @@ namespace Fusion.Addons.ScreenSharing
                             videoPlayer.Dispose();
                             videoPlayerByPlayerIds.Remove(playerId);
                             userDataForPlayer.Remove(videoPlayer);
+                            connectionInfos.Remove(connectionInfo);
                         };
 
                     break;
@@ -224,12 +258,14 @@ namespace Fusion.Addons.ScreenSharing
             Cleanup();
         }
 
-        private void OnVideoPlayerReady(IVideoPlayer videoPlayer, VoiceInfo voiceInfo)
+        private void OnVideoPlayerReady(IVideoPlayer videoPlayer, VoiceInfo voiceInfo, VoiceConnectionInfo connectionInfo)
         {
             Debug.Log($"[ScreenSharingReceiver] OnVideoPlayerReady videoPlayer");
             ScreenSharingScreen screen = ScreenForVideoPlayer(videoPlayer, out int playerId, out object userData);
-
+            connectionInfo.screen = screen;
             var projection = screen.GetComponent<ScreenSharingScreenTextureProjection>();
+            connectionInfo.projection = projection;
+
             if (projection)
             {
                 projection.lowerResFPS = voiceInfo.FPS;
@@ -241,15 +277,18 @@ namespace Fusion.Addons.ScreenSharing
                 {
                     try
                     {
+                        connectionInfo.status = VoiceConnectionStatus.VideoPlayerReady;
                         screen.EnablePlayback(videoPlayer, playerId, userData, new Vector2Int(voiceInfo.Width, voiceInfo.Height), voiceInfo.FPS);
                     }
                     catch (Exception e)
                     {
+                        connectionInfo.status = VoiceConnectionStatus.ErrorImpossibleToPrepareMaterialForVideoPlayer;
                         Debug.LogErrorFormat("[ScreenSharingReceiver] Error while creating video material: " + e.Message);
                     }
                 }
                 else
                 {
+                    connectionInfo.status = VoiceConnectionStatus.ErrorNoScreenForVideoPlayer;
                     Debug.LogError($"[ScreenSharingReceiver] No screen for video player {videoPlayer} / playerId: {playerId} / userData: {userData}");
                 }
             }

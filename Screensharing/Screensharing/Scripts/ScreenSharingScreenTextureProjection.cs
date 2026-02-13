@@ -1,5 +1,6 @@
 #if XRSHARED_CORE_ADDON_AVAILABLE
 using Fusion.XR.Shared;
+using Fusion.XR.Shared.Core;
 #endif
 using System.Collections.Generic;
 using UnityEngine;
@@ -8,9 +9,19 @@ using UnityEngine;
 namespace Fusion.Addons.ScreenSharing
 {
     /**
+     * 
+     * Record a ScreenSharingscreen content (with a temporary camera) and project it on a regular texture on a same size renderer
+     * 
+     * Handles multiple screen projection in the scene at the same time (making sure that only one records at the same time)
+     * 
      * The video playback texture does not support mip mapping.
      * This script captures the video renderer to store it in a mip mappable texture
+     * 
+     * It can also bypass issues when 2 video are visisble at the same time (the video shader for Android does not support to display two Android external memory video at the same time)
+     * 
+     * Finally, it can also solve visual effect (image delay) when the rendering surface is moving (being grabbed)
      */
+    [DefaultExecutionOrder(ScreenSharingScreen.EXECUTION_ORDER)]
     public class ScreenSharingScreenTextureProjection : MonoBehaviour
     {
         public ScreenSharingScreen screen;
@@ -44,6 +55,22 @@ namespace Fusion.Addons.ScreenSharing
         static ScreenSharingScreenTextureProjection RenderingProjectionThisFrame;
         #endregion
 
+        #region Projection disabling handling
+        [Tooltip("The video shader for Android has an issue when 2 video are visible at the same time (it does not work):" +
+            " if the screen projection is used only to bypass this issue (not to add mimapping to the texture, ...), the projection is not needed when there is only one screen rendering. " +
+            "In this case, you can set this param to true")]
+        [SerializeField] bool disableScreenProjectionForSingleScreenProjection = true;
+        [Tooltip("When moving a screen using the Android external video shader, moving the surface might cause unpleasant visual effect: in this case, projecting is safer")]
+        [SerializeField] bool forceProjectionWhenGrabbing = true;
+
+
+        bool projectionModeEnabled = false;
+        bool projectionCameraSetup = false;
+        int originalScreenRendererLayer;
+        bool registerInScreenProjectionsList = false;
+        IGrabbable grabbable;
+        #endregion
+
         private void Awake()
         {
             if (screen == null)
@@ -54,24 +81,77 @@ namespace Fusion.Addons.ScreenSharing
             {
                 Debug.LogError("Missing screen");
             }
+            grabbable = GetComponentInParent<IGrabbable>();
+        }
+
+        private void RegisterScreenProjection()
+        {
+            if (registerInScreenProjectionsList) return;
+            registerInScreenProjectionsList = true;
             ScreenProjections.Add(this);
         }
 
-        private void OnDestroy()
+        private void UnregisterScreenProjection()
         {
-            if (cameraTexture) Destroy(cameraTexture);
+            if (registerInScreenProjectionsList == false) return;
+            registerInScreenProjectionsList = false;
             if (ScreenProjections.Contains(this))
             {
                 ScreenProjections.Remove(this);
             }
         }
 
+        private void OnDestroy()
+        {
+            if (cameraTexture) Destroy(cameraTexture);
+            UnregisterScreenProjection();
+        }
+
         public Vector3 rendererPosition;
         public Quaternion rendererRotation;
 
         #region Camera setup
+        void EnableProjectionMode()
+        {
+            if (projectionModeEnabled) return;
+            projectionModeEnabled = true;
+            ConfigureCamera();
+            projectionTargetRenderer.enabled = screen.isRendering;
+            if (screen && screen.screenRenderer)
+            {
+                screen.screenRenderer.enabled = screen.isRendering;
+                if (string.IsNullOrEmpty(screenLayerName) == false)
+                {
+                    screen.screenRenderer.gameObject.layer = LayerMask.NameToLayer(screenLayerName);
+                }
+            }
+        }
+
+        bool screenIsRenderingOnProjectionModeDesactivation = false;
+        void DisableProjectionMode()
+        {
+            if (projectionModeEnabled == false && screenIsRenderingOnProjectionModeDesactivation == screen.isRendering) return;
+            projectionModeEnabled = false;
+            if (projectionTargetRenderer)
+            {
+                projectionTargetRenderer.enabled = false;
+            }
+            screenIsRenderingOnProjectionModeDesactivation = false;
+            if (screen && screen.screenRenderer)
+            {
+                screenIsRenderingOnProjectionModeDesactivation = screen.isRendering;
+                screen.screenRenderer.enabled = screen.isRendering;
+                if (string.IsNullOrEmpty(screenLayerName) == false)
+                {
+                    screen.screenRenderer.gameObject.layer = originalScreenRendererLayer;
+                }
+            }
+        }
+
         void ConfigureCamera()
         {
+            if (projectionCameraSetup) return;
+            projectionCameraSetup = true;
 #if XRSHARED_CORE_ADDON_AVAILABLE
             if (projectionTargetRendererVisible == null) projectionTargetRendererVisible = GetComponentInChildren<RendererVisible>();
             if (projectionTargetRendererVisible != null && projectionTargetRenderer == null) projectionTargetRenderer = projectionTargetRendererVisible.GetComponent<Renderer>();
@@ -81,6 +161,9 @@ namespace Fusion.Addons.ScreenSharing
             {
                 if (screen && screen.screenRenderer)
                 {
+                    // Backup screen renderer original layer
+                    originalScreenRendererLayer = screen.screenRenderer.gameObject.layer;
+
                     // Create default low res renderer
                     var lowResRendererGO = GameObject.CreatePrimitive(PrimitiveType.Quad);
                     lowResRendererGO.name = "LowResRenderer";
@@ -143,7 +226,7 @@ namespace Fusion.Addons.ScreenSharing
                // Make sure the camera does not run automatically
                 screenRenderTextureCamera.enabled = false;
 
-                // Ensure the camera only recorder the screen layer
+                // Ensure the camera only records the screen layer
                 screenRenderTextureCamera.cullingMask = 1 << screen.screenRenderer.gameObject.layer;
             }
 
@@ -253,7 +336,10 @@ namespace Fusion.Addons.ScreenSharing
             float yOffset = 0;
             if (screen && screen.screenRenderer)
             {
+                bool isScreenRendererEnabled = screen.screenRenderer.enabled;
+                screen.screenRenderer.enabled = true;
                 var scale = screen.screenRenderer.transform.lossyScale;
+                screen.screenRenderer.enabled = isScreenRendererEnabled;
                 scaleUsedForViewPortAdaptation = scale;
                 if (scale.y > scale.x)
                 {
@@ -272,11 +358,6 @@ namespace Fusion.Addons.ScreenSharing
             screenRenderTextureCamera.rect = new Rect(xOffset, yOffset, 1, 1);
         }
         #endregion 
-
-        private void Start()
-        {
-            ConfigureCamera();
-        }
 
         void DetermineNextCapture()
         {
@@ -318,9 +399,47 @@ namespace Fusion.Addons.ScreenSharing
         float lastCaptureTime;
         private void Update()
         {
+            ScreenProjectionHandling();
+        }
+
+        bool IsScreenProjectionRequired
+        {
+            get
+            {
+                // The video shader for Android has an issue when 2 video are visible at the same time (it does not work): if the screen projection is used only to bypass this issue, the projection is not needed when there is only one screen rendering
+                bool screenProjectionRequired = disableScreenProjectionForSingleScreenProjection == false || ScreenProjections.Count > 1;
+                if(forceProjectionWhenGrabbing && grabbable != null && grabbable.IsGrabbed)
+                {
+                    // When moving a screen using the Android external video shader, moving the surface might cause unpleasant visual effect (the world matrix sent to the shader capturing a positioning slightly "late"): in this case, projecting is safer
+                    screenProjectionRequired = true;
+                }
+                return screenProjectionRequired;
+            }
+        }
+
+        void ScreenProjectionHandling() {
+            if (screen && screen.isRendering)
+            {
+                RegisterScreenProjection();
+            } 
+            else
+            {
+                UnregisterScreenProjection();
+            }
+
+            if (IsScreenProjectionRequired)
+            {
+                EnableProjectionMode();
+            }
+            else
+            {
+                DisableProjectionMode();
+                return;
+            }
+
             if (screen && screen.screenRenderer && screen.screenRenderer.transform.lossyScale != scaleUsedForViewPortAdaptation)
             {
-                Debug.LogError("AdaptViewPort for screen scale change");
+                screen.LogEvent("[TextureProjection] AdaptViewPort for screen scale change");
                 AdaptLODCameraViewport();
             }
 

@@ -7,9 +7,23 @@ https://doc.photonengine.com/fusion/current/industries-samples/industries-addons
 
 ## Version & Changelog
 
-- version 2.4.3: Move Meta Camera sample asset to MetaCoreIntegration addons
-- version 2.4.2: Change asmdef to allow usage of Screensharing.MetaWebcam when the Photon video SDK is not installed 
-- version 2.4.1: Change asmdef to avoid error on prefabs when the video SDK is not present
+- version 2.5.0: 
+    - Change Screensharing.MetaWebcam to support Meta SDK v83 and rely on MRUK for camera access    
+    - Add option on ScreenSharingScreen to forcing using a regular material (relevant with video preview, when preview does not use Android Video memory - here, when using a MetaWebcamVideoRecorder whose preview is a regular texture)
+    - Do not add a ScreenSharingScreenTextureProjection when the ScreenSharingScreen uses a regular material
+    - Add an option to skip using the ScreenSharingScreenTextureProjection projection mechanism when only on view is streaming (relevant if the screen projection is only used to deal with the video shader for Android issue when 2 video are visible at the same time) 
+    - Allow WebcamEmitter to use a recorder coming from a ICustomRecorderEmitterController instead of the default Video SDK one
+    - Add MetaWebcamVideoRecorder to stream using Meta MRUK PassthroughCameraAccessTexture texture (when setting MetaWebcamController.streamWithPassthroughCameraAccessTexture to true)
+    - Add MetaWebcamPermissionRequester to manage permissions when using low level API streaming (when setting MetaWebcamController.streamWithPassthroughCameraAccessTexture to false)
+    
+- version 2.4.3: 
+    - Move Meta Camera sample asset to MetaCoreIntegration addons
+
+- version 2.4.2: 
+    - Change asmdef to allow usage of Screensharing.MetaWebcam when the Photon video SDK is not installed 
+
+- version 2.4.1:
+    - Change asmdef to avoid error on prefabs when the video SDK is not present
 
 - version 2.4.0: 
 	- Update the IEmitterController interface (add OnStopEmitting() & OnStartEmitting())

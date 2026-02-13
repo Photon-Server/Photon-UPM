@@ -12,6 +12,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: ScreenSharingPortalPosition
       objectReference: {fileID: 0}
+    - target: {fileID: 3039093039152541388, guid: 2737ee087278cd643a54ef799d10ae6b, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: b3fc8c0b83b3714449becc92952e67ee, type: 2}
     - target: {fileID: 4058664429468752589, guid: 2737ee087278cd643a54ef799d10ae6b, type: 3}
       propertyPath: screenMode
       value: 0

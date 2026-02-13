@@ -6,9 +6,12 @@ using OpenCVForUnity.UnityUtils;
 using OpenCVForUnity.UnityUtils.Helper;
 using System;
 using System.Collections.Generic;
+using UnityEngine;
+
+#region Photon Extensions
 using System.Threading.Tasks;
 using Unity.XR.CoreUtils;
-using UnityEngine;
+#endregion
 
 namespace TryAR.MarkerTracking
 {
@@ -28,9 +31,7 @@ namespace TryAR.MarkerTracking
         /// <summary>
         /// The length of the markers' side in meters.
         /// </summary>
-        [SerializeField] public float _markerLength = 0.1f;
-
-        public float MarkerLength { get { return _markerLength; } set { _markerLength = value; } }
+        [SerializeField] private float _markerLength = 0.1f;
 
         /// <summary>
         /// Coefficient for low-pass filter (0-1). Higher values mean more smoothing.
@@ -55,7 +56,7 @@ namespace TryAR.MarkerTracking
         private Mat _processingRgbMat;
 
         /// <summary>
-        /// Full-size RGBA mat from original webcam image.
+        /// Full-size RGBA mat from camera texture.
         /// </summary>
         private Mat _originalWebcamMat;
         
@@ -83,9 +84,7 @@ namespace TryAR.MarkerTracking
         private ArucoDetector arucoDetector;
 
         private bool _isReady = false;
-
-        public bool trackingProcessInProgress = false;
-
+        
         /// <summary>
         /// Read-only access to determine if tracking is ready
         /// </summary>
@@ -96,7 +95,10 @@ namespace TryAR.MarkerTracking
         /// </summary>
         private Dictionary<int, PoseData> _prevPoseDataDictionary = new Dictionary<int, PoseData>();
 
-        public float PoseFilterCoefficient { get => _poseFilterCoefficient; set => _poseFilterCoefficient = value; }
+        /// <summary>
+        /// Temporary Texture2D for converting camera texture to OpenCV Mat.
+        /// </summary>
+        private Texture2D m_cameraTexture;
 
         /// <summary>
         /// Initialize the marker tracking system with camera parameters
@@ -164,6 +166,9 @@ namespace TryAR.MarkerTracking
             // Create the ArUco detector
             arucoDetector = new ArucoDetector(markerDictionary, detectorParams, refineParameters);
 
+            // Initialize temporary texture for camera texture conversion
+            m_cameraTexture = new Texture2D(originalWidth, originalHeight, TextureFormat.RGBA32, false);
+
             _isReady = true;
         }
 
@@ -188,24 +193,18 @@ namespace TryAR.MarkerTracking
 
             if (_detectedMarkerIds != null)
                 _detectedMarkerIds.Dispose();
-
-            if (_detectedMarkerCorners != null)
+            
+            foreach (var corner in _detectedMarkerCorners)
             {
-                foreach (var corner in _detectedMarkerCorners)
-                {
-                    corner.Dispose();
-                }
-                _detectedMarkerCorners.Clear();
+                corner.Dispose();
             }
-
-            if(_rejectedMarkerCandidates != null)
+            _detectedMarkerCorners.Clear();
+            
+            foreach (var rejectedCorner in _rejectedMarkerCandidates)
             {
-                foreach (var rejectedCorner in _rejectedMarkerCandidates)
-                {
-                    rejectedCorner.Dispose();
-                }
-                _rejectedMarkerCandidates.Clear();
+                rejectedCorner.Dispose();
             }
+            _rejectedMarkerCandidates.Clear();
 
             if (recoveredMarkerIndices != null)
                 recoveredMarkerIndices.Dispose();
@@ -221,52 +220,12 @@ namespace TryAR.MarkerTracking
             Debug.Log("ArUco tracking error: " + errorCode + ":" + message);
         }
 
-
-        public async Task ProcessMarkerTracking(WebCamTexture webCamTexture, Texture2D resultTexture, Dictionary<int, GameObject> arObjects, Transform camTransform)
-        {
-            if(_isReady == false || webCamTexture == null || trackingProcessInProgress == true)
-            {
-                return;
-            }
-
-            trackingProcessInProgress = true;
-
-            // Step 1: Convert webcam texture to OpenCV mat
-            // Get image from webcam at full size
-
-            // Background thread equivalent of Utils.webCamTextureToMat(webCamTexture, _originalWebcamMat);
-            var imageBytes = await ImageProcessing.GetTextureBytes(webCamTexture, TextureFormat.RGBA32);
-            int flipCode = 0;
-            bool flip = true;
-            MatUtils.copyToMat(imageBytes, _originalWebcamMat);
-            if (flip)
-            {
-                Core.flip(_originalWebcamMat, _originalWebcamMat, flipCode);
-            }
-
-            var mainThreadScheduler = TaskScheduler.FromCurrentSynchronizationContext();
-
-            //await Task.Delay(20);
-            float start = Time.realtimeSinceStartup;
-            await Task.Run(() => {
-                // Background thread
-                // Step 2: Detect ArUco markers in the current camera frame
-                DoDetectMarker(resultTexture);
-
-                // Step 3: Estimate the pose of markers and position 3D objects accordingly
-                // This maps the 2D marker positions to 3D space using the camera parameters
-                EstimatePoseCanonicalMarker(arObjects, camTransform);
-            });
-
-            trackingProcessInProgress = false;
-        }
-
         /// <summary>
         /// Detect ArUco markers in the provided webcam texture
         /// </summary>
         /// <param name="webCamTexture">Input webcam texture</param>
         /// <param name="resultTexture">Optional output texture for visualization</param>
-        public void DetectMarker(WebCamTexture webCamTexture, Texture2D resultTexture = null)
+        public void DetectMarker(Texture webCamTexture, Texture2D resultTexture = null)
         {
             if (_isReady)
             {
@@ -274,18 +233,26 @@ namespace TryAR.MarkerTracking
                 {
                     return;
                 }
+                
+                // Convert camera texture to OpenCV Mat
+                Utils.textureToTexture2D(webCamTexture, m_cameraTexture);
+                Utils.texture2DToMat(m_cameraTexture, _originalWebcamMat);
 
-                // Get image from webcam at full size
-                Utils.webCamTextureToMat(webCamTexture, _originalWebcamMat);
-
+                // Photon change
                 DoDetectMarker(resultTexture);
+
+                // Update result texture for visualization
+                if (resultTexture != null)
+                {
+                    Utils.matToTexture2D(_processingRgbMat, resultTexture);
+                }
             }
         }
 
         /// <summary>
-        /// Detect ArUco markers in the provided webcam texture
+        /// Detect ArUco markers in the provided texture
         /// </summary>
-        /// <param name="webCamTexture">Input webcam texture</param>
+        /// <param name="webCamTexture">Input texture</param>
         /// <param name="resultTexture">Optional output texture for visualization</param>
         void DoDetectMarker(Texture2D resultTexture = null)
         {
@@ -293,30 +260,18 @@ namespace TryAR.MarkerTracking
             {
                 // Resize for processing
                 Imgproc.resize(_originalWebcamMat, _halfSizeMat, _halfSizeMat.size());
-                
                 // Convert to RGB for ArUco processing
                 Imgproc.cvtColor(_halfSizeMat, _processingRgbMat, Imgproc.COLOR_RGBA2RGB);
 
-              
                 // Reset detection containers
                 _detectedMarkerIds.create(0, 1, CvType.CV_32S);
                 _detectedMarkerCorners.Clear();
                 _rejectedMarkerCandidates.Clear();
-                
                 // Detect markers
                 arucoDetector.detectMarkers(_processingRgbMat, _detectedMarkerCorners, _detectedMarkerIds, _rejectedMarkerCandidates);
-                
                 // Draw detected markers for visualization
                 if (_detectedMarkerCorners.Count == _detectedMarkerIds.total() || _detectedMarkerIds.total() == 0){
                     Objdetect.drawDetectedMarkers(_processingRgbMat, _detectedMarkerCorners, _detectedMarkerIds, new Scalar(0, 255, 0));
-                }
-                        
-                 
-
-                // Update result texture for visualization
-                if (resultTexture != null)
-                {
-                    Utils.matToTexture2D(_processingRgbMat, resultTexture);
                 }
             }
         }
@@ -331,6 +286,7 @@ namespace TryAR.MarkerTracking
             // Skip if not ready or no markers detected
             if (!_isReady || _detectedMarkerCorners == null || _detectedMarkerCorners.Count == 0)
             {
+                // Photon change
                 if (_isReady)
                 {
                     foreach (var kvp in arObjects)
@@ -346,6 +302,7 @@ namespace TryAR.MarkerTracking
 
                 return;
             }
+            // Photon change
             DetectXROrigin();
 
             // Define 3D coordinates of marker corners (marker center is at origin)
@@ -407,20 +364,15 @@ namespace TryAR.MarkerTracking
                         var arMatrix = ARUtils.ConvertPoseDataToMatrix(ref poseData, true);
                         arMatrix = camTransform.localToWorldMatrix * arMatrix;
                         ARUtils.SetTransformFromMatrix(targetObject.transform, ref arMatrix);
-                        if (rigOrigin)
-                        {
-                            // The targetObject has been positioned around a rig placed at O,O,O. We adapt if the rig moved
-                            var position = rigOrigin.transform.TransformPoint(targetObject.transform.position);
-                            var rotation = rigOrigin.transform.rotation * targetObject.transform.rotation;
-                            //var position = targetObject.transform.position - origin.transform.position;
-                            targetObject.transform.rotation = rotation;
-                            targetObject.transform.position = position;
-                        }
+
+                        // Photon change
+                        FixTargetObjectWorldPosition(targetObject);
                     }
                 }
 
                 // Optional feature to deactivate objects for markers that weren't detected
                 // (Use only if required by your application)
+                // Photon change (uncommented optional code)
                 foreach (var kvp in arObjects)
                 {
                     int markerId = kvp.Key;
@@ -446,19 +398,6 @@ namespace TryAR.MarkerTracking
                     {
                         obj.SetActive(true);
                     }
-                }
-            }
-        }
-
-        public Transform rigOrigin;
-        void DetectXROrigin()
-        {
-            if (rigOrigin == null)
-            {
-                var xrOrigin = FindAnyObjectByType<XROrigin>(FindObjectsInactive.Exclude);
-                if (xrOrigin != null)
-                {
-                    rigOrigin = xrOrigin.transform;
                 }
             }
         }
@@ -513,5 +452,85 @@ namespace TryAR.MarkerTracking
             DICT_7X7_1000 = Objdetect.DICT_7X7_1000,
             DICT_ARUCO_ORIGINAL = Objdetect.DICT_ARUCO_ORIGINAL,
         }
+
+        #region Photon extensions
+        public float MarkerLength { get { return _markerLength; } set { _markerLength = value; } }
+        public bool trackingProcessInProgress = false;
+        public float PoseFilterCoefficient { get => _poseFilterCoefficient; set => _poseFilterCoefficient = value; }
+
+        public Transform rigOrigin;
+        void DetectXROrigin()
+        {
+            if (rigOrigin == null)
+            {
+                var xrOrigin = FindAnyObjectByType<XROrigin>(FindObjectsInactive.Exclude);
+                if (xrOrigin != null)
+                {
+                    rigOrigin = xrOrigin.transform;
+                }
+            }
+        }
+
+        public async Task ProcessMarkerTracking(Texture webCamTexture, Texture2D resultTexture, Dictionary<int, GameObject> arObjects, Transform camTransform)
+        {
+            if(_isReady == false || webCamTexture == null || trackingProcessInProgress == true)
+            {
+                return;
+            }
+
+            trackingProcessInProgress = true;
+
+            // Step 1: Convert webcam texture to OpenCV mat
+            // Get image from webcam at full size
+
+            // Background thread equivalent of Utils.webCamTextureToMat(webCamTexture, _originalWebcamMat);
+            var imageBytes = await ImageProcessing.GetTextureBytes(webCamTexture, TextureFormat.RGBA32);
+            int flipCode = 0;
+            bool flip = true;
+            MatUtils.copyToMat(imageBytes, _originalWebcamMat);
+            if (flip)
+            {
+                Core.flip(_originalWebcamMat, _originalWebcamMat, flipCode);
+            }
+
+            var mainThread = System.Threading.SynchronizationContext.Current;
+
+            //await Task.Delay(20);
+            float start = Time.realtimeSinceStartup;
+            await Task.Run(() => {
+                // Background thread
+                // Step 2: Detect ArUco markers in the current camera frame
+                DoDetectMarker(resultTexture);
+
+                // Step 3: Estimate the pose of markers and position 3D objects accordingly
+                // This maps the 2D marker positions to 3D space using the camera parameters
+                EstimatePoseCanonicalMarker(arObjects, camTransform);
+
+                // Send the texture modification to the main thread
+                mainThread.Post((state) => {
+                    // Update result texture for visualization
+                    if (resultTexture != null)
+                    {
+                        Utils.matToTexture2D(_processingRgbMat, resultTexture);
+                    }
+                }, null);
+            });
+
+            trackingProcessInProgress = false;
+        }
+
+        void FixTargetObjectWorldPosition(GameObject targetObject)
+        {
+            if (rigOrigin)
+            {
+                // The targetObject has been positioned around a rig placed at O,O,O. We adapt if the rig moved
+                var position = rigOrigin.transform.TransformPoint(targetObject.transform.position);
+                var rotation = rigOrigin.transform.rotation * targetObject.transform.rotation;
+                //var position = targetObject.transform.position - origin.transform.position;
+                targetObject.transform.rotation = rotation;
+                targetObject.transform.position = position;
+            }
+        }
+        #endregion
     }
 }

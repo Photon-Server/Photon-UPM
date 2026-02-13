@@ -1,6 +1,6 @@
 using Fusion.Addons.AnchorsAddon;
 using Fusion.XR.Shared.Core;
-using PassthroughCameraSamples;
+using Meta.XR;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -83,9 +83,9 @@ namespace Fusion.Addons.AnchorsAddon.ArucoMarkersTracking{
             {
                 gameObjectsRoot = transform;
             }
-            if(coordinator.WebCamTextureManager == null)
+            if(coordinator.PassthroughCameraAccess == null)
             {
-                coordinator.WebCamTextureManager = FindAnyObjectByType<WebCamTextureManager>(FindObjectsInactive.Include);
+                coordinator.PassthroughCameraAccess = FindAnyObjectByType<PassthroughCameraAccess>(FindObjectsInactive.Include);
             }
             coordinator.MarkerGameObjectPairs.Clear();
             foreach (Transform t in gameObjectsRoot)

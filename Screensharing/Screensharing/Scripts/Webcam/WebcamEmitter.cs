@@ -64,8 +64,7 @@ namespace Fusion.Addons.ScreenSharing
             public bool reliable;
         }
         
-        [SerializeField]
-        Settings settings = new Settings
+        public Settings settings = new Settings
         {
             VideoCodec = Codec.VideoH264,
             UseRecorderResolution = true,
@@ -107,6 +106,9 @@ namespace Fusion.Addons.ScreenSharing
 
         float lastToggle = 0f;
         float bouncePreventionDelay = 0.3f;
+        float lastEmissionStopTime = -1;
+
+        const float DelayBeforeEmissionRestart = 1;
 
         protected virtual void Awake()
         {
@@ -153,11 +155,19 @@ namespace Fusion.Addons.ScreenSharing
             if (!enabled) return;
             if (startEmittingOnVoiceConnectionAvailable) StartEmitting();
         }
-        
+
         [ContextMenu("Start Emitting")]
         public async void StartEmitting()
         {
             Debug.Log("StartEmitting ...");
+
+            if (lastEmissionStopTime != -1 && (Time.time - lastEmissionStopTime) < DelayBeforeEmissionRestart)
+            {
+                // Ensure a clean stop of the emission before starting a new one
+                Debug.Log("[WebcamEmitter] Wait before starting transmission: ensure a clean stop of the emission before starting a new one ...");
+                await AsyncTask.Delay((int)(1000 * DelayBeforeEmissionRestart));
+            }
+
             status = Status.WaitingVoiceConnection;
             while (this != null && didVoiceConnectionJoined == false)
             {
@@ -194,6 +204,11 @@ namespace Fusion.Addons.ScreenSharing
         public void StopEmitting()
         {
             Debug.Log("StopEmitting...");
+
+            if(status == Status.Emitting)
+            {
+                lastEmissionStopTime = Time.time;
+            }
 
             status = Status.NotEmitting;
             emissionInProgress = false;
@@ -282,7 +297,17 @@ namespace Fusion.Addons.ScreenSharing
                 }
             }
 
-            recorder = Platform.CreateVideoRecorderUnityTexture(logger, info, device, VideoRecorderReady);
+            bool isRecorderConfigured = false;
+            if (emitterController != null && emitterController is ICustomRecorderEmitterController customRecorderEmitterController)
+            {
+                recorder = customRecorderEmitterController.GetVideoRecorder(logger, info, device, VideoRecorderReady);
+                isRecorderConfigured = recorder != null;
+            }
+
+            if (isRecorderConfigured == false)
+            {
+                recorder = Platform.CreateVideoRecorderUnityTexture(logger, info, device, VideoRecorderReady);
+            }                
         }
 
         protected virtual void DesactivateRecorder()
@@ -305,10 +330,6 @@ namespace Fusion.Addons.ScreenSharing
                 Debug.Log("TextureRecorderReady recorder IVideoRecorderPusher");
             }
             // Prepare voice
-
-
-
-
 #if VIDEOSDK_258
             localVoiceVideo = fusionVoiceClient.VoiceClient.CreateLocalVoiceVideo(info, readyRecorder, videoChannel);
 #else
@@ -331,7 +352,25 @@ namespace Fusion.Addons.ScreenSharing
 
         void PreparePreviewScreen(ScreenSharingScreen s, IVideoRecorder r)
         {
+            Debug.Log($"PreparePreviewScreen ScreenSharingScreen:{s} / recorder:{r}");
+
             if (s == null) return;
+
+            Flip flip = Flip.None;
+            if(r != null) flip = r.Flip;
+
+            // Check if the emitter tells us we don't need the specific Android shader
+            if (emitterController != null && emitterController is ICustomRecorderEmitterController customRecorderEmitterController)
+            {
+                Debug.Log($"PreparePreviewScreen: customRecorderEmitterController:{customRecorderEmitterController} ShouldPreviewUseVideoMaterial: {customRecorderEmitterController.ShouldPreviewUseVideoMaterial}");
+                s.useRegularMaterial = customRecorderEmitterController.ShouldPreviewUseVideoMaterial == false;
+                if(r != null)
+                {
+                    Debug.Log($"Recorder flip: {r.Flip}");
+                    flip = r.Flip;
+                }
+            }
+
             var projection = s.GetComponent<ScreenSharingScreenTextureProjection>();
             if (projection)
             {
@@ -342,7 +381,14 @@ namespace Fusion.Addons.ScreenSharing
             {
                 if (status == Status.Emitting && s.screenRenderer && r != null)
                 {
-                    s.SetupMaterial(r.PlatformView as Texture, Flip.None, new Vector2Int(settings.VideoWidth, settings.VideoHeight), settings.VideoFPS);
+                    if(r.PlatformView == null)
+                    {
+                        Debug.LogError("Error PlatformView not ready in recorder");
+                    }
+                    else
+                    {
+                        s.SetupMaterial(r.PlatformView as Texture, flip, new Vector2Int(settings.VideoWidth, settings.VideoHeight), settings.VideoFPS);
+                    }                        
                 }
             }
         }

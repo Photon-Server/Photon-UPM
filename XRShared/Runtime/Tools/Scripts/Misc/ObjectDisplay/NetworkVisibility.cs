@@ -5,7 +5,12 @@ using UnityEngine.UI;
 
 namespace Fusion.XR.Shared.Tools
 {
-    public class NetworkVisibility : NetworkBehaviour
+    public interface IVisibility
+    {
+        public void ChangeVisibility(bool visible);
+    }
+
+    public class NetworkVisibility : NetworkBehaviour, IVisibility
     {
         [Networked, OnChangedRender(nameof(OnVisibilityChange))]
         public NetworkBool IsVisible { get; set; }
@@ -61,6 +66,12 @@ namespace Fusion.XR.Shared.Tools
                     text.enabled = IsVisible;
                 }
             }
+        }
+
+        public void ChangeVisibility(bool visible)
+        {
+            if (Object == null) return;
+            IsVisible = visible;
         }
     }
 }

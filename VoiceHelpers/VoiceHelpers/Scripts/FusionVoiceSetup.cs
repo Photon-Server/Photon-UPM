@@ -21,7 +21,7 @@ namespace Fusion.Addons.VoiceHelpers
 #if PHOTON_VOICE_AVAILABLE
         public Recorder recorder;
         FusionVoiceClient fusionVoiceClient;
-        MicrophonePermission microphonePermission;
+        protected MicrophonePermission microphonePermission;
 
         [Header("Permission callbacks")]
         public List<MonoBehaviour> enableOnRequestAnswered = new List<MonoBehaviour>();
@@ -49,6 +49,11 @@ namespace Fusion.Addons.VoiceHelpers
                 recorder.SamplingRate = POpusCodec.Enums.SamplingRate.Sampling48000;
             }
             fusionVoiceClient.PrimaryRecorder = recorder;
+            PermissionRequestSetup();
+        }
+
+        protected virtual void PermissionRequestSetup()
+        {
             microphonePermission = recorder.GetComponent<MicrophonePermission>();
             if (microphonePermission == null)
             {
@@ -57,7 +62,7 @@ namespace Fusion.Addons.VoiceHelpers
             MicrophonePermission.MicrophonePermissionCallback += OnMicrophonePermissionChange;
         }
 
-        private void OnMicrophonePermissionChange(bool hasPermission)
+        protected void OnMicrophonePermissionChange(bool hasPermission)
         {
             foreach (var behaviour in enableOnRequestAnswered)
             {

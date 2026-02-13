@@ -7,6 +7,7 @@ https://doc.photonengine.com/fusion/current/industries-samples/industries-addons
 
 ## Version & Changelog
 
+- version 2.1.0: Add FusionVoiceClientPermissionWaiter (and FusionVoiceSetupWithPermissionsRequester) to support PermissionsRequester system (useful when several components try to access Android permission request system)
 - version 2.1.0: Update to support new XRShared architecture
 - Version 2.0.5:
     - Add define check to prevent first install error (while Fusion weaver define is not already set)

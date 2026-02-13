@@ -1,22 +1,17 @@
-// Copyright (c) Meta Platforms, Inc. and affiliates.
+// Copyright (c) Takashi Yoshinaga. All rights reserved.
 
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using Meta.XR.Samples;
+using Meta.XR;
 using UnityEngine;
-using UnityEngine.Assertions;
-using PassthroughCameraSamples;
-using UnityEngine.UI;
+
+#region Photon extensions
 using UnityEngine.Events;
+#endregion
 
 namespace TryAR.MarkerTracking
 {
-    /// <summary>
-    /// Coordinates the AR marker tracking application, handling camera initialization,
-    /// marker detection, and visualization management.
-    /// </summary>
-    [MetaCodeSample("PassthroughCameraApiSamples-MarkerTracking")]
     public class ArUcoTrackingAppCoordinator : MonoBehaviour
     {
         /// <summary>
@@ -36,97 +31,67 @@ namespace TryAR.MarkerTracking
             public GameObject gameObject;
         }
 
-        [Header("Camera Texture View")]
-        [SerializeField] private WebCamTextureManager m_webCamTextureManager;
-        private PassthroughCameraEye CameraEye => m_webCamTextureManager.Eye;
-        private Vector2Int CameraResolution => m_webCamTextureManager.RequestedResolution;
-        [SerializeField] private Transform m_cameraAnchor;
-   
-        [SerializeField] private Canvas m_cameraCanvas;
-        [SerializeField] private RawImage m_resultRawImage;
-        [SerializeField] private float m_canvasDistance = 1f;
+        [Header("Passthrough Camera")]
+        [SerializeField]
+        private PassthroughCameraAccess m_passthroughCameraAccess;
 
         [Header("Marker Tracking")]
         [SerializeField] private ArUcoMarkerTracking m_arucoMarkerTracking;
         [SerializeField, Tooltip("List of marker IDs mapped to their corresponding GameObjects")]
         private List<MarkerGameObjectPair> m_markerGameObjectPairs = new List<MarkerGameObjectPair>();
+        [SerializeField] MeshRenderer m_debugRenderer;
+
         private Dictionary<int, GameObject> m_markerGameObjectDictionary = new Dictionary<int, GameObject>();
-        private bool m_showCameraCanvas = true;
-
-        public List<MarkerGameObjectPair> MarkerGameObjectPairs => m_markerGameObjectPairs;
-        public WebCamTextureManager WebCamTextureManager { get => m_webCamTextureManager; set => m_webCamTextureManager = value; }
-        public ArUcoMarkerTracking ArucoMarkerTracking => m_arucoMarkerTracking;
-
+       
         private Texture2D m_resultTexture;
 
-        public UnityEvent onTrackingComplete = new UnityEvent();
+        private Transform m_cameraAnchor;
 
-        public enum Trackingmode
-        {
-            DuringUpdate,
-            OnDemand
-        }
-
-        public Trackingmode trackingMode = Trackingmode.DuringUpdate;
+        
+        private bool m_showRecogResult = false;
 
         /// <summary>
-        /// Initializes the camera, permissions, and marker tracking system.
+        /// Initializes the camera anchor, camera, and marker tracking system.
         /// </summary>
         private IEnumerator Start()
         {
-#if UNITY_EDITOR
-            yield break;
-#endif
-            // Validate required components
-            if (m_webCamTextureManager == null)
+        
+            if(m_passthroughCameraAccess==null)
             {
-                Debug.LogError($"PCA: {nameof(m_webCamTextureManager)} field is required " +
-                            $"for the component {nameof(ArUcoTrackingAppCoordinator)} to operate properly");
-                enabled = false;
+                Debug.LogError("PassthroughCameraAccess reference is missing.");
                 yield break;
             }
 
-            // Wait for camera permissions
-            Assert.IsFalse(m_webCamTextureManager.enabled);
-            yield return WaitForCameraPermission();
+            // Create camera anchor dynamically
+            CreateCameraAnchor();
 
             // Initialize camera
             yield return InitializeCamera();
 
-            // Configure UI and tracking components
-            if (m_cameraCanvas)
-            {
-                ScaleCameraCanvas();
-            }
-
+             
             //======================================================================================
             // CORE SETUP: Initialize the marker tracking system with camera parameters
             // This configures the ArUco detection with proper camera calibration values
             // and prepares the marker-to-GameObject mapping dictionary
             //======================================================================================
             InitializeMarkerTracking();
-
+            
             // Set initial visibility states
-            if (m_cameraCanvas)
-            {
-                m_cameraCanvas.gameObject.SetActive(m_showCameraCanvas);
-                SetMarkerObjectsVisibility(!m_showCameraCanvas);
+            if(m_debugRenderer!=null){
+                m_debugRenderer.gameObject.SetActive(m_showRecogResult);
             }
-            else
-            {
-                SetMarkerObjectsVisibility(true);
-            }
+            SetMarkerObjectsVisibility(!m_showRecogResult);
         }
 
+
+
         /// <summary>
-        /// Waits until camera permission is granted.
+        /// Creates a camera anchor GameObject dynamically at runtime.
         /// </summary>
-        private IEnumerator WaitForCameraPermission()
+        private void CreateCameraAnchor()
         {
-            while (PassthroughCameraPermissions.HasCameraPermission != true)
-            {
-                yield return null;
-            }
+            GameObject anchorObject = new GameObject("CameraAnchor");
+            m_cameraAnchor = anchorObject.transform;
         }
 
         /// <summary>
@@ -134,53 +99,21 @@ namespace TryAR.MarkerTracking
         /// </summary>
         private IEnumerator InitializeCamera()
         {
-            // Set the resolution and enable the camera manager
-            m_webCamTextureManager.RequestedResolution = PassthroughCameraUtils.GetCameraIntrinsics(CameraEye).Resolution;
-            m_webCamTextureManager.enabled = true;
-
-            // Wait until the camera texture is available
-            while(m_webCamTextureManager.WebCamTexture == null)
+            while (!m_passthroughCameraAccess.IsPlaying)
             {
                 yield return null;
             }
+            yield return null; // Wait one frame to ensure camera is fully initialized
         }
 
         /// <summary>
-        /// Updates camera poses, detects markers, and handles input for toggling visualization mode.
+        /// Updates camera poses, processes marker tracking, and handles input for toggling visualization mode.
         /// </summary>
         private void Update()
         {
-            if(trackingMode == Trackingmode.DuringUpdate)
-            {
-                LaunchMarkerTracking();
-            }
-        }
-
-        public void LaunchMarkerTracking()
-        {            
-            if(m_arucoMarkerTracking == null || m_arucoMarkerTracking.trackingProcessInProgress == true)
-            {
-                return;
-            }
-#if UNITY_EDITOR
-
-#else
             // Skip if camera or tracking system isn't ready
-            if(m_webCamTextureManager == null){
-                Debug.LogError("m_webCamTextureManager not set");
-                OnTrackingFailed();
+            if(m_passthroughCameraAccess==null || !m_passthroughCameraAccess.IsPlaying || !m_arucoMarkerTracking.IsReady)
                 return;
-            }
-            if(m_arucoMarkerTracking == null){
-                OnTrackingFailed();
-                Debug.LogError("m_arucoMarkerTracking not set");
-                return;
-            }
-            if (m_webCamTextureManager.WebCamTexture == null || !m_arucoMarkerTracking.IsReady){
-                OnTrackingFailed();
-                return;
-            }
-
 
             // Toggle between camera view and AR visualization on button press
             HandleVisualizationToggle();
@@ -194,65 +127,24 @@ namespace TryAR.MarkerTracking
             // are positioned in the scene according to marker positions
             //======================================================================================
             ProcessMarkerTracking();
-#endif
         }
 
         /// <summary>
-        /// Handles button input to toggle between camera view and AR visualization.
+        /// Handles button input to toggle between recognition result display and AR marker objects.
         /// </summary>
         private void HandleVisualizationToggle()
         {
-            if (m_cameraCanvas && OVRInput.GetDown(OVRInput.Button.One))
-            {
-                m_showCameraCanvas = !m_showCameraCanvas;
-                m_cameraCanvas.gameObject.SetActive(m_showCameraCanvas);
-                SetMarkerObjectsVisibility(!m_showCameraCanvas);
-            }
-        }
-
-        private void OnDestroy()
-        {
-            if (m_resultTexture)
-            {
-                Destroy(m_resultTexture);
-            }
-        }
-
-        void OnTrackingFailed()
-        {
-            foreach (var g in m_markerGameObjectDictionary.Values)
-            {
-                if (g != null && g.activeSelf)
-                {
-                    g.SetActive(false);
-                }
-            }
-            if (onTrackingComplete != null)
-            {
-                onTrackingComplete.Invoke();
-            }
-        }
-
-        /// <summary>
-        /// Performs marker detection and pose estimation.
-        /// This is the core functionality that processes camera frames to detect markers
-        /// and position virtual objects in 3D space.
-        /// </summary>
-        private async void ProcessMarkerTracking()
-        {
-            if (m_webCamTextureManager.enabled == false)
-            {
-                OnTrackingFailed();
+            if(m_debugRenderer==null)
                 return;
-            }
 
-            await m_arucoMarkerTracking.ProcessMarkerTracking(m_webCamTextureManager.WebCamTexture, m_resultTexture, m_markerGameObjectDictionary, m_cameraAnchor);
-
-            if (onTrackingComplete != null)
+            if (OVRInput.GetDown(OVRInput.Button.One))
             {
-                onTrackingComplete.Invoke();
+                m_showRecogResult = !m_showRecogResult;
+                m_debugRenderer.gameObject.SetActive(m_showRecogResult);
+                SetMarkerObjectsVisibility(!m_showRecogResult);
             }
         }
+
 
         /// <summary>
         /// Toggles the visibility of all marker-associated GameObjects in the dictionary.
@@ -281,24 +173,41 @@ namespace TryAR.MarkerTracking
         /// </summary>
         private void InitializeMarkerTracking()
         {
-            // Step 1: Set up camera parameters for tracking
+            // Step 1: Get camera intrinsic parameters
             // These intrinsic parameters are essential for accurate marker pose estimation
-            var intrinsics = PassthroughCameraUtils.GetCameraIntrinsics(CameraEye);
+            var intrinsics = m_passthroughCameraAccess.Intrinsics;
             var cx = intrinsics.PrincipalPoint.x;  // Principal point X (optical center)
             var cy = intrinsics.PrincipalPoint.y;  // Principal point Y (optical center)
             var fx = intrinsics.FocalLength.x;     // Focal length X
             var fy = intrinsics.FocalLength.y;     // Focal length Y
-            var width = intrinsics.Resolution.x;   // Image width
-            var height = intrinsics.Resolution.y;  // Image height
+            var width = intrinsics.SensorResolution.x;   // Image width
+            var height = intrinsics.SensorResolution.y;  // Image height
             
-            // Initialize the ArUco tracking with camera parameters
+            // Step 2: Scale parameters to match current camera resolution
+            var currentResolution = m_passthroughCameraAccess.CurrentResolution;
+            Debug.Log($"Camera Intrinsics - fx: {fx}, fy: {fy}, cx: {cx}, cy: {cy}, width: {width}, height: {height}");
+            Debug.Log($"Current Camera Resolution - width: {currentResolution.x}, height: {currentResolution.y}");
+            
+            if (currentResolution.x != width || currentResolution.y != height)
+            {
+                float scaleX = (float)currentResolution.x / width;
+                float scaleY = (float)currentResolution.y / height;
+                fx *= scaleX;
+                fy *= scaleY;
+                cx *= scaleX;
+                cy *= scaleY;
+                width = currentResolution.x;
+                height = currentResolution.y;
+            }
+
+            // Step 3: Initialize the ArUco tracking with camera parameters
             m_arucoMarkerTracking.Initialize(width, height, cx, cy, fx, fy);
             
-            // Step 2: Build marker dictionary from serialized list
+            // Step 4: Build marker dictionary from serialized list
             // This maps marker IDs to the GameObjects that should be positioned at each marker
             BuildMarkerDictionary();
             
-            // Step 3: Set up texture for visualization
+            // Step 5: Set up texture for visualization
             ConfigureResultTexture(width, height);
         }
 
@@ -324,50 +233,87 @@ namespace TryAR.MarkerTracking
         /// <param name="height">Height of the camera resolution</param>
         private void ConfigureResultTexture(int width, int height)
         {
-            if (m_resultRawImage == null) return;
             int divideNumber = m_arucoMarkerTracking.DivideNumber;
             m_resultTexture = new Texture2D(width/divideNumber, height/divideNumber, TextureFormat.RGB24, false);
-            m_resultRawImage.texture = m_resultTexture;
+            if (m_debugRenderer != null)
+            {
+                m_debugRenderer.material.mainTexture = m_resultTexture;
+            }
         }
 
         /// <summary>
-        /// Calculates the dimensions of the canvas based on the distance from the camera origin and the camera resolution.
-        /// </summary>
-        private void ScaleCameraCanvas()
-        {
-            var cameraCanvasRectTransform = m_cameraCanvas.GetComponentInChildren<RectTransform>();
-            
-            // Calculate field of view based on camera parameters
-            var leftSidePointInCamera = PassthroughCameraUtils.ScreenPointToRayInCamera(CameraEye, new Vector2Int(0, CameraResolution.y / 2));
-            var rightSidePointInCamera = PassthroughCameraUtils.ScreenPointToRayInCamera(CameraEye, new Vector2Int(CameraResolution.x, CameraResolution.y / 2));
-            var horizontalFoVDegrees = Vector3.Angle(leftSidePointInCamera.direction, rightSidePointInCamera.direction);
-            var horizontalFoVRadians = horizontalFoVDegrees / 180 * Math.PI;
-            
-            // Calculate canvas size to match camera view
-            var newCanvasWidthInMeters = 2 * m_canvasDistance * Math.Tan(horizontalFoVRadians / 2);
-            var localScale = (float)(newCanvasWidthInMeters / cameraCanvasRectTransform.sizeDelta.x);
-            cameraCanvasRectTransform.localScale = new Vector3(localScale, localScale, localScale);
-        }
-
-        /// <summary>
-        /// Updates the positions and rotations of camera-related transforms based on head and camera poses.
+        /// Updates the camera anchor position and rotation based on the camera pose.
         /// </summary>
         private void UpdateCameraPoses()
         {
-            // Get current head pose
-            var headPose = OVRPlugin.GetNodePoseStateImmediate(OVRPlugin.Node.Head).Pose.ToOVRPose();
-            
             // Update camera anchor position and rotation
-            var cameraPose = PassthroughCameraUtils.GetCameraPoseInWorld(CameraEye);
+            var cameraPose = m_passthroughCameraAccess.GetCameraPose();
             m_cameraAnchor.position = cameraPose.position;
             m_cameraAnchor.rotation = cameraPose.rotation;
+        }
 
-            // Position the canvas in front of the camera
-            if (m_cameraCanvas)
+        #region Photon extensions
+
+        public UnityEvent onTrackingComplete = new UnityEvent();
+
+        public enum Trackingmode
+        {
+            DuringUpdate,
+            OnDemand
+        }
+
+        public Trackingmode trackingMode = Trackingmode.DuringUpdate;
+
+        public PassthroughCameraAccess PassthroughCameraAccess
+        {
+            get
             {
-                m_cameraCanvas.transform.position = cameraPose.position + cameraPose.rotation * Vector3.forward * m_canvasDistance;
-                m_cameraCanvas.transform.rotation = cameraPose.rotation;
+                return m_passthroughCameraAccess;
+            }
+
+            set
+            {
+                m_passthroughCameraAccess = value;
             }
         }
+
+        public List<MarkerGameObjectPair> MarkerGameObjectPairs => m_markerGameObjectPairs;
+        public ArUcoMarkerTracking ArucoMarkerTracking => m_arucoMarkerTracking;
+
+        void OnTrackingFailed()
+        {
+            foreach (var g in m_markerGameObjectDictionary.Values)
+            {
+                if (g != null && g.activeSelf)
+                {
+                    g.SetActive(false);
+                }
+            }
+            if (onTrackingComplete != null)
+            {
+                onTrackingComplete.Invoke();
+            }
+        }
+
+        /// <summary>
+        /// Performs marker detection and pose estimation.
+        /// This is the core functionality that processes camera frames to detect markers
+        /// and position virtual objects in 3D space.
+        /// </summary>
+        private async void ProcessMarkerTracking()
+        {
+            var texture = m_passthroughCameraAccess?.GetTexture();
+            if(texture == null){
+                OnTrackingFailed();
+                return;                
+            }
+            await m_arucoMarkerTracking.ProcessMarkerTracking(texture, m_resultTexture, m_markerGameObjectDictionary, m_cameraAnchor);
+
+            if (onTrackingComplete != null)
+            {
+                onTrackingComplete.Invoke();
+            }
+        }
+        #endregion
     }
 }

@@ -25,8 +25,11 @@ namespace Fusion.Addons.ScreenSharing
      * 
     *  Note: used mostly for receiver screens, it can also be used for an emitter preview screen. ToggleScreenVisibility should be called by the emitter to active/desactive the screen's view
      ***/
+    [DefaultExecutionOrder(ScreenSharingScreen.EXECUTION_ORDER)] 
     public class ScreenSharingScreen : MonoBehaviour
     {
+        // We use a late execution order, to be sure that any move is adressed before passing the world matrix to the shader
+        public const int EXECUTION_ORDER = 10_000;
 
         public Renderer screenRenderer;
         public UnityEvent<bool> onScreensharingScreenVisibility = new UnityEvent<bool>();
@@ -36,10 +39,14 @@ namespace Fusion.Addons.ScreenSharing
         public bool usingShaderRequiringMatrix = true;
         [Tooltip("If usingShaderRequiringMatrix is true, on Android, a ScreenSharingScreenTextureProjection will be added if none is present. This allows to use mipmap, and prevents a shader issue, where only one texture can be visible with the same shader")]
         public bool automaticallyAddTextureProjection = true;
+        [Tooltip(" Set it to true if you are not using video memory to store the video content, but just a regular texture: it will skip using a shader provided by the video SDK")]
+        public bool useRegularMaterial = false;
 
         [Header("Debug")]
         public TMPro.TMP_Text debugStateText;
         public TMPro.TMP_Text debugEventText;
+        [SerializeField] bool shouldIgnorePlatformForTextureProjectionRequirementCheck = false;
+
 
         public void LogEvent(string txt)
         {
@@ -96,18 +103,38 @@ namespace Fusion.Addons.ScreenSharing
             {
                 LogErrorEvent("A notPlayingObject is set, but DisplayNotPlayingObjectWhenNotPlaying option is not choosen: the object won't be used");
             }
-            if(listeners.Count == 0)
+            foreach(var listener in GetComponentsInChildren<IScreenSharingScreenListener>())
             {
-                listeners = new List<IScreenSharingScreenListener>(GetComponentsInChildren<IScreenSharingScreenListener>());
+                if (listeners.Contains(listener) == false)
+                {
+                    listeners.Add(listener);
+                }
             }
             textureProjection = GetComponent<ScreenSharingScreenTextureProjection>();
             ToggleScreenVisibility(false);
+
+            Application.onBeforeRender += OnBeforeRender;
+        }
+
+        private void OnDestroy()
+        {
+            Application.onBeforeRender -= OnBeforeRender;
+
         }
 
         private void Update()
         {
+            SendPositionMatrixToShader();
+        }
+        
+        void OnBeforeRender()
+        {
+            SendPositionMatrixToShader();
+        }
+
+        void SendPositionMatrixToShader() { 
             // Needed for the URP VR shader
-            if (isRendering && usingShaderRequiringMatrix)
+            if (isRendering && usingShaderRequiringMatrix && useRegularMaterial == false)
             {
                 screenRenderer.material.SetMatrix("_localToWorldMatrix", screenRenderer.transform.localToWorldMatrix);
             }
@@ -121,7 +148,13 @@ namespace Fusion.Addons.ScreenSharing
         public Material PrepareMaterial(Texture texture, Flip flip)
         {
             Material material = null;
-            if (usingShaderRequiringMatrix && Application.platform == RuntimePlatform.Android)
+            if (useRegularMaterial)
+            {
+                material = screenRenderer.material;
+                material.mainTexture = texture;
+                material.SetVector("_Flip", new Vector4(flip.IsHorizontal ? -1 : 1, flip.IsVertical ? -1 : 1, 0, 0));
+            }
+            else if (usingShaderRequiringMatrix && Application.platform == RuntimePlatform.Android)
             {
                 var shader = Resources.Load<Shader>(customQuestScreenShaderName);
                 if (shader == null)
@@ -144,7 +177,12 @@ namespace Fusion.Addons.ScreenSharing
         {
             LogEvent($"Setting up material ({fps}fps)");
             var videoMaterial = PrepareMaterial(texture, flip);
-            if (usingShaderRequiringMatrix)
+            bool isTextureProjectionRequired = usingShaderRequiringMatrix && useRegularMaterial == false;
+            if (shouldIgnorePlatformForTextureProjectionRequirementCheck)
+            {
+                isTextureProjectionRequired = useRegularMaterial == false;
+            }
+            if (isTextureProjectionRequired)
             {
                 if (textureProjection == null && automaticallyAddTextureProjection)
                 {
@@ -177,7 +215,7 @@ namespace Fusion.Addons.ScreenSharing
             var screenTexture = videoPlayer.PlatformView as Texture;
             var videoMaterial = SetupMaterial(screenTexture, flip, resolution, fps);
 
-            foreach(var listener in listeners)
+            foreach (var listener in listeners)
             {
                 listener.PlaybackEnabled(videoMaterial, videoPlayer, playerId, userData);
             }
@@ -212,7 +250,10 @@ namespace Fusion.Addons.ScreenSharing
             {
                 if (debugEventText != null) debugEventText.enabled = ShouldScreenBeDisplayed;
                 if (debugStateText != null) debugStateText.enabled = ShouldScreenBeDisplayed;
-                screenRenderer.enabled = ShouldScreenBeDisplayed;
+                if (screenRenderer != null)
+                    screenRenderer.enabled = ShouldScreenBeDisplayed;
+                else
+                    Debug.LogError("Missing screen renderer");
             }
             if (notPlayingObject && (visibilityBehaviour & VisibilityBehaviour.DisplayNotPlayingObjectWhenNotPlaying) == VisibilityBehaviour.DisplayNotPlayingObjectWhenNotPlaying)
             {

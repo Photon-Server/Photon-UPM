@@ -7,6 +7,16 @@ https://doc.photonengine.com/fusion/current/industries-samples/industries-addons
 
 ## Version & Changelog
 
+- Version 2.1.11:
+    - Add new PermissionsRequester/PermissionWaiter permission system, to ensure that permission are not requested at the same time on Android
+	- Changes for Unity 6.3 Compatibility
+	- Fix on Grabbable.pauseGrabbability usage to work in a network context
+	- Add non networked visibility group handling in Visibility class
+
+- Version 2.1.10:
+    - Add DisableForDesktop
+	- Add new icon in shared design
+
 - Version 2.1.9:
     - Fix bug in XRHandCollectableSkeletonDriverHelper when searching for the root transform
 	- Add helper method to TransformManipulation to compute position offset without scale
@@ -23,7 +33,7 @@ https://doc.photonengine.com/fusion/current/industries-samples/industries-addons
 	- Fix for AsyncTask on WebGL
 	- Allow for other kind of rig part position modifiers (grabbed objects, ...)
 	- Add AuthorityVisualization to debug state authority visualy with a material
-	- Add physics grabbable and authroity transfer on collision for 2.1 forecast physics
+	- Add physics grabbable and authority transfer on collision for 2.1 forecast physics
 	- Add new UI prefabs
 - Version 2.1.5: Add canvasesToIgnore option to RigPartVisualizer
 - Version 2.1.4: Add IColocalizationRoomProvider to add interoperability between addons in colocalization scenario

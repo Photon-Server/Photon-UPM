@@ -17,6 +17,8 @@ namespace Fusion.Addons.AnchorsAddon
         public TMPro.TextMeshPro idText;
         public TMPro.TextMeshPro detailText;
         public GameObject anchorVisual;
+        public GameObject anchorVisualForKnownTagDisplayMode;
+        public bool slidersMustBeDisplayed = true;
         public Slider slider;
         public Slider secondarySlider;
         public GameObject panelCanvas;        
@@ -34,9 +36,14 @@ namespace Fusion.Addons.AnchorsAddon
         [Tooltip("IsDetected results. Only for debugging purposes")]
         [SerializeField] bool isDetected = false;
 
+        [Header ("MRUK")]
+        [SerializeField] bool adaptVisualForMURKTrackable = false;
+        [SerializeField] Vector3 eulerRotationAdapatationForMURKtrackable = new Vector3(180, 0, 0);
+
 
 #if MRUK_AVAILABLE
-        MRUKTrackable mrukTrackable;
+        [HideInInspector]
+        public MRUKTrackable mrukTrackable;
 #endif
         public bool IsDetected
         {
@@ -77,6 +84,13 @@ namespace Fusion.Addons.AnchorsAddon
             {
                 defaultDetailTextColor = detailText.color;
             }
+
+            if (anchorVisual)
+            {
+                ActivateKnownTagDisplayMode(false);
+            }
+                
+
 #if MRUK_AVAILABLE
             mrukTrackable = GetComponentInParent<MRUKTrackable>();
             if(mrukTrackable != null)
@@ -106,8 +120,17 @@ namespace Fusion.Addons.AnchorsAddon
 #if MRUK_AVAILABLE
             if (mrukTrackable != null)
             {
-                anchorId = mrukTrackableIdPrefix+mrukTrackable.MarkerPayloadString;
+                var MRUKpayload = mrukTrackableIdPrefix + mrukTrackable.MarkerPayloadString;
+                // Security, in case of v78 SDK x v83 OS incompatibility
+                MRUKpayload = MRUKpayload.Trim((char)0);
+                anchorId = MRUKpayload;
             }
+
+            if (adaptVisualForMURKTrackable && anchorVisualForKnownTagDisplayMode && (mrukTrackable != null || referenceAnchor?.mrukTrackable != null))
+            {
+                anchorVisualForKnownTagDisplayMode.transform.localRotation *= Quaternion.Euler(eulerRotationAdapatationForMURKtrackable);
+            }
+
 #endif
             SetAnchorId(anchorId);
             if (autoregisterToWorldTrackingComponents)
@@ -121,13 +144,6 @@ namespace Fusion.Addons.AnchorsAddon
 
         private void Update()
         {
-#if MRUK_AVAILABLE
-            if (mrukTrackable != null && (mrukTrackableIdPrefix+mrukTrackable.MarkerPayloadString) != anchorId)
-            {
-                Debug.LogError("[AnchorTag] Post start marker change");
-            }
-#endif
-
             if (referenceAnchor != null)
             {
                 visualLocalPosition = referenceAnchor.visualLocalPosition;
@@ -184,7 +200,7 @@ namespace Fusion.Addons.AnchorsAddon
 
         public void SetAnchorProgress(float progress)
         {
-            if (slider != null)
+            if (slider != null && slidersMustBeDisplayed)
             {
                 if (slider.isActiveAndEnabled == false)
                 {
@@ -197,7 +213,7 @@ namespace Fusion.Addons.AnchorsAddon
 
         public void SetAnchorSecondaryProgress(float progress)
         {
-            if (secondarySlider != null)
+            if (secondarySlider != null && slidersMustBeDisplayed)
             {
                 if (secondarySlider.isActiveAndEnabled == false)
                 {
@@ -215,5 +231,14 @@ namespace Fusion.Addons.AnchorsAddon
                 detailText.color = defaultDetailTextColor;
             }
         }
+
+        public void ActivateKnownTagDisplayMode(bool activate)
+        {
+            slidersMustBeDisplayed = activate == false;
+            slider.gameObject?.SetActive(slidersMustBeDisplayed);
+            panelCanvas?.SetActive(activate == false);
+            anchorVisualForKnownTagDisplayMode?.SetActive(activate);
+        }
+
     }
 }

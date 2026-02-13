@@ -215,6 +215,7 @@ GameObject:
   - component: {fileID: 287875539}
   - component: {fileID: 287875540}
   - component: {fileID: 287875541}
+  - component: {fileID: 287875542}
   m_Layer: 0
   m_Name: '[BuildingBlock] Network Manager'
   m_TagString: Untagged
@@ -448,6 +449,25 @@ MonoBehaviour:
           m_BoolArgument: 1
         m_CallState: 2
   autoRegisterFadeOutOnVoiceConnection: 1
+--- !u!114 &287875542
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 287875532}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b039164a93381194db9b7a3ac3106be3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  checkPermisisonGrantAutomatically: 1
+  onPermissionChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  onPermissionGranted:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &476585215
 GameObject:
   m_ObjectHideFlags: 0
@@ -681,7 +701,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7847449403238870662, guid: abfaad578d05e4a09838223134c41c46, type: 3}
       propertyPath: m_Name
-      value: WebCamTextureManagerPrefab
+      value: PassthroughCameraAccessAndPermissionWaiter
       objectReference: {fileID: 0}
     - target: {fileID: 7847449403238870662, guid: abfaad578d05e4a09838223134c41c46, type: 3}
       propertyPath: m_IsActive
@@ -1171,8 +1191,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6057963eed4d9604c9f474db458e6f2e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  webCamTextureManager: {fileID: 0}
   useInEditor: 0
+  requestedResolution: {x: 1280, y: 960}
+  checkIfResolutionIsValid: 0
+  passthroughCameraAccess: {fileID: 0}
+  streamWithPassthroughCameraAccessTexture: 1
+  usePassthroughCameraAccessResolution: 1
+  automaticFlipPassthroughCameraAccessPreview: 1
 --- !u!114 &1607950050
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1499,19 +1524,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &688221891982051098
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8151349765672008678}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 98fbb947c07407d4db937da17af98cbf, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  autoStart: 1
 --- !u!1 &1079207413061302236
 GameObject:
   m_ObjectHideFlags: 0
@@ -1690,6 +1702,7 @@ MonoBehaviour:
   onGrab:
     m_PersistentCalls:
       m_Calls: []
+  pauseGrabbability: 0
   deepDebug: 0
 --- !u!23 &5279130570849642716
 MeshRenderer:
@@ -1755,6 +1768,10 @@ MonoBehaviour:
   isRendering: 0
   usingShaderRequiringMatrix: 1
   automaticallyAddTextureProjection: 1
+  useRegularMaterial: 0
+  debugStateText: {fileID: 0}
+  debugEventText: {fileID: 0}
+  shouldIgnorePlatformForTextureProjectionRequirementCheck: 0
   visibilityBehaviour: 0
   notPlayingObject: {fileID: 0}
 --- !u!33 &5777918720142136749
@@ -2159,7 +2176,6 @@ GameObject:
   m_Component:
   - component: {fileID: 4056332879242419809}
   - component: {fileID: 6716372377100486570}
-  - component: {fileID: 688221891982051098}
   m_Layer: 0
   m_Name: Recorder
   m_TagString: Untagged

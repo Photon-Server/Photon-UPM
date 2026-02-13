@@ -1,6 +1,6 @@
 {
     "name": "com.photonengine.prototyping.addon.interactivemenu",
-    "version": "2.1.0",
+    "version": "2.0.4",
     "displayName": "InteractiveMenu",
     "description": "https://doc.photonengine.com/fusion/current/industries-samples/industries-addons/fusion-industries-addons-interactive-menu",
     "unity": "6.0",

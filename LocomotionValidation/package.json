@@ -1,6 +1,6 @@
 {
     "name": "com.photonengine.prototyping.addon.locomotionvalidation",
-    "version": "2.1.0",
+    "version": "2.0.3",
     "displayName": "LocomotionValidation",
     "description": "This module extends the locomotion system available in VRShared, to validate some locomotion attempts before applying them (locked places, places with limited capacities, restricted area, personal safe zone, ...).",
     "unity": "6.0",

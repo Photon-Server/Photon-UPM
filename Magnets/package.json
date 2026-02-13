@@ -1,6 +1,6 @@
 {
     "name": "com.photonengine.prototyping.addon.magnets",
-    "version": "2.3.0",
+    "version": "2.2.4",
     "displayName": "Magnets",
     "description": "The Magnets addon provides a simple way to attract an object to others when it has been ungrabbed.",
     "unity": "6.0",

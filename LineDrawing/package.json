@@ -1,6 +1,6 @@
 {
     "name": "com.photonengine.prototyping.addon.linedrawing",
-    "version": "2.1.6-preview.1",
+    "version": "2.1.1",
     "displayName": "LineDrawing",
     "description": "This addon demonstrate how to use the DataSyncHelpers add-on to create 3D drawings, that later joiner can receive too.",
     "unity": "6.0",

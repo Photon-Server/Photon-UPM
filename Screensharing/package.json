@@ -1,6 +1,6 @@
 {
     "name": "com.photonengine.prototyping.addon.screensharing",
-    "version": "2.4.3",
+    "version": "2.2.1",
     "displayName": "Screensharing",
     "description": "This module demonstrates how to use the Photon Video SDK to share the user screen, captured through the uWindowCapture third party module.",
     "unity": "6.0",

@@ -1,6 +1,6 @@
 {
     "name": "com.photonengine.prototyping.addon.reconnection",
-    "version": "2.1.0",
+    "version": "2.0.1",
     "displayName": "Reconnection",
     "description": "This module allows to deal with user disconnecting, then rejoining a session. It allows to identify that it is the same user, and to easily recover authority on their previously owned objects.",
     "unity": "6.0",

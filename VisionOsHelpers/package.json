@@ -1,6 +1,6 @@
 {
     "name": "com.photonengine.prototyping.addon.visionoshelpers",
-    "version": "2.1.0",
+    "version": "2.0.10",
     "displayName": "VisionOsHelpers",
     "description": "This module provides some components to help building vision OS application with Unity's Polyspatial, and make them cross-platform. It relies notably on the XRHands addon, to provide proper hand tracking synchronization and gesture detection in Polyspatial unbounded mode.",
     "unity": "6.0",

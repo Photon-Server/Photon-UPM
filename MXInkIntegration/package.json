@@ -1,6 +1,6 @@
 {
     "name": "com.photonengine.prototyping.addon.mxinkintegration",
-    "version": "2.1.2-preview.1",
+    "version": "2.1.3",
     "displayName": "MXInkIntegration",
     "description": "This addon demonstrates how to integrate the Logitech MX Ink pen into a Fusion project.",
     "unity": "6.0",

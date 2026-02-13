@@ -1,6 +1,6 @@
 {
     "name": "com.photonengine.prototyping.addon.xrshared",
-    "version": "2.1.8-preview.3",
+    "version": "2.1.11",
     "displayName": "XRShared",
     "description": "Prototyping base for XR project using Fusion in shared topology",
     "unity": "6.0",

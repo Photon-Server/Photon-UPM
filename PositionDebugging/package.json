@@ -1,6 +1,6 @@
 {
     "name": "com.photonengine.prototyping.addon.positiondebugging",
-    "version": "2.1.0",
+    "version": "2.0.1",
     "displayName": "PositionDebugging",
     "description": "This addon lets you visualize the position of an object by adding a primitive (cube/sphere) at a chosen moment (at each Render, FixedUpdateNetwork, Resim, etc...)",
     "unity": "6.0",

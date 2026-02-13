@@ -1,6 +1,6 @@
 {
     "name": "com.photonengine.prototyping.addon.extendedrigselection",
-    "version": "2.1.1",
+    "version": "2.0.6",
     "displayName": "ExtendedRigSelection",
     "description": "This module allows to specify and select the hardware rig that is enabled at runtime.",
     "unity": "6.0",

@@ -1,6 +1,6 @@
 {
     "name": "com.photonengine.prototyping.addon.datasynchelpers",
-    "version": "2.1.1-preview.1",
+    "version": "2.1.1",
     "displayName": "DataSyncHelpers",
     "description": "The Data Sync Helpers addon provides some helpers classes that simplify synchronizing data for use cases with special needs.",
     "documentationUrl": "https://doc.photonengine.com/fusion/current/industries-samples/industries-addons/fusion-industries-addons-datasynchelpers",

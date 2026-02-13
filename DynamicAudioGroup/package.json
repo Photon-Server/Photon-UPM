@@ -1,6 +1,6 @@
 {
     "name": "com.photonengine.prototyping.addon.dynamicaudiogroup",
-    "version": "2.1.3",
+    "version": "2.0.3",
     "displayName": "DynamicAudioGroup",
     "description": "The dynamic audio group feature allows to discuss with all the remote users around the local one, without using bandwidth or adding noise from user afar.",
     "unity": "6.0",

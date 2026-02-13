@@ -1,6 +1,6 @@
 {
     "name": "com.photonengine.prototyping.addon.uisynchronization",
-    "version": "2.1.0",
+    "version": "2.1.2",
     "displayName": "UISynchronization",
     "description": "This addons provides classes to synchronize some Unity UI components like buttons, dropdown, scroll view, etc.",
     "unity": "6.0",

@@ -1,6 +1,6 @@
 {
     "name": "com.photonengine.prototyping.addon.xritintegration",
-    "version": "2.0.1",
+    "version": "2.0.3",
     "displayName": "XRITIntegration",
     "description": "This addons allows to use Unity XR Interaction Toolkit in a multi-user context",
     "unity": "6.0",

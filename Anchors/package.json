@@ -1,6 +1,6 @@
 {
     "name": "com.photonengine.prototyping.addon.anchors",
-    "version": "2.0.4",
+    "version": "2.0.7",
     "displayName": "Anchors",
     "description": "This addon detects visual markers such as QR codes or ArUco codes and offers two use cases: colocalization and object repositioning.",
     "unity": "6.0",

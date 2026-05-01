@@ -102,6 +102,13 @@ namespace Fusion.Addons.Physics {
       _doNotInterpolate = Runner.Mode == SimulationModes.Server;
       _transform = transform;
       Runner.SetIsSimulated(Object, true); // NetworkRigidbody is always simulated.
+      
+      // This object could already exist on shared mode, just out of interest. So we need to check if it has snapshots.
+      if (Object.HasStateAuthority && Object.LastReceiveTick == default) {
+        CopyToBuffer();
+      } else {
+        CopyToEngine();
+      }
     }
 
     /// <returns>If the setup was successful.</returns>

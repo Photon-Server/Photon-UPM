@@ -107,7 +107,7 @@ namespace Fusion.Addons.Physics {
       if (Object.HasStateAuthority && Object.LastReceiveTick == default) {
         CopyToBuffer();
       } else {
-        CopyToEngine();
+        CopyToEngine(forceAwake: true);
       }
     }
 

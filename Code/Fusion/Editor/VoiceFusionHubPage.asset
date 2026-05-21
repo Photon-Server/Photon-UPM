@@ -332,23 +332,3 @@ MonoBehaviour:
       Asset: {fileID: 0}
       Id: 
       StepElements: []
-    - Text: reset
-      Subtext: reset
-      WidgetMode:
-        Value: ClearPlayerPrefs
-      AutoComplete:
-        Value: None
-      Hide:
-        Value: None
-      Scene: 
-      AddSceneToTop: 0
-      Icon: {fileID: 2800000, guid: d6e1233e498157548ac3b473d993dda8, type: 3}
-      StatusIcon: {fileID: 0}
-      StartPlayMode: 0
-      Url: https://doc.photonengine.com/fusion/v2/game-samples/fusion-impostor
-      Type:
-        ScriptableObject: 
-        Class: 
-      Asset: {fileID: 0}
-      Id: 
-      StepElements: []

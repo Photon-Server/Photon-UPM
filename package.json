@@ -1,0 +1,8 @@
+{
+    "name": "com.photonengine.voice-fusion",
+    "displayName": "Voice for Fusion",
+    "version": "2.61.0",
+    "documentationUrl": "https://doc.photonengine.com/fusion/current/concepts-and-patterns/voice-chat",
+    "description": "Photon Voice for Fusion.",
+    "author": ""
+}

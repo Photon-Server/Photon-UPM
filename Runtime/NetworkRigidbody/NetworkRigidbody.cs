@@ -371,6 +371,7 @@ namespace Fusion.Addons.Physics {
   // Render partial
   public partial class NetworkRigidbody {
     private bool _doNotInterpolate;
+    private int _lastRenderTeleportKey;
 
     /// <summary>
     /// Returns true if the passed Rigidbody/Rigidbody2D velocity energies are below the sleep threshold.
@@ -450,24 +451,24 @@ namespace Fusion.Addons.Physics {
         var frTRSPData = fr.ReinterpretState<NetworkTRSPData>();
         var toTRSPData = to.ReinterpretState<NetworkTRSPData>();
 
-        var frKey = frTRSPData.TeleportKey;
         var toKey = toTRSPData.TeleportKey;
         var syncScale = SyncScale;
 
+        var syncParent = SyncParent;
+        var teleport = toKey != _lastRenderTeleportKey;
+        var useWorldSpace = SyncParent == false;
+        
+        // Teleport Handling - Don't interpolate through teleports
+        if (teleport) {
+          frTRSPData = toTRSPData;
+        }
+        _lastRenderTeleportKey = toKey;
+        
         // cache the from values for position and rotation as these will almost certainly be needed below.
         var frPosition = frTRSPData.Position;
         var frRotation = frTRSPData.Rotation;
         var toPosition = toTRSPData.Position;
         var toRotation = toTRSPData.Rotation;
-
-        var syncParent = SyncParent;
-        var teleport = frKey != toKey;
-        var useWorldSpace = SyncParent == false;
-
-        // Teleport Handling - Don't interpolate through teleports
-        if (teleport) {
-          toTRSPData = frTRSPData;
-        }
 
         // Parenting specific handling
         if (syncParent) {

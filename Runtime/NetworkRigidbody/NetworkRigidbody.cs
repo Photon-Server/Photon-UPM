@@ -36,6 +36,11 @@ namespace Fusion.Addons.Physics {
     /// Defined at <see cref="Spawned"/> based on the detected rigidbody.
     /// </summary>
     public bool Is3D { get; private set; }
+    
+    /// <summary>
+    /// The abstract physics body. This class encapsulates most basic interactions with Rigidbody or Rigidbody2D.
+    /// </summary>
+    public AbstractPhysicsBody PhysicsBody => _physicsBody;
 
     /// <summary>
     /// Get/Set the Transform (typically a child of the Rigidbody root transform) which will be moved in interpolation.
@@ -139,6 +144,10 @@ namespace Fusion.Addons.Physics {
         }
         
         simulatePhysics.Update2DPhysicsScene = true;
+      } else {
+        Debug.LogWarning($"{GetType().Name} requires a {nameof(Rigidbody)} or {nameof(Rigidbody2D)} component attached to the same object. Despawning {gameObject.name}.");
+        Runner.Despawn(Object);
+        return false;
       }
 
       return true;

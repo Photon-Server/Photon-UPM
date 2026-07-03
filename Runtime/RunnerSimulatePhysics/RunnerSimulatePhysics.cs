@@ -35,7 +35,13 @@ namespace Fusion.Addons.Physics {
     /// and original Unity physics settings should be restored.
     /// </summary>
     private static int _enabledRunnersCount;
+    
+#if UNITY_2022_2_OR_NEWER
+    private static SimulationMode _originalSimulationMode;
+#else
     private static bool _originalAutoSimulation;
+#endif
+    
     private static SimulationMode2D _original2DSimulationMode;
 
     public bool Update2DPhysicsScene;
@@ -66,10 +72,16 @@ namespace Fusion.Addons.Physics {
       
       // first runner, take over auto simulate
       if (_enabledRunnersCount == 1) {
+#if UNITY_2022_2_OR_NEWER
+        _originalSimulationMode            = UnityEngine.Physics.simulationMode;
+        UnityEngine.Physics.simulationMode = SimulationMode.Script;
+#else
         _originalAutoSimulation = UnityEngine.Physics.autoSimulation;
+        UnityEngine.Physics.autoSimulation = false;
+#endif
+        
         _original2DSimulationMode = Physics2D.simulationMode;
         
-        UnityEngine.Physics.autoSimulation = false;
         Physics2D.simulationMode = SimulationMode2D.Script;
       }
     }
@@ -82,7 +94,11 @@ namespace Fusion.Addons.Physics {
 
       // last runner, restore auto simulate
       if (_enabledRunnersCount == 0) {
+#if UNITY_2022_2_OR_NEWER
+        UnityEngine.Physics.simulationMode = _originalSimulationMode;
+#else
         UnityEngine.Physics.autoSimulation = _originalAutoSimulation;
+#endif
         Physics2D.simulationMode = _original2DSimulationMode;
       }
     }

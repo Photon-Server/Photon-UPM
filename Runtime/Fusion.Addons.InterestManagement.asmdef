@@ -2,7 +2,7 @@
     "name": "Fusion.Addons.InterestManagement",
     "rootNamespace": "Fusion.Addons.InterestManagement",
     "references": [
-        "GUID:1baf1ffff1031e948b3b228ab3453251"
+        "Fusion.Unity"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
@@ -11,6 +11,12 @@
     "precompiledReferences": [],
     "autoReferenced": true,
     "defineConstraints": [],
-    "versionDefines": [],
+    "versionDefines": [
+        {
+            "name": "Unity",
+            "expression": "",
+            "define": "FUSION_FORCE_WEAVING"
+        }
+    ],
     "noEngineReferences": false
 }

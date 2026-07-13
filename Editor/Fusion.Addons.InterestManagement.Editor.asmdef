@@ -2,11 +2,13 @@
     "name": "Fusion.Addons.InterestManagement.Editor",
     "rootNamespace": "Fusion.Addons.InterestManagement.Editor",
     "references": [
-        "GUID:1baf1ffff1031e948b3b228ab3453251",
-        "GUID:a0c20a7650acc0649a3b3cd69c81a937",
-        "GUID:4d449a4732e064d26a3069f2cfd88917"
+        "Fusion.Unity",
+        "Fusion.Unity.Editor",
+        "Fusion.Addons.InterestManagement"
     ],
-    "includePlatforms": [],
+    "includePlatforms": [
+        "Editor"
+    ],
     "excludePlatforms": [],
     "allowUnsafeCode": true,
     "overrideReferences": false,

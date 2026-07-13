@@ -1,8 +1,8 @@
 {
     "name": "com.photonengine.fusion-interest-management",
     "displayName": "Fusion Interest Management",
-    "version": "2.0.3",
-    "documentationUrl": "https://doc.photonengine.com/fusion/current/addons/fusion-interest-management",
+    "version": "2.1.0",
+    "documentationUrl": "https://doc.photonengine.com/fusion/current/addons/interest-management/overview",
     "description": "Fusion Interest Management addon description.",
     "author": ""
 }

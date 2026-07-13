@@ -7,6 +7,7 @@ Version 2.1.0
 - Interest utility methods now require AreaOfInterestState.
 - PlayerInterestManager now correctly shows Player Interest and Interest Cells in Edit Mode based on selectors in inspector.
 - Unified gizmo color of sampling positions for sphere and cone (green = cell included, red = cell excluded).
+- Added assembly definition files.
 
 Version 2.0.3
 - Improved PlayerInterestView inspector.

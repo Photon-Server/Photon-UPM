@@ -1,6 +1,10 @@
 Photon Fusion Simple KCC Addon - Release History
 
-Last tested with Fusion SDK 2.0.6 Stable 1034
+Last tested with Fusion SDK 2.1.1 Stable 2177
+
+2.1.0
+- Compatibility with Fusion SDK 2.1.
+- KCC now controls Rigidbody using Rigidbody.MovePosition() instead of setting Rigidbody.position directly.
 
 2.0.15
 - Fixed jitter when landing on collider edge - clearing DynamicVelocity.y when step-up is triggered in StepUpProcessor.

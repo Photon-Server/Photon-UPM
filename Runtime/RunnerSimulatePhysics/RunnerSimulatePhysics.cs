@@ -3,6 +3,7 @@ using Fusion.Analyzer;
 using UnityEngine;
 
 namespace Fusion.Addons.Physics {
+  [DefaultExecutionOrder(1000)]
   public class RunnerSimulatePhysics : SimulationBehaviour, IBeforeTick, ISpawned, IDespawned {
   
     /// <summary>

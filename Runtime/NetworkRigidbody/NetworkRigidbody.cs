@@ -4,7 +4,7 @@ using UnityEngine;
 namespace Fusion.Addons.Physics {
   [DisallowMultipleComponent]
   [NetworkBehaviourWeaved(WORDS)]
-  public partial class NetworkRigidbody : NetworkTRSP, INetworkTRSPTeleport, IBeforeAllTicks, IAfterTick {
+  public partial class NetworkRigidbody : NetworkTRSP, INetworkTRSPTeleport, IBeforeAllTicks, IAfterTick, IAfterClientPredictionReset {
     const int WORDS = NetworkTRSPData.WORDS + NetworkPhysicsData.WORDS;
 
     /// <summary>
@@ -18,17 +18,17 @@ namespace Fusion.Addons.Physics {
     [InlineHelp] [SerializeField] public bool SyncParent = true;
 
     /// <summary>
-    /// Get and Set the associated Rigidbody or Rigidbody2D position value.
+    /// Get the associated Rigidbody or Rigidbody2D position value.
     /// </summary>
     public Vector3 RBPosition => _physicsBody.Position;
 
     /// <summary>
-    /// Get and Set the associated Rigidbody or Rigidbody2D rotation value.
+    /// Get the associated Rigidbody or Rigidbody2D rotation value.
     /// </summary>
     public Quaternion RBRotation => _physicsBody.Rotation;
 
     /// <summary>
-    /// Get and Set the associated Rigidbody or Rigidbody2D isKinematic bool value.
+    /// Get the associated Rigidbody or Rigidbody2D isKinematic bool value.
     /// </summary>
     public bool RBIsKinematic => _physicsBody.Kinematic;
     
@@ -200,6 +200,10 @@ namespace Fusion.Addons.Physics {
       }
 
       CopyToBuffer();
+    }
+
+    public void AfterClientPredictionReset() {
+      CopyToEngine(forceAwake: false);
     }
   }
 
@@ -381,7 +385,11 @@ namespace Fusion.Addons.Physics {
   public partial class NetworkRigidbody {
     private bool _doNotInterpolate;
     private int _lastRenderTeleportKey;
-
+    
+    // Used to store the interpolating TO tick when a teleport is detected and know if subsequent render calls are
+    // still being called before the teleport tick was reached by interpolation.
+    private Tick? _teleportDetectTick;
+    
     /// <summary>
     /// Returns true if the passed Rigidbody/Rigidbody2D velocity energies are below the sleep threshold.
     /// </summary>
@@ -461,16 +469,33 @@ namespace Fusion.Addons.Physics {
         var toTRSPData = to.ReinterpretState<NetworkTRSPData>();
 
         var toKey = toTRSPData.TeleportKey;
+        var frKey = frTRSPData.TeleportKey;
         var syncScale = SyncScale;
 
         var syncParent = SyncParent;
-        var teleport = toKey != _lastRenderTeleportKey;
+        var predictingTeleport = toKey != frKey;
+        var readingTeleport = _lastRenderTeleportKey != toKey;
+        var teleport =  predictingTeleport || readingTeleport;
         var useWorldSpace = SyncParent == false;
         
         // Teleport Handling - Don't interpolate through teleports
         if (teleport) {
-          frTRSPData = toTRSPData;
+          _teleportDetectTick = to.Tick;
+        }else if (_teleportDetectTick.HasValue && to.Tick > _teleportDetectTick.Value) {
+          _teleportDetectTick = null;
         }
+        
+        if (_teleportDetectTick.HasValue && to.Tick <= _teleportDetectTick.Value) {
+          // If predicting a teleport render it immediately. If not keep rendering FROM until the teleport tick is reached.
+          if (predictingTeleport) {
+            frTRSPData = toTRSPData;
+          } else {
+            toTRSPData = frTRSPData;
+          }
+        }
+
+        
+        // Clients that are not predicting the teleport key will not have fromKey != toKey, detect the change using render value.
         _lastRenderTeleportKey = toKey;
         
         // cache the from values for position and rotation as these will almost certainly be needed below.

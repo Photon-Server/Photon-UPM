@@ -2,137 +2,137 @@
 
 namespace Fusion.Addons.FSM
 {
-	public abstract class State : State<State>
-	{
-	}
+    public abstract class State : State<State>
+    {
+    }
 
-	public abstract unsafe class State<TState> : IState, IOwnedState<TState> where TState : State<TState>
-	{
-		// PUBLIC MEMBERS
+    public abstract unsafe class State<TState> : IState, IOwnedState<TState> where TState : State<TState>
+    {
+        // PUBLIC MEMBERS
 
-		public int                  StateId   { get; set; }
-		public StateMachine<TState> Machine   { get; set; }
-		public string               Name      { get; set; }
-		public int                  Priority  { get; set; }
+        public int                  StateId   { get; set; }
+        public StateMachine<TState> Machine   { get; set; }
+        public string               Name      { get; set; }
+        public int                  Priority  { get; set; }
 
-		public bool                 CheckPriorityOnExit = true;
+        public bool                 CheckPriorityOnExit = true;
 
-		// PRIVATE MEMBERS
+        // PRIVATE MEMBERS
 
-		private List<TransitionData<TState>> _transitions;
+        private List<TransitionData<TState>> _transitions;
 
-		// CONSTRUCTORS
+        // CONSTRUCTORS
 
-		protected State(string name, int priority = 0) : this()
-		{
-			Name = name;
-			Priority = priority;
-		}
+        protected State(string name, int priority = 0) : this()
+        {
+            Name = name;
+            Priority = priority;
+        }
 
-		protected State()
-		{
-		}
+        protected State()
+        {
+        }
 
-		// PUBLIC METHODS
+        // PUBLIC METHODS
 
-		public void AddTransition(TransitionData<TState> transition)
-		{
-			if (_transitions == null)
-			{
-				_transitions = new List<TransitionData<TState>>(16);
-			}
+        public void AddTransition(TransitionData<TState> transition)
+        {
+            if (_transitions == null)
+            {
+                _transitions = new List<TransitionData<TState>>(16);
+            }
 
-			_transitions.Add(transition);
-		}
+            _transitions.Add(transition);
+        }
 
-		// PROTECTED METHODS
+        // PROTECTED METHODS
 
-		protected virtual void OnInitialize() {}
-		protected virtual void OnDeinitialize(bool hasState) {}
+        protected virtual void OnInitialize() {}
+        protected virtual void OnDeinitialize(bool hasState) {}
 
-		protected virtual bool CanEnterState() => true;
-		protected virtual bool CanExitState(IState nextState) => true;
+        protected virtual bool CanEnterState() => true;
+        protected virtual bool CanExitState(IState nextState) => true;
 
-		protected virtual void OnEnterState() {}
-		protected virtual void OnFixedUpdate() {}
-		protected virtual void OnExitState() {}
+        protected virtual void OnEnterState() {}
+        protected virtual void OnFixedUpdate() {}
+        protected virtual void OnExitState() {}
 
-		protected virtual void OnEnterStateRender() {}
-		protected virtual void OnRender() {}
-		protected virtual void OnExitStateRender() {}
+        protected virtual void OnEnterStateRender() {}
+        protected virtual void OnRender() {}
+        protected virtual void OnExitStateRender() {}
 
-		protected virtual void CollectChildStateMachines(List<IStateMachine> stateMachines) {}
+        protected virtual void CollectChildStateMachines(List<IStateMachine> stateMachines) {}
 
-		protected virtual int GetNetworkDataWordCount() => 0;
-		protected virtual void ReadNetworkData(int* ptr) {}
-		protected virtual void WriteNetworkData(int* ptr) {}
+        protected virtual int GetNetworkDataWordCount() => 0;
+        protected virtual void ReadNetworkData(int* ptr) {}
+        protected virtual void WriteNetworkData(int* ptr) {}
 
-		// IState INTERFACE
+        // IState INTERFACE
 
-		string IState.Name => string.IsNullOrEmpty(Name) == false ? Name : GetType().Name;
+        string IState.Name => string.IsNullOrEmpty(Name) == false ? Name : GetType().Name;
 
-		void IState.OnFixedUpdate()
-		{
-			if (_transitions != null)
-			{
-				for (int i = 0; i < _transitions.Count; i++)
-				{
-					var transition = _transitions[i];
+        void IState.OnFixedUpdate()
+        {
+            if (_transitions != null)
+            {
+                for (int i = 0; i < _transitions.Count; i++)
+                {
+                    var transition = _transitions[i];
 
-					if (TryTransition(ref transition) == true)
-					{
-						Machine.ForceActivateState(transition.TargetState);
-						return;
-					}
-				}
-			}
+                    if (TryTransition(ref transition) == true)
+                    {
+                        Machine.ForceActivateState(transition.TargetState);
+                        return;
+                    }
+                }
+            }
 
-			OnFixedUpdate();
-		}
+            OnFixedUpdate();
+        }
 
-		bool IState.CanExitState(IState nextState, bool isExplicitDeactivation)
-		{
-			// During explicit deactivation (e.g. when user specifically calls TryDeactivateState) priority is not checked
-			if (isExplicitDeactivation == false && CheckPriorityOnExit == true && (nextState as TState).Priority < Priority)
-				return false;
+        bool IState.CanExitState(IState nextState, bool isExplicitDeactivation)
+        {
+            // During explicit deactivation (e.g. when user specifically calls TryDeactivateState) priority is not checked
+            if (isExplicitDeactivation == false && CheckPriorityOnExit == true && (nextState as TState).Priority < Priority)
+                return false;
 
-			return CanExitState(nextState);
-		}
+            return CanExitState(nextState);
+        }
 
-		void IState.Initialize()                => OnInitialize();
-		void IState.Deinitialize(bool hasState) => OnDeinitialize(hasState);
-		bool IState.CanEnterState()             => CanEnterState();
-		void IState.OnEnterState()              => OnEnterState();
-		void IState.OnExitState()               => OnExitState();
-		void IState.OnEnterStateRender()        => OnEnterStateRender();
-		void IState.OnRender()                  => OnRender();
-		void IState.OnExitStateRender()         => OnExitStateRender();
+        void IState.Initialize()                => OnInitialize();
+        void IState.Deinitialize(bool hasState) => OnDeinitialize(hasState);
+        bool IState.CanEnterState()             => CanEnterState();
+        void IState.OnEnterState()              => OnEnterState();
+        void IState.OnExitState()               => OnExitState();
+        void IState.OnEnterStateRender()        => OnEnterStateRender();
+        void IState.OnRender()                  => OnRender();
+        void IState.OnExitStateRender()         => OnExitStateRender();
 
-		IStateMachine[] IState.ChildMachines { get; set; }
-		void IState.CollectChildStateMachines(List<IStateMachine> stateMachines) => CollectChildStateMachines(stateMachines);
+        IStateMachine[] IState.ChildMachines { get; set; }
+        void IState.CollectChildStateMachines(List<IStateMachine> stateMachines) => CollectChildStateMachines(stateMachines);
 
-		int IState.GetWordCount()        => GetNetworkDataWordCount();
-		void IState.Read(int* ptr)       => ReadNetworkData(ptr);
-		void IState.Write(int* ptr)      => WriteNetworkData(ptr);
+        int IState.GetWordCount()        => GetNetworkDataWordCount();
+        void IState.Read(int* ptr)       => ReadNetworkData(ptr);
+        void IState.Write(int* ptr)      => WriteNetworkData(ptr);
 
 
-		// PRIVATE METHODS
+        // PRIVATE METHODS
 
-		private bool TryTransition(ref TransitionData<TState> transition)
-		{
-			if (transition.Transition(this as TState, transition.TargetState) == false)
-				return false;
+        private bool TryTransition(ref TransitionData<TState> transition)
+        {
+            if (transition.Transition(this as TState, transition.TargetState) == false)
+                return false;
 
-			if (transition.IsForced == true)
-				return true;
+            if (transition.IsForced == true)
+                return true;
 
-			if (CanExitState(transition.TargetState) == false)
-				return false;
+            if (CanExitState(transition.TargetState) == false)
+                return false;
 
-			if (transition.TargetState.CanEnterState() == false)
-				return false;
+            if (transition.TargetState.CanEnterState() == false)
+                return false;
 
-			return true;
-		}
-	}
+            return true;
+        }
+    }
 }

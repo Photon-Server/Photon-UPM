@@ -2,33 +2,33 @@
 
 namespace Fusion.Addons.FSM
 {
-	public unsafe interface IState
-	{
-		public int             StateId       { get; set; }
-		public string          Name          { get; }
+    public unsafe interface IState
+    {
+        public int             StateId       { get; set; }
+        public string          Name          { get; }
 
-		public void Initialize();
-		public void Deinitialize(bool hasState);
+        public void Initialize();
+        public void Deinitialize(bool hasState);
 
-		public bool CanEnterState();
-		public bool CanExitState(IState nextState, bool isExplicitDeactivation);
+        public bool CanEnterState();
+        public bool CanExitState(IState nextState, bool isExplicitDeactivation);
 
-		public void OnEnterState();
-		public void OnFixedUpdate();
-		public void OnExitState();
+        public void OnEnterState();
+        public void OnFixedUpdate();
+        public void OnExitState();
 
-		public void OnEnterStateRender();
-		public void OnRender();
-		public void OnExitStateRender();
+        public void OnEnterStateRender();
+        public void OnRender();
+        public void OnExitStateRender();
 
-		public IStateMachine[] ChildMachines { get; set; }
-		internal void CollectChildStateMachines(List<IStateMachine> stateMachines) {}
+        public IStateMachine[] ChildMachines { get; set; }
+        internal void CollectChildStateMachines(List<IStateMachine> stateMachines) {}
 
-		// Custom network data section
+        // Custom network data section
 
-		public int GetWordCount() => 0;
-		public unsafe void Read(int* ptr) {}
-		public void Write(int* ptr) {}
-		public void Interpolate(InterpolationData interpolationData) {}
-	}
+        public int GetWordCount() => 0;
+        public unsafe void Read(int* ptr) {}
+        public void Write(int* ptr) {}
+        public void Interpolate(InterpolationData interpolationData) {}
+    }
 }

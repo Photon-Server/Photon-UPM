@@ -2,6 +2,11 @@ Photon Fusion FSM Addon - Release History
 
 Last tested with Fusion SDK 2.0.4 Stable 880
 
+Version 2.1.0
+- Support for Fusion 2.1
+- Usage of standard indentation style (4 spaces)
+- Allow proxy prediction if object is set as simulated
+
 Version 2.0.5
 - BREAKING: Improved handling of child machine states. Active states in child machines are now properly deactivated and reactivated based on the parent machine's active state. The active state in a child machine will now be null when parent state is inactive.
 - Added the ability to change the default FSM state

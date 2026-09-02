@@ -2,6 +2,15 @@ Photon Fusion Simple KCC Addon - Release History
 
 Last tested with Fusion SDK 2.1.1 Stable 2177
 
+2.1.1
+- Step-up fixes.
+    - Fixed clearance checks being executed at StepHeight instead of the detected step height. Obstacles above the step (door frames, ceilings, lights) no longer cancel the step-up and increasing StepHeight no longer lowers the chance of climbing a step.
+    - StepHeight is now a hard limit. Surfaces above it no longer trigger a step-up at all. Previously the KCC was lifted up to StepHeight and the remaining part was traversed by penetration resolution, which made the effective maximum step height larger than configured and produced jitter on obstacles slightly above the limit.
+    - Surfaces detected below one third of the radius above the KCC are no longer treated as step targets. The KCC traverses them without the step-up and the floor it already stands on could pass this check because of rounding, which started a zero height step-up and kept it active in following ticks.
+    - Fixed StepRequireGroundTarget cancelling the step-up when the detected surfaces contain a walkable step surface but the highest one is not walkable.
+    - StepRequireGroundTarget now also cancels the step-up when no walkable target surface is detected at all.
+    - Fixed clearance checks being stricter than the KCC itself by Extent. The KCC refused to step up to a position it was able to stand on.
+
 2.1.0
 - Compatibility with Fusion SDK 2.1.
 - KCC now controls Rigidbody using Rigidbody.MovePosition() instead of setting Rigidbody.position directly.

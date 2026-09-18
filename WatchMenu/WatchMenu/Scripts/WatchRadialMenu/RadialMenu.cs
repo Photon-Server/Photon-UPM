@@ -1,3 +1,5 @@
+using Fusion.XR.Shared.Automatization;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -19,6 +21,8 @@ namespace Fusion.Addons.WatchMenu
         [SerializeField] public float delayBetweenButtonAnimation = 0.15f;
         [SerializeField] float menuActionBounceProtection = 1f;
         [SerializeField] bool animateMenu = true;
+
+        List<GameObject> buttons = new List<GameObject>();
          
         [Range(180f, 360f)]
         [SerializeField] float angleUsedForButtons = 180f;
@@ -36,11 +40,36 @@ namespace Fusion.Addons.WatchMenu
 
         private float angleMultiplier;
 
+        [Serializable]
+        public struct NamedActionButtonDescriptor
+        {
+            public string actionName;
+            public Sprite actionSprite;
+            public string displayName;
+        }
+
+        [Header("Named action")]
+        [Tooltip("For each entry, a namedActionButtonPrefab button will be added, and its associatedNamedAction will take the entry action name")]
+        public List<NamedActionButtonDescriptor> namedActionButtonDescriptors = new List<NamedActionButtonDescriptor>();
+        public GameObject namedActionButtonPrefab;
+
+        const string NAMED_ACTION_BUTTON_PREFAB_NAME = "RadialMenuButtonAction";
         private void Awake()
         {
             if (watchMenuHandler == null)
             {
                 watchMenuHandler = GetComponentInParent<WatchWindowsHandler>();
+            }
+        }
+
+        private void OnValidate()
+        {
+            if(namedActionButtonDescriptors.Count > 0 && namedActionButtonPrefab == null)
+            {
+                if (AssetLookup.TryFindAsset(new XR.Shared.Automatization.AssetLookup.AssetLookupCriteria(NAMED_ACTION_BUTTON_PREFAB_NAME, extension: "prefab", requiredPathElements: new string[] { "WatchMenu" }), out GameObject prefab))
+                {
+                    namedActionButtonPrefab = prefab;
+                }
             }
         }
 
@@ -57,27 +86,49 @@ namespace Fusion.Addons.WatchMenu
         void UpdateAngleBetweenButtons()
         {
             angleMultiplier = Mathf.Lerp(1.33f, 2f, Mathf.InverseLerp(180f, 360f, angleUsedForButtons));
-            numberOfButtons = buttonPrefabList.Count;
+            numberOfButtons = buttons.Count;
 
             if (numberOfButtons > 0)
             {
                 angleBetweenButtons = angleMultiplier * Mathf.PI / numberOfButtons;
             }
         }
+
+        private GameObject SpawnButton(GameObject prefab)
+        {
+            GameObject button = Instantiate(prefab, canvas.transform);
+            RadialMenuButtonAction radialMenuButton = button.GetComponent<RadialMenuButtonAction>();
+            radialMenuButtonList.Add(radialMenuButton);
+            radialMenuButton.transform.localScale = Vector3.zero;
+            radialMenuButton.transform.localPosition = Vector3.zero;
+
+            RadialMenuButtonWindows settingsAction = button.GetComponentInChildren<RadialMenuButtonWindows>();
+            if (settingsAction)
+            {
+                settingsAction.watchWindowsHandler = watchMenuHandler;
+            }
+            buttons.Add(button);
+
+            return button;
+        }
+
         private void SpawnButtons()
         {
             for (int i = 0; i < buttonPrefabList.Count; i++)
             {
-                GameObject button = Instantiate(buttonPrefabList[i], canvas.transform);
-                RadialMenuButtonAction radialMenuButton = button.GetComponent<RadialMenuButtonAction>();
-                radialMenuButtonList.Add(radialMenuButton);
-                radialMenuButton.transform.localScale = Vector3.zero;
-                radialMenuButton.transform.localPosition = Vector3.zero;
-
-                RadialMenuButtonWindows settingsAction = button.GetComponentInChildren<RadialMenuButtonWindows>();
-                if (settingsAction)
+                GameObject button = SpawnButton(buttonPrefabList[i]);
+            }
+            if (namedActionButtonPrefab)
+            {
+                for (int i = 0; i < namedActionButtonDescriptors.Count; i++)
                 {
-                    settingsAction.watchWindowsHandler = watchMenuHandler;
+                    GameObject button = SpawnButton(namedActionButtonPrefab);
+                    RadialMenuButtonAction radialMenuButton = button.GetComponent<RadialMenuButtonAction>();
+                    radialMenuButton.associatedNamedAction = namedActionButtonDescriptors[i].actionName;
+                    if(radialMenuButton.text)
+                        radialMenuButton.text.text = namedActionButtonDescriptors[i].displayName;
+                    if (radialMenuButton.image)
+                        radialMenuButton.image.sprite = namedActionButtonDescriptors[i].actionSprite;
                 }
             }
         }

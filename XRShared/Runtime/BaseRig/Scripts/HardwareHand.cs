@@ -14,8 +14,14 @@ namespace Fusion.XR.Shared.Base
         public Transform indexTipFollowerTransform;
         public Transform wristFollowerTransform;
 
+        public virtual Pose WorldThumbTipPose => RigPartPose;
         public virtual Pose WorldIndexTipPose => RigPartPose;
+        public virtual Pose WorldIndexBasePose => RigPartPose;
+        public virtual Pose WorldMiddleTipPose => RigPartPose;
+        public virtual Pose WorldRingTipPose => RigPartPose;
+        public virtual Pose WorldLittleTipPose => RigPartPose;
         public virtual Pose WorldWristPose => RigPartPose;
+        public virtual Pose WorldPalmPose => RigPartPose;
 
         protected override void LateUpdate()
         {

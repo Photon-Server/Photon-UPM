@@ -9,9 +9,12 @@ Demonstrate how to use the data sync helper add-on to draw lines.
  
 ## Version & Changelog
 
+- Version 2.1.2: 
+    - Support for ObjectTip markers
+    - Automatic detection of prefab for NetworkGrabbableLineDrawer
 - Version 2.1.2: Unity 6.3 compatibility
 - Version 2.1.1: Fix missing dependencies when using Meta Interaction SDK
-- version 2.1.0: Update to support new XRShared architecture
+- Version 2.1.0: Update to support new XRShared architecture
 - Version 2.0.5: Compatibility with DataSyncHelper 2.0.8 (add ByteArraySize attriute usage)
 - Version 2.0.4: Fix to provide haptic feedback during 3D draw
 - Version 2.0.3: Allow to change inputs for NetworkGrabbableLineDrawer

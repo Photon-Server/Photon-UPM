@@ -7,6 +7,8 @@ doc.photonengine.com/fusion/current/industries-samples/industries-addons/fusion-
 
 ## Version & Changelog
 
+- Version 2.0.4: 
+	- Add index tip markers to hands in rig prefab (allow compatibility with TouchingSetup)
 - Version 2.0.3: 
 	- Add XRSimpleInteractable synchronization in the demo scene
 	- Add a specific demo scene with UI Synchronization with XRIT

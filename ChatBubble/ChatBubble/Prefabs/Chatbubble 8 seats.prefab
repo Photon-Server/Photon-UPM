@@ -210,7 +210,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7165129090714010665, guid: 5a03940890bcde445b98fdf53d062595, type: 3}
       propertyPath: Flags
-      value: 133121
+      value: 133122
       objectReference: {fileID: 0}
     - target: {fileID: 7165129090714010665, guid: 5a03940890bcde445b98fdf53d062595, type: 3}
       propertyPath: SortKey

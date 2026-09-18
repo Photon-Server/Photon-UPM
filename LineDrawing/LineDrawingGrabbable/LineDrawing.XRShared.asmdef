@@ -17,7 +17,8 @@
     "precompiledReferences": [],
     "autoReferenced": true,
     "defineConstraints": [
-        "!XRSHARED_PACKAGE_AVAILABLE || DATASYNCHELPERS_PACKAGE_AVAILABLE"
+        "!XRSHARED_PACKAGE_AVAILABLE || DATASYNCHELPERS_PACKAGE_AVAILABLE",
+        "FUSION_WEAVER"
     ],
     "versionDefines": [
         {

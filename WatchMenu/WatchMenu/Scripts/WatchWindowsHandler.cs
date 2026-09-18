@@ -11,9 +11,9 @@ using UnityEngine;
 
 namespace Fusion.Addons.WatchMenu
 {
-    public class WatchWindowsHandler : MonoBehaviour
+    public class WatchWindowsHandler : MonoBehaviour, IWatchScreenListener
     {
-        [SerializeField] List<WatchScreen> watchScreens = new List<WatchScreen>();
+        public List<WatchScreen> watchScreens = new List<WatchScreen>();
 
         [System.Serializable]
         public struct WindowDescription
@@ -31,32 +31,53 @@ namespace Fusion.Addons.WatchMenu
         }
 
         public List<WindowDescription> windowsDescriptions = new List<WindowDescription>();
-        Dictionary<string, RegisteredWindows> registeredWindows = new Dictionary<string, RegisteredWindows>();
         public List<RegisteredWindows> registeredWindowList = new List<RegisteredWindows>();
 
         // Related network object if we place the watch on a network rig
-        NetworkObject networkObject;
+        NetworkObject _networkObject;
 
         [Header("Various settings")]
         public Vector3 windowSpawnPositionOffsetRelativeToHeadset = new Vector3(0.15f, -0.1f, 0.5f);
         [SerializeField] bool flipWindow = false;
         [SerializeField] string defaultWindowText = "";
 
-        public bool IsLocalUserWindowHandler => networkObject == null || networkObject.HasStateAuthority;
+        public bool IsLocalUserWindowHandler => _networkObject == null || _networkObject.HasStateAuthority;
 
-        IHardwareRig hardwareRig;
+        IHardwareRig _hardwareRig;
+        string _desiredWatchText = null;
+
+        Dictionary<string, RegisteredWindows> _registeredWindows = new Dictionary<string, RegisteredWindows>();
+        bool _rigPositionChecked = false;
+        Vector3 _lastRigPosition = Vector3.zero;
+        bool _initialInstantiationChecked = false;
 
         private void Awake()
         {
-            if (watchScreens == null || watchScreens.Count == 0)
+            foreach(var screen in GetComponentsInChildren<WatchScreen>(true))
             {
-                watchScreens = new List<WatchScreen>(GetComponentsInChildren<WatchScreen>(true));
+                RegisterWatchScreen(screen);
             }
 
-            networkObject = GetComponentInParent<NetworkObject>();
+            _networkObject = GetComponentInParent<NetworkObject>();
 
             foreach (var info in windowsDescriptions) RegisterWindow(info);
         }
+
+        #region IWatchScreenListener
+        public void RegisterWatchScreen(WatchScreen screen)
+        {
+            if (watchScreens.Contains(screen) == false) watchScreens.Add(screen);
+            if(screen != null && string.IsNullOrEmpty(_desiredWatchText) == false)
+            {
+                screen.UpdateWatchText(_desiredWatchText);
+            }
+        }
+
+        public void UnregisterWatchScreen(WatchScreen screen)
+        {
+            if (watchScreens.Contains(screen)) watchScreens.Remove(screen);
+        }
+        #endregion 
 
         private void Start()
         {
@@ -65,21 +86,21 @@ namespace Fusion.Addons.WatchMenu
 
         public void RegisterWindow(WindowDescription description)
         {
-            if (registeredWindows.ContainsKey(description.windowName))
+            if (_registeredWindows.ContainsKey(description.windowName))
             {
-                Debug.LogError($"Window {description.windowName} already known (with prefab {registeredWindows[description.windowName].windowDescription.windowPrefab})." +
+                Debug.LogError($"Window {description.windowName} already known (with prefab {_registeredWindows[description.windowName].windowDescription.windowPrefab})." +
                     $" Cancelling new registration with prefab {description.windowPrefab}");
                 return;
             }
-            registeredWindows[description.windowName] = new RegisteredWindows { windowDescription = description, windowInstance = null };
-            registeredWindowList.Add(registeredWindows[description.windowName]);
+            _registeredWindows[description.windowName] = new RegisteredWindows { windowDescription = description, windowInstance = null };
+            registeredWindowList.Add(_registeredWindows[description.windowName]);
         }
 
         private WatchWindow InstantiateWindowByName(string name, bool startOpen = false)
         {
-            if (registeredWindows.ContainsKey(name))
+            if (_registeredWindows.ContainsKey(name))
             {
-                InstantiateWindow(ref registeredWindows[name].windowInstance, registeredWindows[name].windowDescription.windowPrefab, startOpen);
+                InstantiateWindow(ref _registeredWindows[name].windowInstance, _registeredWindows[name].windowDescription.windowPrefab, startOpen);
             }
             else
             {
@@ -92,7 +113,7 @@ namespace Fusion.Addons.WatchMenu
         {
             if (window == null && windowPrefab != null)
             {
-                var windowSpawnPosition = hardwareRig.Headset.gameObject.transform.TransformPoint(windowSpawnPositionOffsetRelativeToHeadset);
+                var windowSpawnPosition = _hardwareRig.Headset.gameObject.transform.TransformPoint(windowSpawnPositionOffsetRelativeToHeadset);
                 window = Instantiate(windowPrefab, windowSpawnPosition, Quaternion.identity);
                 if (startOpen == false)
                 {
@@ -105,6 +126,7 @@ namespace Fusion.Addons.WatchMenu
 
         public void UpdateWatchText(string text)
         {
+            _desiredWatchText = text;
             foreach (var watchScreen in watchScreens)
             {
                 watchScreen.UpdateWatchText(text);
@@ -117,7 +139,7 @@ namespace Fusion.Addons.WatchMenu
         /// <param name="windowDescription"></param>
         public WatchWindow ToggleWindow(WindowDescription windowDescription)
         {
-            if (registeredWindows.ContainsKey(windowDescription.windowName) == false)
+            if (_registeredWindows.ContainsKey(windowDescription.windowName) == false)
             {
                 RegisterWindow(windowDescription);
             }
@@ -131,21 +153,21 @@ namespace Fusion.Addons.WatchMenu
 
         public WatchWindow GetWindowByName(string windowName, bool startOpen = false)
         {
-            if (registeredWindows.ContainsKey(windowName))
+            if (_registeredWindows.ContainsKey(windowName))
             {
                 if (IsLocalUserWindowHandler)
                 {
-                    if (registeredWindows[windowName].windowInstance == null)
+                    if (_registeredWindows[windowName].windowInstance == null)
                     {
                         InstantiateWindowByName(windowName, startOpen);
                     }
-                    if (registeredWindows[windowName].windowInstance == null)
+                    if (_registeredWindows[windowName].windowInstance == null)
                     {
                         Debug.LogError("Unable to instanciate window " + windowName);
                     }
                     else
                     {
-                        return registeredWindows[windowName].windowInstance;
+                        return _registeredWindows[windowName].windowInstance;
                     }
                 }
             }
@@ -197,7 +219,7 @@ namespace Fusion.Addons.WatchMenu
         {
             if (window && window.gameObject.activeSelf)
             {
-                var headsetTransform = hardwareRig.Headset.gameObject.transform;
+                var headsetTransform = _hardwareRig.Headset.gameObject.transform;
 
                 var windowPosition = headsetTransform.TransformPoint(windowSpawnPositionOffsetRelativeToHeadset);
                 Quaternion windowRotation;
@@ -211,26 +233,22 @@ namespace Fusion.Addons.WatchMenu
                 }
                 window.transform.position = windowPosition;
                 window.transform.rotation = windowRotation;
-                window.transform.localScale = hardwareRig.transform.localScale;
+                window.transform.localScale = _hardwareRig.transform.localScale;
             }
         }
 
-        bool rigPositionChecked = false;
-        Vector3 lastRigPosition = Vector3.zero;
-        bool initialInstantiationChecked = false;
-
         private void Update()
         {
-            if (hardwareRig == null)
+            if (_hardwareRig == null)
             {
-                hardwareRig = HardwareRigsRegistry.GetHardwareRig();
+                _hardwareRig = HardwareRigsRegistry.GetHardwareRig();
             }
-            if (hardwareRig == null) return;
+            if (_hardwareRig == null) return;
 
-            if(initialInstantiationChecked == false && IsLocalUserWindowHandler)
+            if(_initialInstantiationChecked == false && IsLocalUserWindowHandler)
             {
-                initialInstantiationChecked = true;
-                foreach (var registeredWindow in registeredWindows.Values)
+                _initialInstantiationChecked = true;
+                foreach (var registeredWindow in _registeredWindows.Values)
                 {
                     if (registeredWindow.windowDescription.instantiateHiddenAtStart && registeredWindow.windowInstance == null) 
                     { 
@@ -240,9 +258,9 @@ namespace Fusion.Addons.WatchMenu
             }
 
             // We close the window in case of large rig teleportation
-            if (rigPositionChecked && Vector3.Distance(lastRigPosition, hardwareRig.transform.position) > 0.5f)
+            if (_rigPositionChecked && Vector3.Distance(_lastRigPosition, _hardwareRig.transform.position) > 0.5f)
             {
-                foreach (var registeredWindow in registeredWindows.Values)
+                foreach (var registeredWindow in _registeredWindows.Values)
                 {
                     if (registeredWindow.windowInstance != null && registeredWindow.windowInstance.gameObject.activeSelf && registeredWindow.windowInstance.closeOnLargeRigMove)
                     {
@@ -250,8 +268,8 @@ namespace Fusion.Addons.WatchMenu
                     }                        
                 }
             }
-            lastRigPosition = hardwareRig.transform.position;
-            rigPositionChecked = true;
+            _lastRigPosition = _hardwareRig.transform.position;
+            _rigPositionChecked = true;
         }
     }
 }

@@ -88,7 +88,11 @@ namespace Fusion.XR.Shared.Locomotion
 
         public void OnConnectFailed(NetworkRunner runner, NetAddress remoteAddress, NetConnectFailedReason reason)    {    }
 
-        public void OnUserSimulationMessage(NetworkRunner runner, SimulationMessagePtr message)    {    }
+#if !FUSION_2_1_OR_NEWER
+        void INetworkRunnerCallbacks.OnUserSimulationMessage(NetworkRunner runner, SimulationMessagePtr message)
+        {
+        }
+#endif
 
         public void OnReliableDataReceived(NetworkRunner runner, PlayerRef player, ReliableKey key, ArraySegment<byte> data)    {    }
 #if FUSION_2_1_OR_NEWER

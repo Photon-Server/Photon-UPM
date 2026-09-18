@@ -7,6 +7,9 @@ https://doc.photonengine.com/fusion/current/industries-samples/industries-addons
 
 ## Version & Changelog
 
+- Version 2.1.5: Add Fusion version verification for deprecated INetworkRunnerCallbacks OnUserSimulationMessage callback
+- Version 2.1.4: Fix prefab
+- Version 2.1.3: Create prefabs for demo scene
 - Version 2.1.2: Compatibility with Fusion 2.1
 - Version 2.1.1: Improvement to find the audio source in some edge cases
 - Version 2.1.0: Update to support new XRShared architecture
@@ -20,8 +23,8 @@ https://doc.photonengine.com/fusion/current/industries-samples/industries-addons
 - Version 2.0.4: Update to match latest XRShared interfaces
 - Version 2.0.3: Compatibility with IFeedbackHandler interface from XRShared
 - Version 2.0.2: 
-  - Fix to ensure compatibility with VisionOSHelpers add-on. 
-  - Prevent crash in case of missing sound manager.
+	- Fix to ensure compatibility with VisionOSHelpers add-on. 
+	- Prevent crash in case of missing sound manager.
 - Version 2.0.1: Remove duplicate code + add UIAudioFeedback + fix debugLog
 - Version 2.0.0: Fusion 2.0 support
 - Version 1.0.2: Namespace modification

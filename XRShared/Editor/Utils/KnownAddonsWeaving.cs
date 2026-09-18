@@ -12,16 +12,8 @@ namespace Fusion.XRShared.Tools
     {
         public const string usualAddonsRelativePath = "/Photon/FusionAddons";
 
-        static KnownAddonsWeaving()
-        {
-            if (AddonWeaver.IsNetworkProjectConfigAvailable() == false)
-            {
-                // NetworkProjectConfig not yet available: probably first launch of the project
-                return;
-            }
-
-            // Note: do not list here assembly not dependent of XRShared.Core. for those one, call directly AddonWeaver.AddAssemblyToWeaver in an Editor script in those addons
-            string[] addonsAssembliesToWeave = new string[] {
+        // Note: do not list here assembly not dependent of XRShared.Core. for those one, call directly AddonWeaver.AddAssemblyToWeaver in an Editor script in those addons
+        static string[] AddonsAssembliesToWeave = new string[] {
                 "BlockingContact",
                 "TextureDrawing",
                 "XRShared.Interaction.HardwareBasedGrabbing",
@@ -44,13 +36,17 @@ namespace Fusion.XRShared.Tools
                 "Anchors",
                 "LineDrawing.XRShared",
                 "MetaCoreIntegration.Grabbing",
+                "Anchors.ARFoundation",
                 // ------ Suggested list by GeneralCheck --------
                 "Anchors.MRUKQRCode",
+                "Anchors.HardwareBasedGrabbing",
                 "Anchors.OpenCV",
                 "ConnectionManager",
                 //"DesktopFocus",
                 //"ExtendedRigSelection",
                 //"Feedback",
+                //"VirtualKeyboard",
+                //"WatchMenu",
                 "MXIntegration.Logitech",
                 "PositionDebugging",
                 "Screensharing.MetaWebcam",
@@ -58,10 +54,8 @@ namespace Fusion.XRShared.Tools
                 "Spaces",
                 "StickyNotes",
                 "StructureCohesion.HardwareBasedGrabbing",
-                //"VirtualKeyboard",
                 "VoiceHelpers",
                 "VoiceHelpers.Tools",
-                //"WatchMenu",
                 "XRShared.DesktopSimulation",
                 "XRShared.SimpleHands",
                 "XRHandsSynchronization.Demo",
@@ -85,9 +79,35 @@ namespace Fusion.XRShared.Tools
                 "UISynchronization.Demo",
                 "Feedback.Demo",
                 "PositionDebugging.Demo",
+                "XRITIntegration.Demo",
+                "CineMachineUsersTracker"
                 // ------ End of suggested list by GeneralCheck --------
             };
-            foreach (var assemblyName in addonsAssembliesToWeave)
+
+        static string[] AssembliesSubstringToIgnore = new string[] {
+                "Editor",
+                "DesktopFocus",
+                "ExtendedRigSelection",
+                "PositionDebugging",
+                "VirtualKeyboard",
+                "WatchMenu",
+                "Feedback",
+                "Fusion.Addons.Physics",
+                "MetaCoreIntegration.CameraSample",
+                "XRShared.Suggestions",
+                "Photon.SuggestedChanges",
+                "Screensharing.Android",
+            };
+
+        static KnownAddonsWeaving()
+        {
+            if (AddonWeaver.IsNetworkProjectConfigAvailable() == false)
+            {
+                // NetworkProjectConfig not yet available: probably first launch of the project
+                return;
+            }
+
+            foreach (var assemblyName in AddonsAssembliesToWeave)
             {
                 WeaveIfAssemblyIsAvailable(assemblyName);
             }
@@ -101,19 +121,7 @@ namespace Fusion.XRShared.Tools
             int assembliesNotUnsafe = 0;
             string notWeavedAssembliesDescription = "Fusion addon's folder assemblies not weaved:\n";
             string notUnsafeAssembliesDescription = "";
-            string[] assembliesSubstringToIgnore = new string[] {
-                "Editor",
-                "DesktopFocus",
-                "ExtendedRigSelection",
-                "PositionDebugging",
-                "VirtualKeyboard",
-                "WatchMenu",
-                "Feedback",
-                "Fusion.Addons.Physics",
-                "MetaCoreIntegration.CameraSample",
-                "XRShared.Suggestions",
-                "Photon.SuggestedChanges",
-            };
+
             if (Directory.Exists(path))
             {
                 foreach (var file in Directory.EnumerateFiles(path, "*.asmdef", SearchOption.AllDirectories))
@@ -121,7 +129,7 @@ namespace Fusion.XRShared.Tools
                     string assemblyName = Path.GetFileName(file).Replace(".asmdef", "");
                     bool isWeaved = AddonWeaver.IsAddonWeaved(assemblyName);
                     bool shouldIgnore = false;
-                    foreach (var s in assembliesSubstringToIgnore)
+                    foreach (var s in AssembliesSubstringToIgnore)
                     {
                         if (assemblyName.Contains(s))
                         {
@@ -185,7 +193,7 @@ namespace Fusion.XRShared.Tools
         {
             public string[] includePlatforms = Array.Empty<string>();
             public string name = string.Empty;
-            public bool allowUnsafeCode;
+            public bool allowUnsafeCode = false;
         }
     }
 }

@@ -1,4 +1,6 @@
+using Fusion.XR.Shared.Automatization;
 using Fusion.XR.Shared.Core;
+using Fusion.XRShared.Tools;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -43,11 +45,38 @@ namespace Fusion.Addons.LineDrawing
 
         protected override void Awake()
         {
+            // base Awake will fallback to trasnform for tip, so we first look for it if not set, before calling base.Awake()
+            if (tip == null)
+            {
+                var tipObject = GetComponentInChildren<ObjectTip>();
+                if (tipObject != null)
+                {
+                    tip = tipObject.transform;
+                }
+            }
             base.Awake();
             leftTriggerAction.EnableWithDefaultXRBindings(side: RigPartSide.Left, new List<string> { "trigger" });
             rightTriggerAction.EnableWithDefaultXRBindings(side: RigPartSide.Right, new List<string> { "trigger" });
             grabbable = GetComponentInChildren<INetworkGrabbable>();
             feedback = GetComponent<IFeedbackHandler>();
+        }
+
+        const string DrawingPrefabName = "NetworkLineDrawing";
+        private void OnValidate()
+        {
+#if UNITY_EDITOR
+            if (drawingPrefab == null)
+            {
+                if (AssetLookup.TryFindAsset(new XR.Shared.Automatization.AssetLookup.AssetLookupCriteria(DrawingPrefabName, extension: "prefab", requiredPathElements: new string[] { "LineDrawing" }), out GameObject prefab))
+                {
+                    var lineDrawingPrefab = prefab.GetComponent<NetworkLineDrawing>();
+                    if (lineDrawingPrefab != null)
+                    {
+                        drawingPrefab = lineDrawingPrefab;
+                    }
+                }
+            }
+#endif
         }
 
         public override void Render()

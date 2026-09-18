@@ -62,6 +62,8 @@ MeshRenderer:
   m_RayTracingAccelStructBuildFlagsOverride: 0
   m_RayTracingAccelStructBuildFlags: 1
   m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -83,9 +85,11 @@ MeshRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
+  m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
 --- !u!136 &2856888310795689973
 CapsuleCollider:
@@ -124,7 +128,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8823482933406823568, guid: 7268b236f2a49cd44b93fa6f698144ef, type: 3}
       propertyPath: Flags
-      value: 526593
+      value: 526594
       objectReference: {fileID: 0}
     - target: {fileID: 8823482933406823568, guid: 7268b236f2a49cd44b93fa6f698144ef, type: 3}
       propertyPath: SortKey
@@ -137,19 +141,19 @@ PrefabInstance:
     - target: {fileID: 8823482933406823568, guid: 7268b236f2a49cd44b93fa6f698144ef, type: 3}
       propertyPath: 'NetworkedBehaviours.Array.data[0]'
       value: 
-      objectReference: {fileID: 904853702778848375}
+      objectReference: {fileID: 291913200683524022}
     - target: {fileID: 8823482933406823568, guid: 7268b236f2a49cd44b93fa6f698144ef, type: 3}
       propertyPath: 'NetworkedBehaviours.Array.data[1]'
       value: 
-      objectReference: {fileID: 5885350134276773885}
+      objectReference: {fileID: 904853702778848375}
     - target: {fileID: 8823482933406823568, guid: 7268b236f2a49cd44b93fa6f698144ef, type: 3}
       propertyPath: 'NetworkedBehaviours.Array.data[2]'
       value: 
-      objectReference: {fileID: 4267421224772797402}
+      objectReference: {fileID: 5885350134276773885}
     - target: {fileID: 8823482933406823568, guid: 7268b236f2a49cd44b93fa6f698144ef, type: 3}
       propertyPath: 'NetworkedBehaviours.Array.data[3]'
       value: 
-      objectReference: {fileID: 291913200683524022}
+      objectReference: {fileID: 4267421224772797402}
     - target: {fileID: 8823482933406823568, guid: 7268b236f2a49cd44b93fa6f698144ef, type: 3}
       propertyPath: 'NetworkedBehaviours.Array.data[4]'
       value: 

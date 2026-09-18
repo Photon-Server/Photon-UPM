@@ -31,7 +31,10 @@ namespace Fusion.Addons.VisionOsHelpers
             base.Awake();
             if (GetComponentInChildren<Rigidbody>() == null)
             {
-                Debug.LogError("Constrained grabbable required a rigidbody to find the graber collider used");
+                Debug.LogError("Constrained grabbable requires a rigidbody to find the graber collider used. Adding one");
+                var rb = gameObject.AddComponent<Rigidbody>();
+                rb.useGravity = false;
+                rb.isKinematic = true;
             }
         }
 

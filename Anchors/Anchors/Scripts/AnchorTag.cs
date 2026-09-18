@@ -36,9 +36,11 @@ namespace Fusion.Addons.AnchorsAddon
         [Tooltip("IsDetected results. Only for debugging purposes")]
         [SerializeField] bool isDetected = false;
 
+#if MRUK_AVAILABLE
         [Header ("MRUK")]
         [SerializeField] bool adaptVisualForMURKTrackable = false;
         [SerializeField] Vector3 eulerRotationAdapatationForMURKtrackable = new Vector3(180, 0, 0);
+#endif
 
 
 #if MRUK_AVAILABLE

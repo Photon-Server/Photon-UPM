@@ -1,6 +1,6 @@
 {
     "name": "com.photonengine.prototyping.addon.connectionmanager",
-    "version": "2.1.2",
+    "version": "2.1.5",
     "displayName": "ConnectionManager",
     "description": "ConnectionManager XR addon for Fusion",
     "unity": "6.0",

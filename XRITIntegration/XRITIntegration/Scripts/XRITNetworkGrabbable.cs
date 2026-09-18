@@ -136,6 +136,8 @@ namespace Fusion.XR.Shared.XRIT
         #region XRGrabInteractable
         protected void OnSelectEnter(SelectEnterEventArgs selectEventArgs)
         {
+            if (Object == null || Object.IsValid == false) return;
+
             var interactor = selectEventArgs.interactorObject;
             IHardwareRigPart hardwareRigPart = null;
             if (interactor != null)
@@ -150,7 +152,7 @@ namespace Fusion.XR.Shared.XRIT
 
             if (detectedGrabber == null)
             {
-                Debug.LogError($"Unable to detect NetworkGrabber. Missing on the network rig part ({hardwareRigPart?.LocalUserNetworkRigPart}) ?");
+                Debug.Log($"Unable to detect NetworkGrabber. Missing on the network rig part ({hardwareRigPart?.LocalUserNetworkRigPart} for hardware rig part {hardwareRigPart} of interactor {interactor}) ?");
             }
 
             if (debugPositions)
@@ -168,9 +170,17 @@ namespace Fusion.XR.Shared.XRIT
                 StoreEngineState();
             }
 
-            var pose = this.LocalOffsetToGrabber(detectedGrabber);
-            LocalPositionOffset = pose.position;
-            LocalRotationOffset = pose.rotation;
+            if (detectedGrabber)
+            {
+                var pose = this.LocalOffsetToGrabber(detectedGrabber);
+                LocalPositionOffset = pose.position;
+                LocalRotationOffset = pose.rotation;
+            }
+            else
+            {
+                LocalPositionOffset = Vector3.zero;
+                LocalRotationOffset = Quaternion.identity;
+            }
 
             if (onLocalUserGrab != null)
             {
@@ -180,6 +190,9 @@ namespace Fusion.XR.Shared.XRIT
 
         protected void OnSelectExit(SelectExitEventArgs arg0)
         {
+            if (Object == null || Object.IsValid == false) return;
+
+
             if (Object && Object.HasStateAuthority && rb)
             {
                 rb.isKinematic = OriginalIsKinematic;

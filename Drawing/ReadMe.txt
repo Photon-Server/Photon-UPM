@@ -7,7 +7,7 @@ https://doc.photonengine.com/fusion/current/industries-samples/industries-addons
 
 ## Version & Changelog
 
-- version 2.1.0: Update to support new XRShared architecture
+- Version 2.1.0: Update to support new XRShared architecture
 - Version 2.0.12: Modifications for Asset Store
 - Version 2.0.11: Modification for Asset Store
 - Version 2.0.10: Adapt to Unity 2022.3.47f1

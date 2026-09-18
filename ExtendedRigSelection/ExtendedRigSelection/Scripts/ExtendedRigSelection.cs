@@ -84,6 +84,8 @@ namespace Fusion.Addons.ExtendedRigSelectionAddon
             public bool automaticSelectOnTargetPlatform;
             [DrawIf(nameof(automaticSelectOnTargetPlatform), Hide = true)]
             public RuntimePlatform targetPlatform;
+            [Tooltip("If set, the SystemInfo.deviceModel must containthis value. If '|' are in the string, it will serve as a separator: any of the separated values will be accepted")]
+            public string deviceModelConstraint;
         }
 
 
@@ -131,6 +133,15 @@ namespace Fusion.Addons.ExtendedRigSelectionAddon
 
         private void Awake()
         {
+            /*
+            Debug.Log($"[ExtendedRigSelection] PLatform: {Application.platform} DeviceInfo: " +
+                $"deviceModel={SystemInfo.deviceModel}, " +
+                $"deviceName={SystemInfo.deviceName}, " +
+                $"deviceType={SystemInfo.deviceType}, " +
+                $"unsupportedIdentifier={SystemInfo.unsupportedIdentifier}, " +
+                $"operatingSystem={SystemInfo.operatingSystem}, " +
+                $"operatingSystemFamily={SystemInfo.operatingSystemFamily}");
+            */
             rigSelectionCamera = GetComponentInChildren<Camera>();
             if (connexionHandler)
             {
@@ -186,6 +197,12 @@ namespace Fusion.Addons.ExtendedRigSelectionAddon
 #if FORCE_SELECTING_RIGINDEX_4
                 if (rigIndex == 4) scriptingSymbolForcedRig = true; 
 #endif
+#if FORCE_SELECTING_RIGINDEX_5
+                if (rigIndex == 5) scriptingSymbolForcedRig = true; 
+#endif
+#if FORCE_SELECTING_RIGINDEX_6
+                if (rigIndex == 6) scriptingSymbolForcedRig = true; 
+#endif
                 if (scriptingSymbolForcedRig)
                 {
                     automaticSelectedDescription = rigDescription;
@@ -198,14 +215,43 @@ namespace Fusion.Addons.ExtendedRigSelectionAddon
 
             if (scriptingSymbolForcedRig == false)
             {
+                string deviceModel = null;
+
                 foreach (var rigDescription in rigKindDescriptions)
                 {
-                    if (rigDescription.automaticSelectOnTargetPlatform && Application.platform == rigDescription.targetPlatform && selectionMode != SelectionMode.SelectedByForcedValue)
+                    bool compatiblePlatform = Application.platform == rigDescription.targetPlatform;
+                    //Debug.Log($"[ExtendedRigSelection] Checking {rigDescription.name} ... ({Application.platform}/{rigDescription.targetPlatform})... ");
+                    if (compatiblePlatform && string.IsNullOrEmpty(rigDescription.deviceModelConstraint) == false){
+                        //Debug.Log($"[ExtendedRigSelection] Checking {rigDescription.name} deviceModel={deviceModel} against global device constraint {rigDescription.deviceModelConstraint}");
+                        if(deviceModel == null){
+                            deviceModel = SystemInfo.deviceModel.ToLower();
+                        }
+                        compatiblePlatform = false;
+                        if(deviceModel != null)
+                        {
+                            foreach(var value in rigDescription.deviceModelConstraint.Split('|'))
+                            {
+                                //Debug.Log($"[ExtendedRigSelection] - Checking {rigDescription.name} deviceModel={deviceModel} against specific device constraint {value}");
+                                if (deviceModel.Contains(value, System.StringComparison.InvariantCultureIgnoreCase))
+                                {
+                                    //Debug.Log($"[ExtendedRigSelection] {rigDescription.name} compatible with deviceModel constraints");
+                                    compatiblePlatform = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+                    if (rigDescription.automaticSelectOnTargetPlatform && compatiblePlatform && selectionMode != SelectionMode.SelectedByForcedValue)
                     {
+                        //Debug.Log($"[ExtendedRigSelection] Found compatible rig description {rigDescription.name} ({Application.platform}/{rigDescription.targetPlatform})... ");
                         automaticSelectedDescription = rigDescription;
                         automaticalySelectedRigSpecificGameObjects = rigDescription.specificGameObjects;
                         automaticSelectedCustomConnexionHandler = rigDescription.connexionHandler;
+                        // Break on first compatible platform
+                        break;
                     }
+
                     if (selectionMode == SelectionMode.SelectedByForcedValue && rigDescription.name == forcedKindName)
                     {
                         automaticSelectedDescription = rigDescription;
@@ -236,12 +282,6 @@ namespace Fusion.Addons.ExtendedRigSelectionAddon
                 }
             }
 
-            if (automaticSelectedDescription != null)
-            {
-                EnableRig(automaticSelectedDescription.GetValueOrDefault());
-                return;
-            }
-
 #if !UNITY_EDITOR && UNITY_ANDROID
             if (forceVROnAndroid)
             {
@@ -250,17 +290,29 @@ namespace Fusion.Addons.ExtendedRigSelectionAddon
             }
 #endif
 
-            // In release build, we replace SelectedByUI by SelectedByUserPref unless overriden
-            DisableDebugSelectedByUI();
-
             if (selectionMode == SelectionMode.SelectedByUserPref)
             {
                 var rigDescription = PreferedRigDescription();
-                EnableRig(rigDescription);
+                if (rigDescription != null)
+                {
+                    EnableRig(rigDescription);
+                    return;
+                }
             }
-            else if (selectionMode == SelectionMode.SelectedByForcedValue)
+
+            if (automaticSelectedDescription != null)
+            {
+                EnableRig(automaticSelectedDescription.GetValueOrDefault());
+                return;
+            }
+
+            // In release build, we replace SelectedByUI by SelectedByUserPref unless overriden
+            DisableDebugSelectedByUI();
+
+            if (selectionMode == SelectionMode.SelectedByForcedValue)
             {
                 EnableRig(forcedKindName);
+                return;
             }
         }
 
@@ -271,6 +323,12 @@ namespace Fusion.Addons.ExtendedRigSelectionAddon
             if (sessionPrefMode != "")
             {
                 rigDescription = FindRigDescriptionByName(sessionPrefMode, silentSearch);
+                if (rigDescription == null)
+                {
+                    // The selected preference does not exist anymore. Removing this preference
+                    Debug.LogError("The selected preference does not exist anymore. Removing this preference");
+                    PlayerPrefs.DeleteKey(SETTING_RIGMODE);
+                }
             }
             return rigDescription;
         }
@@ -306,6 +364,7 @@ namespace Fusion.Addons.ExtendedRigSelectionAddon
 
         void SelectRig(RigKindDescription rigDescription)
         {
+            Debug.Log($"[ExtendedRigSelection] Selected rig: {rigDescription.name}");
             isRigSelected = true;
             selectedRig = rigDescription;
             foreach (var o in rigDescription.specificGameObjects)

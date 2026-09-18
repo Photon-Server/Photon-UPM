@@ -65,8 +65,10 @@ public class UpdateConnectionStatus : MonoBehaviour, INetworkRunnerCallbacks
     #region INetworkRunnerCallbacks
     public virtual void OnPlayerJoined(NetworkRunner runner, PlayerRef player)
     {
-
-        audioSource.PlayOneShot(playerJoined);
+        if (playerJoined)
+        {
+            audioSource.PlayOneShot(playerJoined);
+        }
 
         if (player == runner.LocalPlayer)
         {
@@ -78,33 +80,48 @@ public class UpdateConnectionStatus : MonoBehaviour, INetworkRunnerCallbacks
 
     public void OnPlayerLeft(NetworkRunner runner, PlayerRef player)
     {
-        audioSource.PlayOneShot(playerLeft);
+        if (playerLeft)
+        {
+            audioSource.PlayOneShot(playerLeft);
+        }
         DebugLog("A player left !");
     }
 
 
     public void OnShutdown(NetworkRunner runner, ShutdownReason shutdownReason)
     {
+        if (shutdown)
+        {
+            audioSource.PlayOneShot(shutdown);
+        }
         DebugLog($"Shutdown : { shutdownReason} ", permanentError: true);
-        audioSource.PlayOneShot(shutdown);
     }
 
     public void OnConnectedToServer(NetworkRunner runner)
     {
+        if (connectedToServer)
+        {
+            audioSource.PlayOneShot(connectedToServer);
+        }
         DebugLog("Connected to the server");
-        audioSource.PlayOneShot(connectedToServer);
     }
 
     public void OnDisconnectedFromServer(NetworkRunner runner, NetDisconnectReason reason)
     {
+        if (disconnectedFromServer)
+        {
+            audioSource.PlayOneShot(disconnectedFromServer);
+        }
         DebugLog($"Disconnected From Server: {runner.SessionInfo} ({reason})", permanentError: true);
-        audioSource.PlayOneShot(disconnectedFromServer);
     }
 
     public void OnConnectFailed(NetworkRunner runner, NetAddress remoteAddress, NetConnectFailedReason reason)
     {
+        if (connectFailed)
+        {
+            audioSource.PlayOneShot(connectFailed);
+        }
         DebugLog($"Connect Failed : { reason} ", permanentError: true);
-        audioSource.PlayOneShot(connectFailed);
     }
     #endregion
 
@@ -112,7 +129,11 @@ public class UpdateConnectionStatus : MonoBehaviour, INetworkRunnerCallbacks
     public void OnInput(NetworkRunner runner, NetworkInput input) { }
     public void OnInputMissing(NetworkRunner runner, PlayerRef player, NetworkInput input) { }
     public void OnConnectRequest(NetworkRunner runner, NetworkRunnerCallbackArgs.ConnectRequest request, byte[] token) { }
-    public void OnUserSimulationMessage(NetworkRunner runner, SimulationMessagePtr message) { }
+#if !FUSION_2_1_OR_NEWER
+    void INetworkRunnerCallbacks.OnUserSimulationMessage(NetworkRunner runner, SimulationMessagePtr message)
+    {
+    }
+#endif
     public void OnSessionListUpdated(NetworkRunner runner, List<SessionInfo> sessionList) { }
     public void OnCustomAuthenticationResponse(NetworkRunner runner, Dictionary<string, object> data) { }
     public void OnHostMigration(NetworkRunner runner, HostMigrationToken hostMigrationToken) { }

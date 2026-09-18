@@ -38,12 +38,14 @@ namespace Fusion.XR.Shared.XRHands
         bool leftControllerXRInteractionGroupFound = false;
         bool rightControllerXRInteractionGroupFound = false;
         bool cameraRigFound = false;
-#endif
 
 #if XRHANDS_ENABLED
         bool leftHandSkeletonDriverFound = false;
         bool rightHandSkeletonDriverFound = false;
 #endif
+
+#endif
+
 
 
 

@@ -28,7 +28,15 @@ namespace Fusion.XR.Shared.Core.Tools
 
         public Vector3 Origin => transform.position;
 
-        public Quaternion Rotation => directionTransform.rotation;
+        public Quaternion Rotation
+        {
+            get
+            {
+                PrepareDirectionTransform();
+                return directionTransform.rotation;
+            }
+        }
+
         public virtual Vector2 ScrollDelta => Vector2.zero;
         public IInteractionDetailsProvider LastInteractionDetailProvider { get; set; } = null;
         #endregion
@@ -48,6 +56,11 @@ namespace Fusion.XR.Shared.Core.Tools
 
 
         private void Awake()
+        {
+            PrepareDirectionTransform();
+        }
+
+        void PrepareDirectionTransform()
         {
             if (directionTransform == null) directionTransform = transform;
         }

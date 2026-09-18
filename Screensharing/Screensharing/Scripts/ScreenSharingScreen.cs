@@ -4,6 +4,7 @@ using Photon.Voice;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.UI;
 
 #if PHOTON_VOICE_VIDEO_ENABLE
     using VoiceVideoTextureShader3D = Photon.Voice.Unity.VideoTexture.Shader3D;
@@ -32,6 +33,8 @@ namespace Fusion.Addons.ScreenSharing
         public const int EXECUTION_ORDER = 10_000;
 
         public Renderer screenRenderer;
+        [Tooltip("Optional: assign a RawImage for UI-based preview instead of a 3D MeshRenderer")]
+        public RawImage screenRawImage;
         public UnityEvent<bool> onScreensharingScreenVisibility = new UnityEvent<bool>();
         Material initialMaterial;
         public bool isRendering = false;
@@ -45,8 +48,9 @@ namespace Fusion.Addons.ScreenSharing
         [Header("Debug")]
         public TMPro.TMP_Text debugStateText;
         public TMPro.TMP_Text debugEventText;
+#if PHOTON_VOICE_VIDEO_ENABLE
         [SerializeField] bool shouldIgnorePlatformForTextureProjectionRequirementCheck = false;
-
+#endif
 
         public void LogEvent(string txt)
         {
@@ -78,6 +82,13 @@ namespace Fusion.Addons.ScreenSharing
         public List<IScreenSharingScreenListener> listeners = new List<IScreenSharingScreenListener>();
         ScreenSharingScreenTextureProjection textureProjection = null;
 
+        /// <summary>
+        /// When using RawImage mode, stores a reference to the source texture provider
+        /// so the RawImage can be updated each frame (the Texture2D object may be
+        /// recreated on resolution change).
+        /// </summary>
+        private System.Func<Texture> rawImageTextureSource;
+
         private IVideoPlayer currentVideoPlayer;
         [System.Flags]
         public enum VisibilityBehaviour
@@ -91,12 +102,17 @@ namespace Fusion.Addons.ScreenSharing
         public GameObject notPlayingObject;
 
 
+        private bool UseRawImage => screenRawImage != null;
+
         private void Awake()
         {
             if (debugEventText != null) debugEventText.text = "";
             if (debugStateText != null) debugStateText.text = "";
 
-            if (screenRenderer == null) screenRenderer = GetComponentInChildren<Renderer>();
+            if (screenRawImage == null)
+            {
+                if (screenRenderer == null) screenRenderer = GetComponentInChildren<Renderer>();
+            }
             if (screenRenderer)
                 initialMaterial = screenRenderer.material;
             if (notPlayingObject && (visibilityBehaviour & VisibilityBehaviour.DisplayNotPlayingObjectWhenNotPlaying) != VisibilityBehaviour.DisplayNotPlayingObjectWhenNotPlaying)
@@ -125,6 +141,7 @@ namespace Fusion.Addons.ScreenSharing
         private void Update()
         {
             SendPositionMatrixToShader();
+            UpdateRawImageTexture();
         }
         
         void OnBeforeRender()
@@ -132,11 +149,30 @@ namespace Fusion.Addons.ScreenSharing
             SendPositionMatrixToShader();
         }
 
-        void SendPositionMatrixToShader() { 
-            // Needed for the URP VR shader
-            if (isRendering && usingShaderRequiringMatrix && useRegularMaterial == false)
+        void SendPositionMatrixToShader() {
+            // Needed for the URP VR shader (not applicable in RawImage mode)
+            if (isRendering && usingShaderRequiringMatrix && useRegularMaterial == false && UseRawImage == false && screenRenderer != null)
             {
                 screenRenderer.material.SetMatrix("_localToWorldMatrix", screenRenderer.transform.localToWorldMatrix);
+            }
+        }
+
+        /// <summary>
+        /// When using RawImage mode, continuously update the texture reference.
+        /// This handles the case where the Texture2D object is recreated
+        /// (e.g., on resolution change in KotlinBufferToTextureConverter).
+        /// </summary>
+        void UpdateRawImageTexture()
+        {
+            if (UseRawImage == false || isRendering == false || rawImageTextureSource == null)
+			{
+				 return;
+			}
+
+            var currentTexture = rawImageTextureSource();
+            if (currentTexture != null && screenRawImage.texture != currentTexture)
+            {
+                screenRawImage.texture = currentTexture;
             }
         }
 
@@ -199,6 +235,37 @@ namespace Fusion.Addons.ScreenSharing
             return videoMaterial;
         }
 
+        /// <summary>
+        /// Sets up a RawImage-based preview with a live texture source.
+        /// The textureSource function is called every frame to get the current
+        /// texture, handling cases where the Texture2D is recreated.
+        /// </summary>
+        public void SetupRawImage(System.Func<Texture> textureSource, Flip flip = default)
+        {
+            if (screenRawImage == null)
+            {
+                LogErrorEvent("SetupRawImage called but screenRawImage is not assigned");
+                return;
+            }
+            LogEvent($"Setting up RawImage preview (flip: H={flip.IsHorizontal} V={flip.IsVertical})");
+            rawImageTextureSource = textureSource;
+            var texture = textureSource();
+            if (texture != null)
+            {
+                screenRawImage.texture = texture;
+            }
+
+            // Apply flip via uvRect: default is (0,0,1,1)
+            // Vertical flip: y=1, height=-1; Horizontal flip: x=1, width=-1
+            float x = flip.IsHorizontal ? 1f : 0f;
+            float w = flip.IsHorizontal ? -1f : 1f;
+            float y = flip.IsVertical ? 1f : 0f;
+            float h = flip.IsVertical ? -1f : 1f;
+            screenRawImage.uvRect = new Rect(x, y, w, h);
+
+            ToggleScreenVisibility(true);
+        }
+
         public void EnablePlayback(IVideoPlayer videoPlayer, int playerId, object userData, Vector2Int resolution, int fps)
         {
             if (currentVideoPlayer != null)
@@ -208,12 +275,28 @@ namespace Fusion.Addons.ScreenSharing
             else
             {
                 LogEvent("Playback started on screen for videoPlayer " + videoPlayer);
-            }                
+            }
 
             currentVideoPlayer = videoPlayer;
             var flip = videoPlayer.Flip;
             var screenTexture = videoPlayer.PlatformView as Texture;
-            var videoMaterial = SetupMaterial(screenTexture, flip, resolution, fps);
+
+            Material videoMaterial = null;
+            if (UseRawImage)
+            {
+                // On Android, the decoder returns Flip.None but the texture is natively
+                // inverted. The Photon shader (_Flip) compensates implicitly, but for
+                // RawImage/uvRect we need to invert the vertical flip manually.
+                var rawFlip = flip;
+                if (Application.platform == RuntimePlatform.Android)
+                    rawFlip = flip * Flip.Vertical;
+
+                SetupRawImage(() => videoPlayer.PlatformView as Texture, rawFlip);
+            }
+            else
+            {
+                videoMaterial = SetupMaterial(screenTexture, flip, resolution, fps);
+            }
 
             foreach (var listener in listeners)
             {
@@ -235,7 +318,15 @@ namespace Fusion.Addons.ScreenSharing
 
             currentVideoPlayer = null;
             ToggleScreenVisibility(false);
-            screenRenderer.material = initialMaterial;
+            if (UseRawImage)
+            {
+                screenRawImage.texture = null;
+                rawImageTextureSource = null;
+            }
+            else if (screenRenderer != null)
+            {
+                screenRenderer.material = initialMaterial;
+            }
 
             foreach (var listener in listeners)
             {
@@ -250,7 +341,11 @@ namespace Fusion.Addons.ScreenSharing
             {
                 if (debugEventText != null) debugEventText.enabled = ShouldScreenBeDisplayed;
                 if (debugStateText != null) debugStateText.enabled = ShouldScreenBeDisplayed;
-                if (screenRenderer != null)
+                if (UseRawImage)
+                {
+                    screenRawImage.gameObject.SetActive(ShouldScreenBeDisplayed);
+                }
+                else if (screenRenderer != null)
                     screenRenderer.enabled = ShouldScreenBeDisplayed;
                 else
                     Debug.LogError("Missing screen renderer");

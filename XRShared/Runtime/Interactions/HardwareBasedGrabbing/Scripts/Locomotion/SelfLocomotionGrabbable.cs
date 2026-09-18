@@ -3,11 +3,10 @@ using Fusion.XR.Shared.Core.HardwareBasedGrabbing;
 using Fusion.XR.Shared.Utils;
 using UnityEngine;
 
-namespace Fusion.Addon.Colocalization
+namespace Fusion.XRShared.Locomotion
 {
     /**
-     * 
-     * 
+     * During "grabbing", move the user rig so that the grabbed object does not move
      * 
      **/
 
@@ -24,8 +23,8 @@ namespace Fusion.Addon.Colocalization
             new Keyframe(0.6f, 5f),
             new Keyframe(0.9f, 20f)
             );
-
-
+        public float maxMoveSpeed = 10;
+        public float maxRotationSpeed = 180;
 
         public enum ConstraintType
         {
@@ -154,14 +153,41 @@ namespace Fusion.Addon.Colocalization
 
                 amplification = 1 + moveSpeedAmplificationCurve.Evaluate(speed);
             }
-            rig.transform.position = rig.transform.position + amplification * (rigPosition - rig.transform.position);
-            rig.transform.rotation = rigRotation;
+
+            // Modification limits
+            var move = amplification * (rigPosition - rig.transform.position);
+            if (move.magnitude > Time.deltaTime * maxMoveSpeed)
+            {
+                var limitedMove = move.normalized * Time.deltaTime * maxMoveSpeed;
+                //Debug.LogError($"Limiting position change: desired change {move.magnitude} / authorised change {limitedMove.magnitude}");
+                move = limitedMove;
+            }
+
+            var limitedRotation = rigRotation;
+            if(maxRotationSpeed == 0)
+            {
+                limitedRotation = rig.transform.rotation;
+            }
+            else
+            {
+                var changeAngle = Quaternion.Angle(rig.transform.rotation, rigRotation);
+                var allowedAngleChange = Time.deltaTime * maxRotationSpeed;
+                if (changeAngle > allowedAngleChange)
+                {
+                    limitedRotation = Quaternion.Slerp(rig.transform.rotation, limitedRotation, allowedAngleChange / changeAngle);
+                    //Debug.LogError($"Limiting rotation change: desired change {changeAngle} / authorised change {Quaternion.Angle(rig.transform.rotation, limitedRotation)}");
+                }
+            }              
+
+            rig.transform.position = rig.transform.position + move;
+            rig.transform.rotation = limitedRotation;
 
             var amplifiedMove = rig.transform.position - rigPosition;
+            var rotationAdaptation = Quaternion.Inverse(rigRotation) * limitedRotation;
 
             // We do not want the object to move (only our rig), so we put it back in place: putting it back in its position
             transform.position = initialObjectPose.position + amplifiedMove;
-            transform.rotation = initialObjectPose.rotation;
+            transform.rotation = initialObjectPose.rotation * rotationAdaptation;
         }
     }
 

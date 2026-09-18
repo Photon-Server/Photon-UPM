@@ -201,7 +201,7 @@ namespace Fusion.Addons.VirtualKeyboard.Touch
             
     if (disableVirtualKeyboardOnAndroid)
     {
-        Debug.LogError("Touch detected but disableVirtualKeyboardOnAndroid is true => VR keyboard will not be openned");
+        Debug.LogWarning("Touch detected but disableVirtualKeyboardOnAndroid is true => VR keyboard will not be openned");
         return;
     }
 #endif

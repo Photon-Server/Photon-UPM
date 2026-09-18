@@ -6,6 +6,9 @@ https://doc.photonengine.com/fusion/current/industries-samples/industries-addons
 
 ## Version & Changelog
 
+- Version 2.1.5: Add Fusion version verification for deprecated INetworkRunnerCallbacks OnUserSimulationMessage callback
+- Version 2.1.4: NetworkPreferences refactoring
+- Version 2.1.3: Add verifications in UpdateConnectionStatus demo script
 - Version 2.1.2: Compatibility with Fusion 2.1
 - Version 2.1.1: Add NetworkPreferences class to load network preferences from settings
 - Version 2.1.0: Update to support new XRShared architecture

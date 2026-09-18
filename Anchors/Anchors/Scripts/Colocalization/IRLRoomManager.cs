@@ -28,6 +28,9 @@ public interface IRLRoomMovingReferenceElement
  */
 public class IRLRoomManager : MonoBehaviour, IRLAnchorTracking.IIRLAnchorTrackingListener
 {
+    public static IRLRoomManager SharedInstance;
+    public static bool IsAvailable => SharedInstance != null;
+
     public interface IEventLogHandler
     {
         public void LogEvent(string log);
@@ -37,6 +40,13 @@ public class IRLRoomManager : MonoBehaviour, IRLAnchorTracking.IIRLAnchorTrackin
     {
         public void OnRoomCreate(string roomId);
         public void OnRoomDelete(string roomId);
+        public void OnRoomMemberLeaving(string roomId) { }
+    }
+
+    public interface IIRLRoomManagerPartListener : IIRLRoomManagerListener
+    {
+        public void OnAssociatedPartPoseChange(NetworkIRLRoomAssociatedPart part) { }
+        public void OnAssociatedPartRegistration(NetworkIRLRoomAssociatedPart part) { }
     }
 
     [System.Serializable]
@@ -53,6 +63,7 @@ public class IRLRoomManager : MonoBehaviour, IRLAnchorTracking.IIRLAnchorTrackin
         public List<NetworkIRLRoomMember> members = new List<NetworkIRLRoomMember>();
         public List<NetworkIRLRoomAnchor> anchors = new List<NetworkIRLRoomAnchor>();
         public NetworkIRLRoomMoveRequester moveRequester = null;
+        public List<NetworkIRLRoomAssociatedPart> associatedParts = new List<NetworkIRLRoomAssociatedPart>();
         // A counter to track move requests (move requests equal or below this number have already been applied by this local player and can be ignored)
         public int lastAppliedMoveCounter = 0;
     }
@@ -87,8 +98,6 @@ public class IRLRoomManager : MonoBehaviour, IRLAnchorTracking.IIRLAnchorTrackin
 
     public NetworkIRLRoomMember localNetworkIRLRoomMember;
 
-    bool worldAnchorTrackingRegistered = false;
-
     public IEventLogHandler eventLogHandler;
 
     [Header("Colocalization option - repositioning effects")]
@@ -104,7 +113,8 @@ public class IRLRoomManager : MonoBehaviour, IRLAnchorTracking.IIRLAnchorTrackin
 
     public enum NetworkIRLRoomAssociatedPartDisplayMode
     { 
-        Always,                     
+        Always,
+        LocalRoomOnly,
         RemoteRoomOnly,
         MainPlayerInRemoteRoomOnly, // Main player is determined by the lowest Fusion playerId
         Never
@@ -130,9 +140,43 @@ public class IRLRoomManager : MonoBehaviour, IRLAnchorTracking.IIRLAnchorTrackin
     [HideInInspector]
     public int detectedAnchors = 0;
 
-    bool colocalizationTriggeredThisFrame = false;
-
     public List<IIRLRoomManagerListener> listeners = new List<IIRLRoomManagerListener>();
+
+    bool _colocalizationTriggeredThisFrame = false;
+    bool _worldAnchorTrackingRegistered = false;
+
+    /// <summary>
+    /// Access hardware rig pose, while handling temporary positioning, aka when localNetworkIRLRoomMember.TemporaryHardwareRigMove has been used (used for room move previews for instance)
+    /// </summary>
+    Pose HardwareRigRealPose {
+        get {
+            if (localNetworkIRLRoomMember)
+            {
+                return new Pose(localNetworkIRLRoomMember.LocalUserHardwareRigRealPosition, localNetworkIRLRoomMember.LocalUserHardwareRigRealRotation);
+            }
+            else
+            {
+                var hardwareRig = HardwareRigsRegistry.GetHardwareRig();
+                Debug.LogError("Accessing HardwareRigRealPose while localNetworkIRLRoomMember is not set");
+                return new Pose(hardwareRig.transform.position, hardwareRig.transform.rotation);
+            }
+        }
+
+        set
+        {
+            if (localNetworkIRLRoomMember)
+            {
+                localNetworkIRLRoomMember.OverrideHardwareRigPose(value.position, value.rotation);
+            }
+            else
+            {
+                var hardwareRig = HardwareRigsRegistry.GetHardwareRig();
+                Debug.LogError("Accessing HardwareRigRealPose while localNetworkIRLRoomMember is not set");
+                hardwareRig.transform.rotation = value.rotation;
+                hardwareRig.transform.position = value.position;
+            }
+        }
+    }
 
     public bool IsPredefinedRoomAnchorId(string anchorId, out string roomId)
     {
@@ -186,16 +230,22 @@ public class IRLRoomManager : MonoBehaviour, IRLAnchorTracking.IIRLAnchorTrackin
         {
             worldAnchorTracking = FindAnyObjectByType<IRLAnchorTracking>();
         }
-        if (worldAnchorTracking && worldAnchorTrackingRegistered == false)
+        if (worldAnchorTracking && _worldAnchorTrackingRegistered == false)
         {
-            worldAnchorTrackingRegistered = true;
+            _worldAnchorTrackingRegistered = true;
             worldAnchorTracking.listeners.Add(this);
         }
     }
 
     private void Awake()
     {
+        if (SharedInstance == null) SharedInstance = this;
         FindWorldAnchorTracking();
+    }
+
+    private void OnDestroy()
+    {
+        if (SharedInstance == this) SharedInstance = null;
     }
 
     private void Start()
@@ -225,7 +275,7 @@ public class IRLRoomManager : MonoBehaviour, IRLAnchorTracking.IIRLAnchorTrackin
         if (localNetworkIRLRoomMember == null) return;
 
         // If a colocalization occured this frame, the anchors detection position might not be relevant anymore: skipping next tags
-        if (colocalizationTriggeredThisFrame) return;
+        if (_colocalizationTriggeredThisFrame) return;
 
         // We only manipulate stable anchor (stable for long enough)
         if (anchor.hasLongStability == false) return;
@@ -238,7 +288,7 @@ public class IRLRoomManager : MonoBehaviour, IRLAnchorTracking.IIRLAnchorTrackin
         {
             if (knowNetworkAnchorByAnchorIds.ContainsKey(anchor.anchorId) == false)
             {
-                Debug.LogError("[IRLRoomManager] Incoherent state");
+                Debug.LogError("[IRLRoomManager] Incoherent state for anchor "+ anchor.anchorId);
                 return;
             }
             var networkAnchor = knowNetworkAnchorByAnchorIds[anchor.anchorId];
@@ -247,10 +297,11 @@ public class IRLRoomManager : MonoBehaviour, IRLAnchorTracking.IIRLAnchorTrackin
     }
 
     public void OnIRLAnchorSpawn(IRLAnchorTracking worldAnchorTracking, string anchorId) { }
+
     public void OnDetectionStarted(IRLAnchorTracking worldAnchorTracking)
     {
         detectedAnchors = 0;
-        colocalizationTriggeredThisFrame = false;
+        _colocalizationTriggeredThisFrame = false;
         foreach (var d in visibleLongStableAnchorsInfo)
         {
             d.detectedThisFrame = false;
@@ -275,11 +326,12 @@ public class IRLRoomManager : MonoBehaviour, IRLAnchorTracking.IIRLAnchorTrackin
 
         var position = anchor.stablePose.position;
         var rotation = anchor.stablePose.rotation;
-        var runner = NetworkRunner.GetRunnerForGameObject(gameObject);
+        var anchorId = anchor.anchorId;
 
+        var runner = NetworkRunner.GetRunnerForGameObject(gameObject);
         var anchorRoomId = localNetworkIRLRoomMember.RoomId.ToString();
         bool isChangingRoomForbidden = false;
-        if (IsPredefinedRoomAnchorId(anchor.anchorId, out var anchorPredefinedRoomId) && anchorPredefinedRoomId != anchorRoomId)
+        if (IsPredefinedRoomAnchorId(anchorId, out var anchorPredefinedRoomId) && anchorPredefinedRoomId != anchorRoomId)
         {
             // This is a predefined anchor. If the predefined room has no anchors yet, we can put this anchor in its predefined room
             // But if it is not empty, we cannot add it yet to this room (we don't know how the anchors are positionned relatively to each others)
@@ -287,13 +339,13 @@ public class IRLRoomManager : MonoBehaviour, IRLAnchorTracking.IIRLAnchorTrackin
             bool canUsePredefinedroomId = true;
             if (knowRoomByRoomIds.ContainsKey(anchorPredefinedRoomId) && knowRoomByRoomIds[anchorPredefinedRoomId].anchors.Count != 0)
             {
-                var logEvent = $"Unable to use predefined room id {anchorPredefinedRoomId} for anchor id {anchor.anchorId}: room not new. Using user default room {localNetworkIRLRoomMember.RoomId}";
+                var logEvent = $"Unable to use predefined room id {anchorPredefinedRoomId} for anchor id {anchorId}: room not new. Using user default room {localNetworkIRLRoomMember.RoomId}";
                 LogEvent(logEvent);
                 canUsePredefinedroomId = false;
             }
             if (canUsePredefinedroomId)
             {
-                var logEvent = $"Found predefined room id {anchorPredefinedRoomId} for anchor id {anchor.anchorId}. Moving user to this room";
+                var logEvent = $"Found predefined room id {anchorPredefinedRoomId} for anchor id {anchorId}. Moving user to this room";
                 LogEvent(logEvent);
                 anchorRoomId = anchorPredefinedRoomId;
                 localNetworkIRLRoomMember.ChangeRoomId(anchorRoomId);
@@ -301,13 +353,13 @@ public class IRLRoomManager : MonoBehaviour, IRLAnchorTracking.IIRLAnchorTrackin
             }
         }
 
-        var eventText = $"New anchor visible {anchor.anchorId}: spawning its network anchor (room {anchorRoomId})";
+        var eventText = $"New anchor visible {anchorId}: spawning its network anchor (room {anchorRoomId})";
         LogEvent(eventText);
 
 
         var networkAnchor = runner.Spawn(networkIRLRoomTagPrefab, position, rotation, onBeforeSpawned: (r, o) => {
             var na = o.GetComponentInChildren<NetworkIRLRoomAnchor>();
-            na.SetAnchorId(anchor.anchorId);
+            na.SetAnchorId(anchorId);
             na.ChangeRoomId(anchorRoomId);
         });
         networkAnchor.IsChangingRoomForbidden = isChangingRoomForbidden;
@@ -335,15 +387,15 @@ public class IRLRoomManager : MonoBehaviour, IRLAnchorTracking.IIRLAnchorTrackin
         {
             // Other room
             MatchNetworkAnchorPosition(networkAnchor, worldAnchor);
-            colocalizationTriggeredThisFrame = true;
+            _colocalizationTriggeredThisFrame = true;
         }
         else
         {
             // TODO Check Anchor expected position, to see if a correction would be needed
-            var rig = HardwareRigsRegistry.GetHardwareRig();
+            var hardwareRigRealPose = HardwareRigRealPose;
             var rigPose = DetermineRigPositionToMoveCurrentIRLPoseToTargetPose(worldAnchor.stablePose, networkAnchor.AnchorPose);
-            positionError = Vector3.Distance(rigPose.position, rig.transform.position);
-            angleError = Quaternion.Angle(rigPose.rotation, rig.transform.rotation);
+            positionError = Vector3.Distance(rigPose.position, hardwareRigRealPose.position);
+            angleError = Quaternion.Angle(rigPose.rotation, hardwareRigRealPose.rotation);
 
             if (fixPositionError)
             {
@@ -404,16 +456,17 @@ public class IRLRoomManager : MonoBehaviour, IRLAnchorTracking.IIRLAnchorTrackin
     void MatchNetworkAnchorPosition(NetworkIRLRoomAnchor networkAnchor, IRLAnchorInfo worldAnchor)
     {
         ConsoleLog($"MatchNetworkAnchorPosition {worldAnchor.anchorId} {networkAnchor.RoomId} ({localNetworkIRLRoomMember.Object.StateAuthority}/{localNetworkIRLRoomMember.RoomId})");
-        var rig = HardwareRigsRegistry.GetHardwareRig();
+        var hardwareRigRealPose = HardwareRigRealPose;
+
         var currentRoomId = localNetworkIRLRoomMember.RoomId.ToString();
 
-        var positionBeforeMergingRoom = rig.transform.position;
-        var rotationBeforeMergingRoom = rig.transform.rotation;
+        var positionBeforeMergingRoom = hardwareRigRealPose.position;
+        var rotationBeforeMergingRoom = hardwareRigRealPose.rotation;
 
         MoveRigPositionToMoveCurrentIRLPoseToTargetPose(worldAnchor.stablePose, networkAnchor.AnchorPose);
 
-        var positionAfterMergingRoom = rig.transform.position;
-        var rotationAfterMergingRoom = rig.transform.rotation;
+        var positionAfterMergingRoom = hardwareRigRealPose.position;
+        var rotationAfterMergingRoom = hardwareRigRealPose.rotation;
 
         // Will trigger on change, that may read merge position info, hence the need to do it before changing room
         localNetworkIRLRoomMember.InitializingRoomMerge(networkAnchor.RoomId.ToString(), positionBeforeMergingRoom, rotationBeforeMergingRoom, positionAfterMergingRoom, rotationAfterMergingRoom);
@@ -426,12 +479,19 @@ public class IRLRoomManager : MonoBehaviour, IRLAnchorTracking.IIRLAnchorTrackin
 
     public Pose DetermineRigPositionToMoveCurrentIRLPoseToTargetPose(Pose currentIRLPose, Pose targetPose)
     {
-        var rig = HardwareRigsRegistry.GetHardwareRig();
+        var hardwareRig = HardwareRigsRegistry.GetHardwareRig();
+        var hardwareRigRealPose = HardwareRigRealPose;
+
+        // Finding real headset pose, if the rig has a preview move
+        var headset = hardwareRig.Headset;
+        (var headsetOffsetPosition, var headsetOffsetRotation) = TransformManipulations.UnscaledOffset(hardwareRig.transform, headset.transform);
+        (var realHardwareHeadsetPosition, var realHardwareHeadsetRotation) = TransformManipulations.ApplyUnscaledOffset(referenceTransformPosition: hardwareRigRealPose.position, referenceTransformRotation: hardwareRigRealPose.rotation, headsetOffsetPosition, headsetOffsetRotation);
+
         (var rigPosition, var rigRotation) = TransformManipulations.DetermineNewRigPositionToMovePositionToTargetPosition(
                 currentIRLPose.position, currentIRLPose.rotation,
                 targetPose.position, targetPose.rotation,
-                rig.transform,
-                rig.Headset.transform,
+                hardwareRigRealPose.position, hardwareRigRealPose.rotation,
+                realHardwareHeadsetPosition, realHardwareHeadsetRotation,
                 ignoreYAxisMove: !autofixGroundPosition, keepUpDirection: keepUpDirection
         );
         return new Pose(rigPosition, rigRotation);
@@ -439,12 +499,11 @@ public class IRLRoomManager : MonoBehaviour, IRLAnchorTracking.IIRLAnchorTrackin
 
     public void MoveRigPositionToMoveCurrentIRLPoseToTargetPose(Pose currentIRLPose, Pose targetPose)
     {
-        var rig = HardwareRigsRegistry.GetHardwareRig();
+        var hardwareRigRealPose = HardwareRigRealPose;
         var rigPose = DetermineRigPositionToMoveCurrentIRLPoseToTargetPose(currentIRLPose, targetPose);
 
-        ConsoleLog($"MoveRigPositionToMoveCurrentIRLPoseToTargetPose: {rig.transform.position}->{rigPose.position} // {rig.transform.rotation.eulerAngles} -> {rigPose.rotation.eulerAngles}");
-        rig.transform.rotation = rigPose.rotation;
-        rig.transform.position = rigPose.position;
+        ConsoleLog($"MoveRigPositionToMoveCurrentIRLPoseToTargetPose: {hardwareRigRealPose.position}->{rigPose.position} // {hardwareRigRealPose.rotation.eulerAngles} -> {rigPose.rotation.eulerAngles}");
+        HardwareRigRealPose = rigPose;
     }
 
     #endregion
@@ -551,6 +610,12 @@ public class IRLRoomManager : MonoBehaviour, IRLAnchorTracking.IIRLAnchorTrackin
         {
             ConsoleLog($"OnMemberLeavingRoom {member.Object.StateAuthority} {roomId}");
             knowRoomByRoomIds[roomId].members.Remove(member);
+
+            foreach(var l in listeners)
+            {
+                l.OnRoomMemberLeaving(roomId);
+            }
+
             RemoveRoomIfEmpty(roomId);
         }
     }
@@ -710,6 +775,43 @@ public class IRLRoomManager : MonoBehaviour, IRLAnchorTracking.IIRLAnchorTrackin
     }
     #endregion
 
+    #region Associated parts
+    public virtual void OnAssociatedPartJoiningRoom(NetworkIRLRoomAssociatedPart part, string roomId)
+    {
+        if (string.IsNullOrEmpty(roomId)) return;
+
+        CreateRoomIfneeded(roomId);
+        if (knowRoomByRoomIds[roomId].associatedParts.Contains(part)) return;        
+        knowRoomByRoomIds[roomId].associatedParts.Add(part);
+        foreach (var l in listeners)
+        {
+            if (l is IIRLRoomManagerPartListener partListener)
+            {
+                partListener.OnAssociatedPartRegistration(part);
+            }
+        }
+    }
+
+    public void OnAssociatedPartLeavingRoom(NetworkIRLRoomAssociatedPart part, string roomId)
+    {
+        if (string.IsNullOrEmpty(roomId)) return;
+
+        if (knowRoomByRoomIds.ContainsKey(roomId) && knowRoomByRoomIds[roomId].associatedParts.Contains(part))
+        {
+            knowRoomByRoomIds[roomId].associatedParts.Remove(part);
+        }
+    }
+
+    public void OnAssociatedPartPoseChange(NetworkIRLRoomAssociatedPart part)
+    {
+        foreach(var listener in listeners)
+        {
+            if (listener is IIRLRoomManagerPartListener l) l.OnAssociatedPartPoseChange(part);
+        }
+    }
+
+    #endregion
+
     #region Room modifications triggered by room members
     bool IsRoomMergeAllowed(string previousRoomId, string roomId)
     {
@@ -769,7 +871,6 @@ public class IRLRoomManager : MonoBehaviour, IRLAnchorTracking.IIRLAnchorTrackin
                     // Change id
                     moveRequester.ChangeRoomId(targetRoomId);
                 }
-
             }
 
             foreach (var member in members)
@@ -792,9 +893,9 @@ public class IRLRoomManager : MonoBehaviour, IRLAnchorTracking.IIRLAnchorTrackin
         // Otherwise, we need to move ourselves
         if (localNetworkIRLRoomMember.RoomAnchorToFollow == null)
         {
-            var rig = HardwareRigsRegistry.GetHardwareRig();
-            MoveTransformToFollowSameRoomReferenceElementMove(requesterTriggeringRoomMove, rig.transform);
-            LogEvent($"Moving local user {localNetworkIRLRoomMember.Object.StateAuthority} (with no anchors) as player {requesterTriggeringRoomMove.Object.StateAuthority} has moved room (new local member position: {rig.transform.position})");
+            MoveHardwareRigTransformToFollowSameRoomReferenceElementMove(requesterTriggeringRoomMove);
+            var hardwareRigRealPose = HardwareRigRealPose;
+            LogEvent($"Moving local user {localNetworkIRLRoomMember.Object.StateAuthority} (with no anchors) as player {requesterTriggeringRoomMove.Object.StateAuthority} has moved room (new local member position: {hardwareRigRealPose.position})");
         }
 
         // 2 - Relocate all anchors controlled by user
@@ -811,18 +912,32 @@ public class IRLRoomManager : MonoBehaviour, IRLAnchorTracking.IIRLAnchorTrackin
         }
     }
 
-    public void MoveTransformToFollowSameRoomReferenceElementMove(IRLRoomMovingReferenceElement referenceElement, Transform transformToMove)
+    public (Vector3 position, Quaternion rotation) PoseToFollowSameRoomReferenceElementMove(IRLRoomMovingReferenceElement referenceElement, Vector3 transformToMovePosition, Quaternion transformToMoveRotation)
     {
         var memberPositionBeforeMerge = referenceElement.PositionBeforeMoveToPropagate;
         var memberRotationBeforeMerge = referenceElement.RotationBeforeMoveToPropagate;
         var memberPositionAfterMerge = referenceElement.PositionAfterMoveToPropagate;
         var memberRotationAfterMerge = referenceElement.RotationAfterMoveToPropagate;
 
-        (var offsetToMemberPosition, var offsetToMemberRotation) = TransformManipulations.UnscaledOffset(memberPositionBeforeMerge, memberRotationBeforeMerge, transformToMove);
+        (var offsetToMemberPosition, var offsetToMemberRotation) = TransformManipulations.UnscaledOffset(memberPositionBeforeMerge, memberRotationBeforeMerge, transformToMovePosition, transformToMoveRotation);
         (var newAnchorPosition, var newAnchorRotation) = TransformManipulations.ApplyUnscaledOffset(memberPositionAfterMerge, memberRotationAfterMerge, offsetToMemberPosition, offsetToMemberRotation);
+        return (newAnchorPosition, newAnchorRotation);
+    }
+
+    public void MoveTransformToFollowSameRoomReferenceElementMove(IRLRoomMovingReferenceElement referenceElement, Transform transformToMove)
+    {
+        (var newAnchorPosition, var newAnchorRotation) = PoseToFollowSameRoomReferenceElementMove(referenceElement, transformToMove.position, transformToMove.rotation);
 
         transformToMove.position = newAnchorPosition;
         transformToMove.rotation = newAnchorRotation;
+    }
+
+    public void MoveHardwareRigTransformToFollowSameRoomReferenceElementMove(IRLRoomMovingReferenceElement referenceElement)
+    {
+        var hardwareRigRealPose = HardwareRigRealPose;
+        (var newAnchorPosition, var newAnchorRotation) = PoseToFollowSameRoomReferenceElementMove(referenceElement, hardwareRigRealPose.position, hardwareRigRealPose.rotation);
+
+        HardwareRigRealPose = new Pose(newAnchorPosition, newAnchorRotation);
     }
     #endregion
 

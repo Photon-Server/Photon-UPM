@@ -48,7 +48,7 @@ namespace Fusion.Addons.Automatization
                     VisualElement container = new VisualElement();
                     container.style.flexDirection = FlexDirection.Column;
 
-                    XRAddonsDependencyManager.CleanupRequests();
+                    PackageDependencyManager.CleanupRequests();
 
                     bool installAllowed = true;
                     if (XRAddonsDependencyManager.RequestHandlers.Count > 0)
@@ -184,7 +184,7 @@ namespace Fusion.Addons.Automatization
         {
             await XRAddonsDependencyManager.InstallDependencyIfNotPresentAsync(addon.addonName, updateIfPresent: true);
 
-            XRAddonsDependencyManager.CleanupRequests();
+            PackageDependencyManager.CleanupRequests();
             bool installInprogress = false;
             int watchdog = 50;
             while (XRAddonsDependencyManager.RequestHandlers.Count > 0 && watchdog > 0)
@@ -198,7 +198,7 @@ namespace Fusion.Addons.Automatization
                 }
                 Debug.LogError(log);
                 await Task.Delay(2000);
-                XRAddonsDependencyManager.CleanupRequests();
+                PackageDependencyManager.CleanupRequests();
                 watchdog--;
             }
             UnityEditor.SettingsService.NotifySettingsProviderChanged();

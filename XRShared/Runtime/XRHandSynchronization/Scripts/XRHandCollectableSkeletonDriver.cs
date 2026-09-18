@@ -64,6 +64,7 @@ namespace Fusion.Addons.XRHandsSync
         public Pose WorldWristPose => BoneWorldPose(XRHandJointID.Wrist);
 
         public Pose WorldIndexTipPose => BoneWorldPose(XRHandJointID.IndexTip);
+        public Pose WorldThumbTipPose => BoneWorldPose(XRHandJointID.ThumbTip);
 
         // Bone world pose
         public Pose BoneWorldPose(XRHandJointID boneId)

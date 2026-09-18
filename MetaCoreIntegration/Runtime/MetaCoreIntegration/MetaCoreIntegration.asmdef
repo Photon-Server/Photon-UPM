@@ -18,7 +18,8 @@
     "precompiledReferences": [],
     "autoReferenced": true,
     "defineConstraints": [
-        "XRHANDS_AVAILABLE"
+        "XRHANDS_AVAILABLE",
+        "FUSION_WEAVER"
     ],
     "versionDefines": [
         {

@@ -26,10 +26,10 @@ namespace Fusion.Addons.VoiceHelpersTools
             {
                 Debug.LogError("FusionVoiceSetupWithPermissionsRequester is used, so a MicrophonePermission is not required (a VoicePermissionWaiter will be used instead)");
             }
-            voicePermissionWaiter = recorder.GetComponent<FusionVoiceClientPermissionWaiter>();
+            voicePermissionWaiter = fusionVoiceClient.gameObject.GetComponent<FusionVoiceClientPermissionWaiter>();
             if (voicePermissionWaiter == null)
             {
-                voicePermissionWaiter = recorder.gameObject.AddComponent<FusionVoiceClientPermissionWaiter>();
+                voicePermissionWaiter = fusionVoiceClient.gameObject.AddComponent<FusionVoiceClientPermissionWaiter>();
                 if (callOnMicrophonePermissionChangeForPermissionGrantedOnly)
                 {
                     voicePermissionWaiter.onPermissionGranted.AddListener(() => { OnMicrophonePermissionChange(true); });

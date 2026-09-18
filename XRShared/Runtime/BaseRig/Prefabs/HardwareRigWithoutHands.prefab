@@ -62,7 +62,7 @@ Transform:
   m_GameObject: {fileID: 700506518353865998}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 5.523179, y: 0.56152713, z: -2.5561733}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -99,11 +99,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _runner: {fileID: 0}
-  head: {fileID: 0}
-  leftController: {fileID: 0}
-  rightController: {fileID: 0}
-  leftHand: {fileID: 0}
-  rightHand: {fileID: 0}
 --- !u!114 &7582416291928556162
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -146,9 +141,13 @@ MonoBehaviour:
   disableLeftHandRotation: 0
   disableRightHandRotation: 0
   teleportBeamers: []
+  addBeamersToControllers: 0
+  beamerPrefab: {fileID: 0}
+  addFaderToHeadset: 0
   locomotionLayerMask:
     serializedVersion: 2
     m_Bits: 0
+  additionnalCompatibleLayer: Locomotion
 --- !u!1 &1145738922828633355
 GameObject:
   m_ObjectHideFlags: 0
@@ -296,11 +295,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7d6e83a08a8f8ad43a27a5e3ce050ed0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  autofillRenderersToAdapt: 1
   renderersToAdapt: []
   renderersToIgnore:
-  - {fileID: 3044529075104154673}
+  - {fileID: 0}
   materialWhileShouldNotDisplay: {fileID: 2100000, guid: 2b3e7f7d0a39e374c8e3d5230e431f69, type: 2}
+  autofillCanvasesToAdapt: 1
+  canvasesToAdapt: []
+  canvasesToIgnore: []
+  gameObjectsToAdapt: []
   adaptRenderersDuringUpdate: 1
+  lastAppliedShouldDisplay: 0
   mode: 2
 --- !u!114 &980807227294658301
 MonoBehaviour:
@@ -772,11 +777,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7d6e83a08a8f8ad43a27a5e3ce050ed0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  autofillRenderersToAdapt: 1
   renderersToAdapt: []
   renderersToIgnore:
-  - {fileID: 4121894833981712483}
+  - {fileID: 0}
   materialWhileShouldNotDisplay: {fileID: 2100000, guid: 2b3e7f7d0a39e374c8e3d5230e431f69, type: 2}
+  autofillCanvasesToAdapt: 1
+  canvasesToAdapt: []
+  canvasesToIgnore: []
+  gameObjectsToAdapt: []
   adaptRenderersDuringUpdate: 1
+  lastAppliedShouldDisplay: 0
   mode: 2
 --- !u!114 &3466832833349795409
 MonoBehaviour:
@@ -876,11 +887,6 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: cdb05a6cc51c5f945923c13211a57294, type: 3}
---- !u!23 &4121894833981712483 stripped
-MeshRenderer:
-  m_CorrespondingSourceObject: {fileID: 3503668792233294192, guid: cdb05a6cc51c5f945923c13211a57294, type: 3}
-  m_PrefabInstance: {fileID: 697039482273173779}
-  m_PrefabAsset: {fileID: 0}
 --- !u!4 &8676785722263232703 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 8198313923795939756, guid: cdb05a6cc51c5f945923c13211a57294, type: 3}
@@ -1067,11 +1073,6 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 656355804d0b8e34981ab05ad0cd939c, type: 3}
---- !u!23 &3044529075104154673 stripped
-MeshRenderer:
-  m_CorrespondingSourceObject: {fileID: 7824367705950806517, guid: 656355804d0b8e34981ab05ad0cd939c, type: 3}
-  m_PrefabInstance: {fileID: 5104245138735162820}
-  m_PrefabAsset: {fileID: 0}
 --- !u!4 &3676657769656236000 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 8490401482382299684, guid: 656355804d0b8e34981ab05ad0cd939c, type: 3}

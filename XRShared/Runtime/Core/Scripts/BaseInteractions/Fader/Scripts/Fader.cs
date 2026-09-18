@@ -1,3 +1,4 @@
+using Fusion.XR.Shared.Automatization;
 using Fusion.XR.Shared.Core;
 using Fusion.XR.Shared.Core.Interaction;
 using System.Collections;
@@ -16,6 +17,10 @@ namespace Fusion.XR.Shared.Locomotion
         public Renderer target;
         public Color fadeColor = Color.black;
         public float startFadeLevel = 0;
+
+        [Header("Fader shader")]
+        public FaderPreset faderPreset = FaderPreset.SpecificFaderShader;
+        public Material faderViewMaterial = null;
         public string colorNameMaterialProperty = "_Color";
 
         [Header("Blink default durations")]
@@ -25,6 +30,13 @@ namespace Fusion.XR.Shared.Locomotion
 
         const string FADER_SHADER_NAME = "Unlit/Fader";
         const string SHADER_COLLECTION_NAME = "FaderShaderCollection";
+        const string URPUNLIT_MATERIAL_NAME = "URPUnlitSimpleFader";
+
+        public enum FaderPreset
+        {
+            FaderViewMaterial,
+            SpecificFaderShader
+        }
 
         private void Awake()
         {
@@ -42,7 +54,11 @@ namespace Fusion.XR.Shared.Locomotion
             faderTargetGameObject.transform.localPosition = new Vector3(0, 0, 0.02f);
             faderTargetGameObject.transform.localRotation = Quaternion.Euler(-90, 0, 0);
             target = faderTargetGameObject.GetComponent<Renderer>();
-            target.material = new Material(Shader.Find(FADER_SHADER_NAME));
+            if(faderViewMaterial == null || faderPreset == FaderPreset.SpecificFaderShader)
+            {
+                faderViewMaterial = new Material(Shader.Find(FADER_SHADER_NAME));
+            }
+            target.material = faderViewMaterial; 
             target.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             faderTargetGameObject.SetActive(false);
         }
@@ -67,6 +83,14 @@ namespace Fusion.XR.Shared.Locomotion
         {
 #if UNITY_EDITOR
             ValidationUtils.SceneEditionValidate(gameObject, () => {
+                if (faderPreset == FaderPreset.FaderViewMaterial && faderViewMaterial == null)
+                {
+                    if (AssetLookup.TryFindAsset(new XR.Shared.Automatization.AssetLookup.AssetLookupCriteria(URPUNLIT_MATERIAL_NAME, extension: "material"), out Material mat) && mat != null)
+                    {
+                        faderViewMaterial = mat;
+                    }
+                }
+
                 var shader = Shader.Find(FADER_SHADER_NAME);
                 var graphicsSettings = new UnityEditor.SerializedObject(UnityEngine.Rendering.GraphicsSettings.GetGraphicsSettings());
                 UnityEditor.SerializedProperty alwaysIncludedShaders = graphicsSettings.FindProperty("m_AlwaysIncludedShaders");
@@ -96,7 +120,7 @@ namespace Fusion.XR.Shared.Locomotion
                     }
                 }
 
-                if (found == false)
+                if (found == false && faderViewMaterial == null)
                 {
                     Debug.LogWarning($"[Fader] To be sure that the fader shader is included in builds,  either add {FADER_SHADER_NAME} to Always included shaders, or add {SHADER_COLLECTION_NAME} to the preloaded shaders in graphics settings");
                 }

@@ -7,7 +7,8 @@ https://doc.photonengine.com/fusion/current/industries-samples/industries-addons
 
 ## Version & Changelog
 
-- version 2.3.0: Update to support new XRShared architecture
+- Version 2.3.1: Remove unused MagnetCoordinator backing field in the deprecated StaticMagnet
+- Version 2.3.0: Update to support new XRShared architecture
 - Version 2.2.4:
     - Remove some unused demo prefabs
 - Version 2.2.3: Unity 6 compability

@@ -17,6 +17,9 @@ namespace Fusion.XR.Shared.Core.Interaction
         public bool CanInteract { get; }
         public bool IsSelecting { get; }
         public Vector3 Origin { get; }
+#pragma warning disable CS0108
+        public GameObject gameObject { get; }
+#pragma warning restore CS0108
         public Quaternion Rotation { get; }
         public Vector2 ScrollDelta { get; }
         public IInteractionDetailsProvider LastInteractionDetailProvider { get; set; }

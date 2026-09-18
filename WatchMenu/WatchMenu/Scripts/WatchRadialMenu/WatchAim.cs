@@ -1,4 +1,5 @@
 using Fusion.XR.Shared.Core;
+using Fusion.XR.Shared.Utils;
 using UnityEngine;
 
 namespace Fusion.Addons.WatchMenu
@@ -6,26 +7,25 @@ namespace Fusion.Addons.WatchMenu
     /// <summary>
     /// This component, placed on the watch, checks whether the user is looking at it.
     /// When they are, it instructs the configured radial menu to display its buttons.
-    /// Please note this class implements the `IRigPartVisualizerGameObjectToAdapt` interface in order to add the watch in the  `Game Objects To Adapt` list of the `RigPartVisualizer` (added on runtime).
+    /// Please note this class adds itself to the `Game Objects To Adapt` list of the `RigPartVisualizer`
     /// </summary>
 
 
     [DefaultExecutionOrder(WatchAim.EXECUTION_ORDER)]
-    public class WatchAim : MonoBehaviour, IRigPartVisualizerGameObjectToAdapt
+    public class WatchAim : MonoBehaviour
     {
         // We move the menu late, to be sure to follow components after their final moves for the frame (rig parts, ...)
         const int EXECUTION_ORDER = 100_000;
         [SerializeField] Transform radialMenuCenterPosition;
-        [SerializeField] Transform aimObject;
-        [SerializeField] Vector3 radialMenuTranslationOffset = new Vector3(0f, 0.015f, 0f);
-        [SerializeField] Vector3 radialMenuRotationOffset = new Vector3(0f, 0f, 90f);
-        [SerializeField] RadialMenu radialMenu;
+        public Transform aimObject;
+        public Vector3 radialMenuTranslationOffset = new Vector3(0f, 0.015f, 0f);
+        public Vector3 radialMenuRotationOffset = new Vector3(0f, 0f, 90f);
+        public RadialMenu radialMenu;
         [SerializeField] float acceptedAngleBetweenAimObjectAndHeadset = 32f;
         [SerializeField] bool disableWhenOnline = false;
-        [SerializeField] bool radialMenuFollowWatchPosition = true;
-        [SerializeField] float timerBeforeOpeningTheMenu = 0.5f;
+        public bool radialMenuFollowWatchPosition = true;
+        public float timerBeforeOpeningTheMenu = 0.5f;
         [SerializeField] float timerBeforeClosingTheMenu = 1f;
-        [SerializeField] float faceDotThreshold = 0.85f;
 
         float headToTargetObjectDotThreshold = -1;
         float lastWatchingTime = -1;
@@ -37,9 +37,17 @@ namespace Fusion.Addons.WatchMenu
         NetworkObject networkObject;
         [SerializeField] RigPartVisualizer rigPartVisualizer;
 
+        bool applyUnscaledOffset = false;
+        bool shouldUseAimObjectForMenuCenterPosition = false;
+
         private void Awake()
         {
             networkObject = GetComponentInParent<NetworkObject>();
+        }
+
+        public void ChangeApplyUnscaledOffset(bool applyUnscaledOffset)
+        {
+            this.applyUnscaledOffset = applyUnscaledOffset;
         }
 
         private void OnEnable()
@@ -50,6 +58,11 @@ namespace Fusion.Addons.WatchMenu
         private void OnDisable()
         {
             Application.onBeforeRender -= OnBeforeRender;
+        }
+
+        private void OnDestroy()
+        {
+            ChangeRigPartVisualizer(null);
         }
 
         private void Start()
@@ -65,7 +78,6 @@ namespace Fusion.Addons.WatchMenu
             SetHeadset();
 
             headToTargetObjectDotThreshold = Mathf.Cos(acceptedAngleBetweenAimObjectAndHeadset * Mathf.Deg2Rad);
-
         }
 
         [BeforeRenderOrder(WatchAim.EXECUTION_ORDER)]
@@ -95,8 +107,23 @@ namespace Fusion.Addons.WatchMenu
                     Debug.LogError("headsetTransform not set and Headset not found");
                 }
             }
+        }
 
+        public void ChangeRigPartVisualizer(RigPartVisualizer visualizer)
+        {
 
+            if (rigPartVisualizer != null)
+            {
+                rigPartVisualizer.RemoveObjectContentToAdapt(gameObject, shouldAdaptGameObject: true, includeDisabledComponents: true);
+                if(aimObject) rigPartVisualizer.RemoveObjectContentToAdapt(aimObject.gameObject, shouldAdaptGameObject: true, includeDisabledComponents: true);
+            }
+            rigPartVisualizer = visualizer;
+            if (rigPartVisualizer != null)
+            {
+                rigPartVisualizer.AddObjectContentToAdapt(gameObject, shouldAdaptGameObject: true, includeDisabledComponents: true);
+                if (aimObject) rigPartVisualizer.AddObjectContentToAdapt(aimObject.gameObject, shouldAdaptGameObject: true, includeDisabledComponents: true);
+                rigPartVisualizer.ReApplyAdapt();
+            }
         }
 
         void WatchMenuHandling()
@@ -107,7 +134,7 @@ namespace Fusion.Addons.WatchMenu
 
             if (rigPartVisualizer == null)
             {
-                rigPartVisualizer = GetComponentInParent<RigPartVisualizer>();
+                ChangeRigPartVisualizer(GetComponentInParent<RigPartVisualizer>());
             }
 
             if (rigPartVisualizer && rigPartVisualizer.ShouldDisplay() == false)
@@ -189,9 +216,26 @@ namespace Fusion.Addons.WatchMenu
 
         void ComputeRadialMenuPosition()
         {
-            if (radialMenuCenterPosition == null) radialMenuCenterPosition = aimObject;
-            radialMenu.transform.rotation = radialMenuCenterPosition.rotation * Quaternion.Euler(radialMenuRotationOffset);
-            radialMenu.transform.position = radialMenuCenterPosition.transform.TransformPoint(radialMenuTranslationOffset);
+            if (radialMenuCenterPosition == null)
+            {
+                radialMenuCenterPosition = aimObject;
+                shouldUseAimObjectForMenuCenterPosition = true;
+            }
+            if (shouldUseAimObjectForMenuCenterPosition)
+            {
+                radialMenuCenterPosition = aimObject;
+            }
+            if (applyUnscaledOffset)
+            {
+                (var position, var rotation) = TransformManipulations.ApplyUnscaledOffset(radialMenuCenterPosition.transform.position, radialMenuCenterPosition.transform.rotation, radialMenuTranslationOffset, Quaternion.Euler(radialMenuRotationOffset));
+                radialMenu.transform.rotation = rotation;
+                radialMenu.transform.position = position;
+            }
+            else
+            {
+                radialMenu.transform.rotation = radialMenuCenterPosition.rotation * Quaternion.Euler(radialMenuRotationOffset);
+                radialMenu.transform.position = radialMenuCenterPosition.transform.TransformPoint(radialMenuTranslationOffset);
+            }
         }
 
         private bool IsHeadsetLookingAtTargetObject(GameObject targetObject)
@@ -203,6 +247,7 @@ namespace Fusion.Addons.WatchMenu
 
             if (headToTargetObjectDot < headToTargetObjectDotThreshold)
             {
+                //Debug.LogError($"IsHeadsetLookingAtTargetObject KO1 (Check if headset is looking at target object) {headToTargetObjectDot} < {headToTargetObjectDotThreshold}");
                 return false;
             }
 
@@ -213,6 +258,7 @@ namespace Fusion.Addons.WatchMenu
 
             if (targetObjectToHeadDot < headToTargetObjectDotThreshold)
             {
+                //Debug.LogError($"IsHeadsetLookingAtTargetObject KO2 (Check if target object {targetObject} if oriented toward the head) {targetObjectToHeadDot} < {headToTargetObjectDotThreshold}");
                 return false;
             }
 

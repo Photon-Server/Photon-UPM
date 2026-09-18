@@ -1,5 +1,5 @@
 // Uncomment nextr line if a Photon video SDK version earlier than 2.59 is used (and above or equal to 2.52)
-#define VIDEOSDK_258 
+//#define VIDEOSDK_258 
 
 #if PHOTON_VOICE_VIDEO_ENABLE
 using Photon.Voice;
@@ -9,7 +9,13 @@ using VoiceILogger = Photon.Voice.ILogger;
 using UnityLogger = Photon.Voice.Unity.Logger;
 using VoiceClientstate = Photon.Realtime.ClientState;
 using VideoTextureShader3D = Photon.Voice.Unity.VideoTexture.Shader3D;
+using System.Threading.Tasks;
+
+#if XRSHARED_CORE_ADDON_AVAILABLE
 using Fusion.XR.Shared.Core;
+#else
+using System.Threading.Tasks;
+#endif
 using UnityEngine.Events;
 #endif
 
@@ -130,6 +136,7 @@ namespace Fusion.Addons.ScreenSharing
             logger = new UnityLogger();
         }
 
+
         private void Update()
         {
             if (fusionVoiceClient == null)
@@ -148,6 +155,7 @@ namespace Fusion.Addons.ScreenSharing
                 didVoiceConnectionJoined = true;
                 OnVoiceJoined();
             }
+
         }
 
         public void OnVoiceJoined()
@@ -165,14 +173,22 @@ namespace Fusion.Addons.ScreenSharing
             {
                 // Ensure a clean stop of the emission before starting a new one
                 Debug.Log("[WebcamEmitter] Wait before starting transmission: ensure a clean stop of the emission before starting a new one ...");
+#if XRSHARED_CORE_ADDON_AVAILABLE
                 await AsyncTask.Delay((int)(1000 * DelayBeforeEmissionRestart));
+#else
+                await Task.Delay((int)(1000 * DelayBeforeEmissionRestart));
+#endif
             }
 
             status = Status.WaitingVoiceConnection;
             while (this != null && didVoiceConnectionJoined == false)
             {
                 Debug.Log($"Texture emission connection requested. Waiting for Photon voice connection ({(fusionVoiceClient ? fusionVoiceClient.ClientState : "")}) ...");
+#if XRSHARED_CORE_ADDON_AVAILABLE
                 await AsyncTask.Delay(1000);
+#else
+                await Task.Delay(1000);
+#endif
             }
             emissionInProgress = true;
             status = Status.WaitingRecorderTextureAvailability;
@@ -377,7 +393,13 @@ namespace Fusion.Addons.ScreenSharing
                 projection.lowerResFPS = settings.VideoFPS;
             }
             s.ToggleScreenVisibility(true);
-            if (s.screenRenderer)
+
+            // RawImage mode: use SetupRawImage with a live texture source
+            if (s.screenRawImage != null && r != null && status == Status.Emitting)
+            {
+                s.SetupRawImage(() => r.PlatformView as Texture, flip);
+            }
+            else if (s.screenRenderer)
             {
                 if (status == Status.Emitting && s.screenRenderer && r != null)
                 {
@@ -388,7 +410,7 @@ namespace Fusion.Addons.ScreenSharing
                     else
                     {
                         s.SetupMaterial(r.PlatformView as Texture, flip, new Vector2Int(settings.VideoWidth, settings.VideoHeight), settings.VideoFPS);
-                    }                        
+                    }
                 }
             }
         }

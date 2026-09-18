@@ -1,0 +1,22 @@
+{
+    "name": "com.photonengine.prototyping.addon.cinemachineuserstracker",
+    "version": "1.0.1",
+    "displayName": "CineMachineUsersTracker",
+    "description": "Allow to track network rigs as target object for a CinemachineTargetGroup",
+    "unity": "6.0",
+    "documentationUrl": "https://doc.photonengine.com/fusion/current/industries-samples/industries-addons/fusion-industries-addons-cinemachine-userstracker",
+    "dependencies": {
+    },
+   "keywords": [
+      "Fusion",
+      "Photon",
+      "Network"
+    ],
+    "author": {
+      "name": "XR prototyping add-ons for Fusion",
+      "email": "sebastien.poivre@exitgames.com",
+      "url": "https://doc.photonengine.com/fusion/current/industries-samples/industries-addons/fusion-industries-addons-xrshared"
+    },
+    "samples": [
+    ]
+  }

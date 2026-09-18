@@ -1,6 +1,6 @@
 {
     "name": "com.photonengine.prototyping.addon.feedback",
-    "version": "2.1.2",
+    "version": "2.1.5",
     "displayName": "Feedback",
     "description": "This addons provides several classes to generate haptic and audio feedbacks.",
     "unity": "6.0",

@@ -6,7 +6,7 @@ https://doc.photonengine.com/fusion/current/industries-samples/industries-addons
 
 ## Version & Changelog
 
-- version 2.1.0: Update to support new XRShared architecture
+- Version 2.1.0: Update to support new XRShared architecture
 - Version 2.0.10: Add Polyspatial packages verification because of compatibility issue with Unity 6 when building for Android
 - Version 2.0.9:
 	- Material parameter update for Unity 6

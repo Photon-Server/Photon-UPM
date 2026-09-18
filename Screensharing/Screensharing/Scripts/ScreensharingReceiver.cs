@@ -295,10 +295,12 @@ namespace Fusion.Addons.ScreenSharing
         }
     }
 #else
-public class ScreensharingReceiver : UnityEngine.MonoBehaviour
-{
-#warning Screensharing add-on installed, but PHOTON_VOICE_VIDEO_ENABLE not set in project defines: select Window -> Photon Voice -> Enable Video from the Editor menu (or manually add PHOTON_VOICE_VIDEO_ENABLE scripting define symbol for each platform)
-}
+    public class ScreensharingReceiver : UnityEngine.MonoBehaviour
+    {
+    #if PHOTON_VOICE_VIDEO_AVAILABLE
+    #warning Screensharing and Photon Video SDK add-on installed, but PHOTON_VOICE_VIDEO_ENABLE not set in project defines: select Window -> Photon Voice -> Enable Video from the Editor menu (or manually add PHOTON_VOICE_VIDEO_ENABLE scripting define symbol for each platform)
+    #endif
+    }
 #endif
 }
 

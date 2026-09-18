@@ -61,6 +61,10 @@ namespace Fusion.XR.Shared.Core
         public bool adaptRenderersDuringUpdate = true;
         public List<IRigPartVisualizerCustomizer> customizers = new List<IRigPartVisualizerCustomizer>();
 
+        [Header("Status")]
+        // Takes into account potential direct calls to Adapt when adaptRenderersDuringUpdate is disabled (for NetworkrigPart with adaptRenderersToTrackingStatus enabled typically)
+        public bool lastAppliedShouldDisplay = false;
+
 
         [System.Flags]
         public enum Mode
@@ -76,27 +80,95 @@ namespace Fusion.XR.Shared.Core
 
         protected virtual void Awake()
         {
-            if ((renderersToAdapt == null || renderersToAdapt.Count == 0) && autofillRenderersToAdapt)
+            AddObjectContentToAdapt(gameObject, shouldFillRenderers: autofillRenderersToAdapt, shouldFillCanvases: autofillCanvasesToAdapt);
+        }
+
+        public void AddObjectContentToAdapt(GameObject o, bool shouldFillRenderers = true, bool shouldFillCanvases = true, bool shouldAdaptGameObject = false, bool includeDisabledComponents = false)
+        {
+            if (o == null) return;
+            if (shouldFillRenderers)
             {
-                renderersToAdapt = new List<Renderer>(GetComponentsInChildren<Renderer>());
+                foreach (var r in o.GetComponentsInChildren<Renderer>(includeDisabledComponents))
+                {
+                    if (renderersToAdapt.Contains(r) == false) renderersToAdapt.Add(r);
+                }
             }
-            if ((canvasesToAdapt == null || canvasesToAdapt.Count == 0) && autofillCanvasesToAdapt)
+            if (shouldFillCanvases)
             {
-                canvasesToAdapt = new List<Canvas>(GetComponentsInChildren<Canvas>());
+                foreach (var c in o.GetComponentsInChildren<Canvas>(includeDisabledComponents))
+                {
+                    if (canvasesToAdapt.Contains(c) == false) canvasesToAdapt.Add(c);
+                }
             }
-            foreach (var customizer in GetComponentsInChildren<IRigPartVisualizerCustomizer>())
+
+            foreach (var customizer in o.GetComponentsInChildren<IRigPartVisualizerCustomizer>(includeDisabledComponents))
             {
                 if (customizers.Contains(customizer) == false) customizers.Add(customizer);
             }
-            foreach (var customizer in GetComponentsInParent<IRigPartVisualizerCustomizer>())
+
+            foreach (var customizer in o.GetComponentsInParent<IRigPartVisualizerCustomizer>(includeDisabledComponents))
             {
                 if (customizers.Contains(customizer) == false) customizers.Add(customizer);
             }
-            foreach(var c in GetComponentsInChildren<IRigPartVisualizerGameObjectToAdapt>())
+
+            foreach (var c in GetComponentsInChildren<IRigPartVisualizerGameObjectToAdapt>(includeDisabledComponents))
             {
-                if(gameObjectsToAdapt.Contains(c.gameObject) == false)
+                if (gameObjectsToAdapt.Contains(c.gameObject) == false)
                 {
                     gameObjectsToAdapt.Add(c.gameObject);
+                }
+            }
+
+            if (shouldAdaptGameObject)
+            {
+                if (gameObjectsToAdapt.Contains(o) == false)
+                {
+                    gameObjectsToAdapt.Add(o);
+                }
+            }
+        }
+
+        public void RemoveObjectContentToAdapt(GameObject o, bool shouldFillRenderers = true, bool shouldFillCanvases = true, bool shouldAdaptGameObject = false, bool includeDisabledComponents = false)
+        {
+            if (o == null) return;
+            if (shouldFillRenderers)
+            {
+                foreach (var r in o.GetComponentsInChildren<Renderer>(includeDisabledComponents))
+                {
+                    if (renderersToAdapt.Contains(r)) renderersToAdapt.Remove(r);
+                }
+            }
+            if (shouldFillCanvases)
+            {
+                foreach (var c in o.GetComponentsInChildren<Canvas>(includeDisabledComponents))
+                {
+                    if (canvasesToAdapt.Contains(c)) canvasesToAdapt.Remove(c);
+                }
+            }
+
+            foreach (var customizer in o.GetComponentsInChildren<IRigPartVisualizerCustomizer>(includeDisabledComponents))
+            {
+                if (customizers.Contains(customizer)) customizers.Remove(customizer);
+            }
+
+            foreach (var customizer in o.GetComponentsInParent<IRigPartVisualizerCustomizer>(includeDisabledComponents))
+            {
+                if (customizers.Contains(customizer)) customizers.Remove(customizer);
+            }
+
+            foreach (var c in GetComponentsInChildren<IRigPartVisualizerGameObjectToAdapt>(includeDisabledComponents))
+            {
+                if (gameObjectsToAdapt.Contains(c.gameObject))
+                {
+                    gameObjectsToAdapt.Remove(c.gameObject);
+                }
+            }
+
+            if (shouldAdaptGameObject)
+            {
+                if (gameObjectsToAdapt.Contains(o))
+                {
+                    gameObjectsToAdapt.Remove(o);
                 }
             }
         }
@@ -110,8 +182,14 @@ namespace Fusion.XR.Shared.Core
             }
         }
 
+        public void ReApplyAdapt()
+        {
+            Adapt(lastAppliedShouldDisplay);
+        }
+
         public void Adapt(bool shouldDisplay)
         {
+            lastAppliedShouldDisplay = shouldDisplay;
             AdaptRenderers(shouldDisplay);
             AdaptGameObjects(shouldDisplay);
             AdaptCanvases(shouldDisplay);
@@ -161,20 +239,19 @@ namespace Fusion.XR.Shared.Core
                 else
                 {
                     // Adapt renderer enabled to shouldDisplay
-                    if (r.enabled != shouldDisplay)
+                    if (r != null && r.enabled != shouldDisplay)
                     {
                         r.enabled = shouldDisplay;
                     }
                 }
             }
-
         }
 
         void AdaptGameObjects(bool shouldDisplay)
         {
             foreach (var gameObjectToAdapt in gameObjectsToAdapt)
             {
-                if (gameObjectToAdapt.activeInHierarchy != shouldDisplay)
+                if (gameObjectToAdapt != null && gameObjectToAdapt.activeInHierarchy != shouldDisplay)
                 {
                     gameObjectToAdapt.SetActive(shouldDisplay);
                 }
@@ -188,7 +265,7 @@ namespace Fusion.XR.Shared.Core
                 if (canvasesToIgnore.Contains(c)) continue;
                 
                 // Adapt canvas enabled to shouldDisplay
-                if (c.enabled != shouldDisplay)
+                if (c != null && c.enabled != shouldDisplay)
                 {
                     c.enabled = shouldDisplay;
                 }

@@ -205,6 +205,11 @@ namespace Fusion.Addons.DynamicAudioGroup
 
         protected float DistanceSqr(DynamicAudioGroupMember other)
         {
+            if(other.rig == null || rig == null)
+            {
+                // We consider a member that does not rely on a NetworRig to be close to everybody (flat screen client, ...)
+                return 0;
+            }
             return (other.rig.Headset.transform.position - rig.Headset.transform.position).sqrMagnitude;
         }
 
@@ -239,9 +244,16 @@ namespace Fusion.Addons.DynamicAudioGroup
 
             foreach (var member in members)
             {
-                if (member == null || member.rig == null || member == this) continue;
-
-                CheckProximityWithOtherMember(member);
+                if (member == null || member == this) continue;
+                if (member.rig == null)
+                {
+                    // Member is not a network rig, we consider it always is listening
+                    ListenToMember(member);
+                }
+                else
+                {
+                    CheckProximityWithOtherMember(member);
+                }
             }
 
             // TODO adapt proximityDistance to number of listenedtoMembers (to decrease it if the number is too hight)

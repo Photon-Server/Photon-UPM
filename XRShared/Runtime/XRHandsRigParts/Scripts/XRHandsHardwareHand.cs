@@ -2,10 +2,17 @@ using Fusion.XR.Shared.Base;
 using UnityEngine;
 using System.Collections.Generic;
 using Fusion.XR.Shared.Core;
+using Fusion.XR.Shared.Tools;
+using Fusion.XRShared.Tools;
 using System;
+
 #if XRHANDS_AVAILABLE
 using UnityEngine.XR.Hands;
+#if UNITY_ANDROID
+using UnityEngine.Android;
 #endif
+#endif
+
 #if XRHANDS_SYNCHRONIZATION_ADDON_AVAILABLE
 using Fusion.Addons.XRHandsSync;
 #endif
@@ -35,7 +42,15 @@ namespace Fusion.XR.Shared.XRHands
 
 #if XRHANDS_SYNCHRONIZATION_ADDON_AVAILABLE
         public override Pose WorldIndexTipPose => collectableSkeletonDriver.WorldIndexTipPose;
+        public override Pose WorldIndexBasePose => collectableSkeletonDriver.BoneWorldPose(XRHandJointID.IndexProximal);
         public override Pose WorldWristPose => collectableSkeletonDriver.WorldWristPose;
+        public override Pose WorldThumbTipPose => collectableSkeletonDriver.WorldThumbTipPose;
+        public override Pose WorldMiddleTipPose => collectableSkeletonDriver.BoneWorldPose(XRHandJointID.MiddleTip);
+        public override Pose WorldRingTipPose => collectableSkeletonDriver.BoneWorldPose(XRHandJointID.RingTip);
+        public override Pose WorldLittleTipPose => collectableSkeletonDriver.BoneWorldPose(XRHandJointID.LittleTip);
+        public override Pose WorldPalmPose => collectableSkeletonDriver.BoneWorldPose(XRHandJointID.Palm);
+
+
 #endif
         public bool IsPinching { get; set; } = false;
 
@@ -73,38 +88,68 @@ namespace Fusion.XR.Shared.XRHands
         #region Tracking status
 #if XRHANDS_SYNCHRONIZATION_ADDON_AVAILABLE
 #if XRHANDS_AVAILABLE
-        XRHandSubsystem handSubsystem;
-        bool noHandSubsystemErrorDisplayed = false;
+        XRHandSubsystem _handSubsystem;
+        bool _noHandSubsystemErrorDisplayed = false;
+#if UNITY_ANDROID
+        bool _permissionRequested = false;
+#endif
         protected virtual void DetectHandSubsystems()
         {
-            if (handSubsystem != null) return;
+            if (_handSubsystem != null) return;
+
+#if UNITY_ANDROID
+
+            if (_permissionRequested == false)
+            {
+                PermissionsRequester.SharedInstance.AddPermissionRequest(GetHandTrackingPermission());
+                _permissionRequested = true;
+            }
+
+            // Wait until permission is granted before looking for subsystem
+            if (Permission.HasUserAuthorizedPermission(GetHandTrackingPermission()) == false)
+                return;
+#endif
 
             var handSubsystems = new List<XRHandSubsystem>();
             SubsystemManager.GetSubsystems(handSubsystems);
+
             for (var i = 0; i < handSubsystems.Count; ++i)
             {
                 var availableHandSubsystem = handSubsystems[i];
                 if (availableHandSubsystem.running)
                 {
-                    handSubsystem = availableHandSubsystem;
-                    handSubsystem.updatedHands += UpdatedHands;
+                    _handSubsystem = availableHandSubsystem;
+                    _handSubsystem.updatedHands += UpdatedHands;
+                    Debug.Log("[DetectHandSubsystems] Hand tracking active");
                     break;
                 }
             }
-            if (handSubsystems.Count == 0 && noHandSubsystemErrorDisplayed == false)
+            if (handSubsystems.Count == 0 && _noHandSubsystemErrorDisplayed == false)
             {
-                noHandSubsystemErrorDisplayed = true;
-                Debug.LogError("No hand subsystem: hand tracking won't work");
+                _noHandSubsystemErrorDisplayed = true;
+                Debug.LogWarning("[DetectHandSubsystems] No subsystem found yet");
             }
         }
 
+#if UNITY_ANDROID
+        private string GetHandTrackingPermission()
+        {
+
+            string deviceModel = SystemInfo.deviceModel.ToLower();
+
+            if (deviceModel.Contains("oculus") || deviceModel.Contains("meta"))
+                return "com.oculus.permission.HAND_TRACKING";
+
+            return "android.permission.HAND_TRACKING";
+        }
+#endif
 
         protected override void OnDestroy()
         {
             base.OnDestroy();
-            if (handSubsystem != null)
+            if (_handSubsystem != null)
             {
-                handSubsystem.updatedHands -= UpdatedHands;
+                _handSubsystem.updatedHands -= UpdatedHands;
             }
         }
 
@@ -134,8 +179,11 @@ namespace Fusion.XR.Shared.XRHands
 #if XRHANDS_SYNCHRONIZATION_ADDON_AVAILABLE
 #if XRHANDS_AVAILABLE
             DetectHandSubsystems();
-            if (handSubsystem == null) return;
-            var hand = Side == Core.RigPartSide.Left ? handSubsystem.leftHand : handSubsystem.rightHand;
+            if (_handSubsystem == null)
+            {
+                return;
+            }
+            var hand = Side == Core.RigPartSide.Left ? _handSubsystem.leftHand : _handSubsystem.rightHand;
             if (hand.isTracked)
             {
                 TrackingStatus = RigPartTrackingstatus.Tracked;

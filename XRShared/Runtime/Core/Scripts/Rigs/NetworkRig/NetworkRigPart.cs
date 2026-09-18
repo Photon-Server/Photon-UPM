@@ -34,26 +34,26 @@ namespace Fusion.XR.Shared.Core
         [Networked, OnChangedRender(nameof(OnTrackingStatusChange))]
         public RigPartTrackingstatus TrackingStatus { get; set; } = RigPartTrackingstatus.NotTracked;
 
-        protected IHardwareRig localHardwareRig = null;
-        protected IHardwareRigPart _localHardwareRigPart = null;
-        protected List<IRigPartPositionModifier> localHardwareRigPartPositionModifiers = new List<IRigPartPositionModifier>();
-        protected List<IRigPartPositionModifier> rigPartPositionModifiers = new List<IRigPartPositionModifier>();
-
         public INetworkRig networkRig;
 
         public Vector3 DisplayedPositionWithoutModifiers { get; set; } = Vector3.zero;
         public Quaternion DisplayedRotationWithoutModifiers { get; set; } = Quaternion.identity;
 
+        protected IHardwareRig _localHardwareRig = null;
+        protected IHardwareRigPart _localHardwareRigPart = null;
+        protected List<IRigPartPositionModifier> _localHardwareRigPartPositionModifiers = new List<IRigPartPositionModifier>();
+        protected List<IRigPartPositionModifier> _rigPartPositionModifiers = new List<IRigPartPositionModifier>();
+
+        bool _previousHideRenderersForStateAuthority;
+
 
         #region INetworkRigPart
-
         public abstract RigPartKind Kind { get; }
         public IHardwareRigPart LocalHardwareRigPart => _localHardwareRigPart;
         public IRig Rig => networkRig;
 
         RigPartVisualizer rigPartVisualizer;
         #endregion
-
 
         protected virtual void Awake()
         {
@@ -69,11 +69,10 @@ namespace Fusion.XR.Shared.Core
                 }
                 rigPartVisualizer.adaptRenderersDuringUpdate = false;
             }
-            rigPartPositionModifiers = new List<IRigPartPositionModifier>(GetComponentsInChildren<IRigPartPositionModifier>());
+            _rigPartPositionModifiers = new List<IRigPartPositionModifier>(GetComponentsInChildren<IRigPartPositionModifier>());
         }
 
         #region NetworkBehaviour
-
         public override void Spawned()
         {
             base.Spawned();
@@ -100,6 +99,12 @@ namespace Fusion.XR.Shared.Core
             if (this.RequiredExtrapolationTiming() == ExtrapolationTiming.DuringFusionRender)
             {
                 AdaptDisplayedPosition();
+            }
+
+            if (_previousHideRenderersForStateAuthority != hideRenderersForStateAuthority)
+            {
+                AdaptRenderers();
+                _previousHideRenderersForStateAuthority = hideRenderersForStateAuthority;
             }
         }
 
@@ -152,7 +157,7 @@ namespace Fusion.XR.Shared.Core
         {
             if (allowPositionModifiers)
             {
-                foreach (var rigPartPositionModifier in rigPartPositionModifiers)
+                foreach (var rigPartPositionModifier in _rigPartPositionModifiers)
                 {
                     if (TryApplyPositionModifiers(rigPartPositionModifier))
                     {
@@ -160,7 +165,7 @@ namespace Fusion.XR.Shared.Core
                         return;
                     }
                 }
-                foreach (var localHardwareRigPartPositionModifier in localHardwareRigPartPositionModifiers)
+                foreach (var localHardwareRigPartPositionModifier in _localHardwareRigPartPositionModifiers)
                 {
                     if (TryApplyPositionModifiers(localHardwareRigPartPositionModifier))
                     {
@@ -227,11 +232,11 @@ namespace Fusion.XR.Shared.Core
         #region Detection
         protected virtual void DetectHardwareRig()
         {
-            if (Object.HasStateAuthority && localHardwareRig == null)
+            if (Object.HasStateAuthority && _localHardwareRig == null)
             {
                 // Detect the matching hardware rig
-                localHardwareRig = FindHardwareRig();
-                if (localHardwareRig == null)
+                _localHardwareRig = FindHardwareRig();
+                if (_localHardwareRig == null)
                 {
                     Debug.LogError("Hardware rig not found");
                 }
@@ -270,9 +275,9 @@ namespace Fusion.XR.Shared.Core
 
         protected virtual void DetectedHardwareRigPart()
         {
-            if (localHardwareRig != null && _localHardwareRigPart == null)
+            if (_localHardwareRig != null && _localHardwareRigPart == null)
             {
-                foreach (var rigPart in localHardwareRig.RigParts)
+                foreach (var rigPart in _localHardwareRig.RigParts)
                 {
                     if (IsMatchingHardwareRigPart(rigPart))
                     {
@@ -281,7 +286,7 @@ namespace Fusion.XR.Shared.Core
                         // For debug purposes
                         localHardwareRigPartGameObject = rigPart.gameObject;
 
-                        localHardwareRigPartPositionModifiers = new List<IRigPartPositionModifier>(_localHardwareRigPart.gameObject.GetComponentsInChildren<IRigPartPositionModifier>(true));
+                        _localHardwareRigPartPositionModifiers = new List<IRigPartPositionModifier>(_localHardwareRigPart.gameObject.GetComponentsInChildren<IRigPartPositionModifier>(true));
                     }
                 }
             }
@@ -291,6 +296,10 @@ namespace Fusion.XR.Shared.Core
 
         protected virtual void OnTrackingStatusChange()
         {
+            AdaptRenderers();
+        }
+
+        void AdaptRenderers() { 
             if (adaptRenderersToTrackingStatus && rigPartVisualizer)
             {
                 var shouldDisplay = rigPartVisualizer.ShouldDisplay();

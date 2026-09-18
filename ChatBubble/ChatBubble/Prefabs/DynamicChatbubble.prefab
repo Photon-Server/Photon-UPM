@@ -162,7 +162,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7165129090714010665, guid: 5a03940890bcde445b98fdf53d062595, type: 3}
       propertyPath: Flags
-      value: 264449
+      value: 264450
       objectReference: {fileID: 0}
     - target: {fileID: 7165129090714010665, guid: 5a03940890bcde445b98fdf53d062595, type: 3}
       propertyPath: SortKey
@@ -247,7 +247,30 @@ MonoBehaviour:
   SyncScale: 0
   SyncParent: 0
   _autoAOIOverride: 1
-  DisableSharedModeInterpolation: 0
+  ConfigFlags: 0
+  PhysicsSettings:
+    ForecastEnabled: 1
+    DebugPhysics: 0
+    GravityForecast: 2
+    MaxExtrapolationTime: 0.15
+    MinLinearDetectedError: 0.02
+    MinAngularDetectedError: 3
+    MaxLinearError: 0
+    MaxAngularError: 0
+    LowCorrectionProgressThreshold: 0.015
+    HighErrorSimilarityThreshold: 1
+    MaxErrorTotalTime: 0.5
+    MaxRemoteSleepIgnoreTime: 0.5
+    ErrorCorrectionType: 0
+    LinearVelCorrectionMul: 1
+    AngularVelCorrectionMul: 1
+    PositionCorrectionLerp: 0.15
+    RotationCorrectionLerp: 0.15
+    Spring: 75
+    Damper: 2
+    MinImpactfulCollisionAlignment: 0.3
+    ImpactStartCorrectionTime: 0.1
+    ImpactCorrectionTimeComplete: 0.3
 --- !u!114 &7484328964272031663
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -265,7 +288,7 @@ MonoBehaviour:
   capacity: 8
   unlockIfEmpty: 1
   _IsLocked:
-    _value: 0
+    RawValue: 0
   roomShape: 1
   roomSize: {x: 4, y: 4, z: 4}
   radius: 3.13

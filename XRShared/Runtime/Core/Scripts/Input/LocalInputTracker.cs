@@ -155,6 +155,15 @@ namespace Fusion.XR.Shared.Core
         }
 
         /// <summary>
+        /// Read both side input (unless an explicit action has been provide), add return true if the max result is over the threshold
+        /// </summary>
+        /// <returns></returns>
+        public bool ReadAnyButtonPressed(float threshold = 0.5f)
+        {
+            return ReadMaxFloat() is float maxValue && maxValue > threshold;
+        }
+
+        /// <summary>
         /// Read both side input (unless an explicit action has been provide), add return true if any is true
         /// </summary>
         /// <returns></returns>

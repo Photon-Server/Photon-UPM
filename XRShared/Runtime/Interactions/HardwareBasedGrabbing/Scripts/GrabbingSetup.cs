@@ -19,6 +19,8 @@ namespace Fusion.XR.Shared.Core.HardwareBasedGrabbing
         [Tooltip("If true, don't display warning when automaticaly setting a collider is needed")]
         public bool removeColliderAutosetupWarning = false;
 
+        public string grabbingColliderLayer = "";
+
         [Header("Debug")]
         [SerializeField]
         bool logCreation = false;
@@ -34,6 +36,21 @@ namespace Fusion.XR.Shared.Core.HardwareBasedGrabbing
             GrabberVerification();
         }
 
+        void ApplyLayer(Collider collider)
+        {
+            if (string.IsNullOrEmpty(grabbingColliderLayer) == false)
+            {
+                int layer = LayerMask.NameToLayer(grabbingColliderLayer);
+                if (layer == -1)
+                {
+                    Debug.LogError($"Please add a {grabbingColliderLayer} layer. Required by {gameObject.name}");
+                }
+                else
+                {
+                    collider.gameObject.layer = layer;
+                }
+            }
+        }
         void GrabberVerification()
         {
             foreach (var rigPart in hardwareRig.RigParts)
@@ -140,6 +157,7 @@ namespace Fusion.XR.Shared.Core.HardwareBasedGrabbing
                             sphereCollider.isTrigger = true;
                             if (removeColliderAutosetupWarning == false)
                                 Debug.LogWarning($"A default index collider has been added for grabbing under the indexTipFollowerTransform {root}. Please create on in the scene to have desired positionning, or set removeColliderAutosetupWarning to true.");
+                            collider = sphereCollider;
                         }
                     }
                     else
@@ -157,7 +175,13 @@ namespace Fusion.XR.Shared.Core.HardwareBasedGrabbing
                             boxCollider.isTrigger = true;
                             if (removeColliderAutosetupWarning == false)
                                 Debug.LogWarning($"A default box collider has been added for grabbing under the palm {root}. Please create on in the scene to have desired positionning.");
+                            collider = boxCollider;
                         }
+                    }
+
+                    if (collider)
+                    {
+                        ApplyLayer(collider);
                     }
                 }
             }

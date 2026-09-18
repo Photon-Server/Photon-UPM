@@ -2,6 +2,7 @@ using UnityEngine;
 using Fusion.XR.Shared.Core;
 using Fusion.XR.Shared.Core.Interaction.Contact;
 using System;
+using Fusion.XRShared.Tools;
 
 namespace Fusion.Addons.BlockingContact
 {
@@ -177,6 +178,14 @@ namespace Fusion.Addons.BlockingContact
                 Debug.LogError("BlockableTip without blockingLayers configured: won't work]");
                 Debug.LogError("[BlockableTip] Enable blocking by all surfaces as a fallback (will probably have undesired side effects)");
                 blockingLayers = ~0;
+            }
+            if (tip == null)
+            {
+                var tipObject = GetComponentInChildren<ObjectTip>();
+                if (tipObject != null)
+                {
+                    tip = tipObject.transform;
+                }
             }
         }
 

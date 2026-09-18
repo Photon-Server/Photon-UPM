@@ -696,6 +696,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 7978156381403885674}
   - {fileID: 6009608892507430794}
   - {fileID: 4844147703812672212}
   - {fileID: 1453710269322243261}
@@ -889,7 +890,6 @@ MonoBehaviour:
   _IsDataHighConfidence:
     _value: 0
   _HandScale: 0
-  _CompressedBonesRotations: 
   useRotationsInterpolation: 1
   debugDisplayNetworkStateForLocaluser: 0
   debugDisplayCompressionImprovements: 0
@@ -1055,6 +1055,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   adaptRenderersToTrackingStatus: 1
   hideRenderersForStateAuthority: 0
+  allowPositionModifiers: 1
+  addHapticFeedbackOnPositionModifications: 1
+  positionOffsetForMaxHapticFeedback: 0.3
+  positionOffsetHapticAmplitude: 1
+  positionOffsetHapticDuration: 0.05
   localHardwareRigPartGameObject: {fileID: 0}
   _TrackingStatus: 0
   _side: 1
@@ -1165,3 +1170,65 @@ Transform:
   - {fileID: 4597732682690121408}
   m_Father: {fileID: 7646817497995208867}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1001 &1072074826181237781
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 5865619282425938560}
+    m_Modifications:
+    - target: {fileID: 3725196950932332441, guid: be3052229bfbf964c8d1365f3f2e0da4, type: 3}
+      propertyPath: m_Name
+      value: LeftHandTrackingWrist
+      objectReference: {fileID: 0}
+    - target: {fileID: 6942541451099368575, guid: be3052229bfbf964c8d1365f3f2e0da4, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6942541451099368575, guid: be3052229bfbf964c8d1365f3f2e0da4, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6942541451099368575, guid: be3052229bfbf964c8d1365f3f2e0da4, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6942541451099368575, guid: be3052229bfbf964c8d1365f3f2e0da4, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6942541451099368575, guid: be3052229bfbf964c8d1365f3f2e0da4, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6942541451099368575, guid: be3052229bfbf964c8d1365f3f2e0da4, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6942541451099368575, guid: be3052229bfbf964c8d1365f3f2e0da4, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6942541451099368575, guid: be3052229bfbf964c8d1365f3f2e0da4, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6942541451099368575, guid: be3052229bfbf964c8d1365f3f2e0da4, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6942541451099368575, guid: be3052229bfbf964c8d1365f3f2e0da4, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: be3052229bfbf964c8d1365f3f2e0da4, type: 3}
+--- !u!4 &7978156381403885674 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 6942541451099368575, guid: be3052229bfbf964c8d1365f3f2e0da4, type: 3}
+  m_PrefabInstance: {fileID: 1072074826181237781}
+  m_PrefabAsset: {fileID: 0}

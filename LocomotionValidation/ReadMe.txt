@@ -7,7 +7,7 @@ https://doc.photonengine.com/fusion/current/industries-samples/industries-addons
 
 ## Version & Changelog
 
-- version 2.1.0: Update to support new XRShared architecture
+- Version 2.1.0: Update to support new XRShared architecture
 - Version 2.0.3: Modifications for Asset Store
 - Version 2.0.2: Fix error log on application exit
 - Version 2.0.1: Fix issue + add minimalDetectedMove parameter

@@ -231,8 +231,10 @@ namespace Fusion.Addons.Meta
                         if (wristBone)
                         {
                             hand = ovrSkeleton.gameObject.AddComponent<XRHandsHardwareHand>();
+#if XRHANDS_AVAILABLE && XRHANDS_SYNCHRONIZATION_ADDON_AVAILABLE
                             hand.handBonesRootOverride = wristBone;
                             hand.dontUpdateBonesTransforms = true;
+#endif
                             hand.Side = side; 
                         }
 

@@ -20,7 +20,7 @@ namespace Fusion.Addons.VoiceHelpers
     {
 #if PHOTON_VOICE_AVAILABLE
         public Recorder recorder;
-        FusionVoiceClient fusionVoiceClient;
+        protected FusionVoiceClient fusionVoiceClient;
         protected MicrophonePermission microphonePermission;
 
         [Header("Permission callbacks")]

@@ -234,6 +234,8 @@ MeshRenderer:
   m_RayTracingAccelStructBuildFlagsOverride: 0
   m_RayTracingAccelStructBuildFlags: 1
   m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -255,9 +257,11 @@ MeshRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 1
+  m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
 --- !u!114 &2848988646730492483
 MonoBehaviour:
@@ -317,6 +321,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -361,6 +366,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 9189840154713017, guid: 9fdb10023291f61429d0813d972f4c0b, type: 3}
+      propertyPath: Flags
+      value: 262402
+      objectReference: {fileID: 0}
     - target: {fileID: 9189840154713017, guid: 9fdb10023291f61429d0813d972f4c0b, type: 3}
       propertyPath: SortKey
       value: 2330751247
@@ -568,6 +577,7 @@ MonoBehaviour:
   - {fileID: 7315912495879790151}
   gameObjectsToAdapt: []
   adaptRenderersDuringUpdate: 1
+  lastAppliedShouldDisplay: 0
   mode: 3
 --- !u!114 &856229305384089621 stripped
 MonoBehaviour:

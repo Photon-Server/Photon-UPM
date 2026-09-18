@@ -7,25 +7,30 @@ https://doc.photonengine.com/fusion/current/industries-samples/industries-addons
 
 ## Version & Changelog
 
+- Version 2.0.9:
+    - Add Fusion version verification for deprecated INetworkRunnerCallbacks OnUserSimulationMessage callback
+    - Fix IRLRoomsMinimap Oculus device detection compiled without the Oculus SDK
+- Version 2.0.8:
+    - Add MixedRealityRemoteuseRoom and MRRoomPortal to show a context for remote users rooms when they are positioned outside of local user rooms
+    - Add IRLRoomMinimap to show a minimap with grabbable rooms to trigger their moves 
+    - Add LocalRoomOnly display mode for NetworkIRLRoomAssociatedPart
+    - Track NetworkIRLRoomAssociatedPart in IRLRoomManager
+    - Add IIRLRoomManagerPartListener.OnAssociatedPartPoseChange to know when an associated part is moving. useful to know when a room changed on a remote user
+    - Allow to have "fake" NetworkIRLRoomAssociatedPart for debugging, associated to hardcoded fake rooms id
 - Version 2.0.7: Add option to change the anchor tag display after a long stability detection 
 - Version 2.0.6:
     - Update Aruco and OpenCV support update for Meta SDK v83: transition to latest version of https://github.com/TakashiYoshinaga/QuestArUcoMarkerTracking, supporting Meta SDK v83
-    
 - Version 2.0.5:
 	- Add security because of QR Code reading incompatibility between Meta SDK v78 and MetaOS v83
 	- Add security for QR code with long payload
-
 - Version 2.0.4: Update scene to use the new WebCamTextureManager Prefab (to avoid guid collision with Meta SDKs V81)
-
 - Version 2.0.3:
     - Add visualization option on IRLRoomManager for room associated parts (display just for one member for the remote rooms, all members of remote rooms, all rooms, ...)
     - Bug fix when the last member of a room leaves it (anchor removal, room cleanup, ...)
-    
 - Version 2.0.2:
     - Prefabs refactoring
     - Compatibility with Fusion 2.1
     - [Beta preview] Possibility to move remote room in colocalization scenario, with NetworkIRLRoomMoveRequester components
-
 - Version 2.0.1:
     - Ensure that anchors whose state authority has disconnected receive a new state authority (to continue moving on room merges)
     - Bug fix: colocalization could fail in certain scenario (when a member was following an anchor, that it had created, during a room merge triggered by another player) due to an unneeded state authority check 

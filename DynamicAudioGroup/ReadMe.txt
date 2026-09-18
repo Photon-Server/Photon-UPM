@@ -7,10 +7,11 @@ https://doc.photonengine.com/fusion/current/industries-samples/industries-addons
 
 ## Version & Changelog
 
-- version 2.1.3: Add default colors to DisplayDynamicAudioGroupInfos demo script
-- version 2.1.2: Fix networkRig demo scene
-- version 2.1.1: Add ColocDynamicAudioGroupMember to handle colocalization scenario
-- version 2.1.0: Update to support new XRShared architecture
+- Version 2.1.4: Allow to use DynamicAudioGroupMember with non XR rig (those user prefab then can hear from any distance, as they have no "head" position)
+- Version 2.1.3: Add default colors to DisplayDynamicAudioGroupInfos demo script
+- Version 2.1.2: Fix networkRig demo scene
+- Version 2.1.1: Add ColocDynamicAudioGroupMember to handle colocalization scenario
+- Version 2.1.0: Update to support new XRShared architecture
 - Version 2.0.3: Fix SpeakAndListenOnlyToGroup : mute only in MuteWhenListeningToNoOne state
 - Version 2.0.2: Improve extendability (notably for not listenable member - for bot testing purposes for example)
 - Version 2.0.1: Add NEVER_MATCHING_GROUP_FILTER to DynamicAudioGroup additional filters to prevent joining any member group (listening to no one)

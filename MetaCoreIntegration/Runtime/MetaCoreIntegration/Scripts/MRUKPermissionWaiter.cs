@@ -23,17 +23,34 @@ namespace Fusion.Addons.Meta
 #if MRUK_AVAILABLE
         MRUK mruk;
 
+        public bool hasSceneLoadedBeenDelayed = false;
+        public bool isSceneLoadWaiting = false;
+        public bool isSceneLoaded = false;
         #region PermissionWaiter override 
         protected override void Awake()
         {
             mruk = GetComponent<MRUK>();
+            mruk.SceneLoadedEvent.AddListener(OnMRUKSceneLoaded);
             base.Awake();
         }
+
+        private void OnDestroy()
+        {
+            mruk.SceneLoadedEvent.RemoveListener(OnMRUKSceneLoaded);
+        }
+
         protected override void OnPermissionRequired()
         {
             base.OnPermissionRequired();
             PreventOVRManagerStartupPermissions();
             mruk.SceneSettings.LoadSceneOnStartup = false;
+            isSceneLoadWaiting = true;
+            hasSceneLoadedBeenDelayed = true;
+        }
+
+        void OnMRUKSceneLoaded()
+        {
+            isSceneLoaded = true;
         }
 
         public override string PermissionName => OVRPermissionsRequester.ScenePermission;
@@ -53,7 +70,7 @@ namespace Fusion.Addons.Meta
         /// </summary>
         public async void MRUKLoadScene()
         {
-            if(IsPermissionGranted == false)
+            if (IsPermissionGranted == false)
             {
                 Debug.LogError($"Should be called when {PermissionName} permission is granted only");
                 return;
@@ -67,6 +84,7 @@ namespace Fusion.Addons.Meta
                     sceneModel = MRUK.SceneModel.V2FallbackV1;
                 }
                 await mruk.LoadSceneFromDevice(sceneModel: sceneModel);
+                isSceneLoadWaiting = false;
             }
             catch (System.Exception e)
             {

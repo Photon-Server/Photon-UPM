@@ -27,6 +27,7 @@ namespace Fusion.XRShared.Tools
         public UnityEvent<bool> onPermissionChanged = new UnityEvent<bool>();
         [Tooltip("Warn of permission grant reception")]
         public UnityEvent onPermissionGranted = new UnityEvent();
+        public bool IsWaitingForPermission => waitingForPermission;
 
         protected virtual void Awake()
         {

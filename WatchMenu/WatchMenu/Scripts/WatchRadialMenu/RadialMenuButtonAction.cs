@@ -13,7 +13,8 @@ namespace Fusion.Addons.WatchMenu
     {
 
         [SerializeField] protected Button button;
-        [SerializeField] Image image;
+        public Image image;
+        public TMPro.TMP_Text text;
         public Color activeColor = Color.white;
         public Color inactiveColor = Color.blue;
 
@@ -28,12 +29,20 @@ namespace Fusion.Addons.WatchMenu
         // isActive is used to set button status (on/off)
         public bool isActive = false;
 
+        [Header("Named action")]
+        [Tooltip("If a NamedActionManager is present, the action associated with this name will be triggered")]
+        public string associatedNamedAction = "";
+
         protected virtual void Awake()
         {
 
             if (button == null)
             {
                 button = GetComponent<Button>();
+            }
+            if (text == null)
+            {
+                text = GetComponent<TMPro.TMP_Text>();
             }
 
             if (button == null)
@@ -78,6 +87,10 @@ namespace Fusion.Addons.WatchMenu
             isActive = !isActive;
             UpdateButtonColor();
             PlayAudioFeedback();
+            if(string.IsNullOrEmpty(associatedNamedAction) == false && NamedActionManager.SharedInstance != null)
+            {
+                NamedActionManager.Invoke(associatedNamedAction);
+            }
         }
 
         protected void UpdateButtonColor()

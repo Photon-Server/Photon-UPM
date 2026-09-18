@@ -289,7 +289,10 @@ namespace Fusion.XR.Shared.Core.Interaction.UI
             if (interactionTips == null) return;
             foreach (var interactionTip in interactionTips)
             {
-                ProcessInteractionTip(interactionTip);
+                if (interactionTip.gameObject.activeInHierarchy)
+                {
+                    ProcessInteractionTip(interactionTip);
+                }
             }
         }
 

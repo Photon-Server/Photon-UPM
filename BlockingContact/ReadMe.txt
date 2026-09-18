@@ -7,7 +7,8 @@ https://doc.photonengine.com/fusion/current/industries-samples/industries-addons
 
 ## Version & Changelog
 
-- version 2.1.0: Update to support new XRShared architecture
+- Version 2.1.1: Support for ObjectTip markers
+- Version 2.1.0: Update to support new XRShared architecture
 - Version 2.0.5: Modifications for Asset Store
 - Version 2.0.4: Add visionOS compatibility with optional VisionOSHelpers add-on's spatial grabbers support 
 - Version 2.0.3: 

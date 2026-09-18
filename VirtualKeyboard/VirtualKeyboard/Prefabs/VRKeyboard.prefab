@@ -322,6 +322,7 @@ MonoBehaviour:
   onGrab:
     m_PersistentCalls:
       m_Calls: []
+  pauseGrabbability: 0
   deepDebug: 0
 --- !u!65 &4449405454970175473
 BoxCollider:
@@ -1489,7 +1490,7 @@ Transform:
   m_GameObject: {fileID: 7510729876211600764}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -250.55327, y: -1308.7244, z: -659.61743}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:

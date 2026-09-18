@@ -4,9 +4,24 @@ namespace Fusion.XR.Shared.Core.Touch
 {
     public interface ITouchable
     {
+        public Transform transform {get;}
+        public bool enabled { get; set; }
         public void OnToucherContactStart(Toucher toucher);
         public void OnToucherStay(Toucher toucher);
         public void OnToucherContactEnd(Toucher toucher);
+    }
+
+    public interface ITouchableListener
+    {
+        public void OnToucherContactStart(ITouchable touchable, Toucher toucher);
+        public void OnToucherStay(ITouchable touchable, Toucher toucher);
+        public void OnToucherContactEnd(ITouchable touchable, Toucher toucher);
+    }
+
+    public interface IRegisterableTouchable : ITouchable
+    {
+        void RegisterListener(ITouchableListener listener);
+        void UnregisterListener(ITouchableListener listener);
     }
 
     /**

@@ -7,6 +7,7 @@ namespace Fusion.XR.Shared.Tools
 {
     public interface IVisibility
     {
+        public Transform transform { get; }
         public void ChangeVisibility(bool visible);
     }
 

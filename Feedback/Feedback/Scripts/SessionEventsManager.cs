@@ -109,7 +109,11 @@ namespace Fusion.Addons.HapticAndAudioFeedback
             if (soundManager) soundManager.PlayOneShot("OnConnectFailed");
         }
 
-        public void OnUserSimulationMessage(NetworkRunner runner, SimulationMessagePtr message) { }
+#if !FUSION_2_1_OR_NEWER
+        void INetworkRunnerCallbacks.OnUserSimulationMessage(NetworkRunner runner, SimulationMessagePtr message)
+        {
+        }
+#endif
 
         public void OnSessionListUpdated(NetworkRunner runner, List<SessionInfo> sessionList) { }
 

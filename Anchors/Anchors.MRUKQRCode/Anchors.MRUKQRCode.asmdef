@@ -4,7 +4,9 @@
     "references": [
         "GUID:f64c9ebcd7899c3448a08dc9f9ddbe30",
         "GUID:f5eda1afa2a1241a59c4db6830e1c890",
-        "GUID:6055be8ebefd69e48b49212b09b47b2f"
+        "GUID:6055be8ebefd69e48b49212b09b47b2f",
+        "GUID:2affaa6684b07a442bdf25aff7330c1c",
+        "GUID:0fcb95827765196489d66b076928288d"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
@@ -14,13 +16,20 @@
     "autoReferenced": true,
     "defineConstraints": [
         "MRUK_AVAILABLE",
-        "FUSION_WEAVER"
+        "FUSION_WEAVER",
+        "OCULUS_SDK_AVAILABLE",
+        "XRHANDS_AVAILABLE"
     ],
     "versionDefines": [
         {
             "name": "com.meta.xr.mrutilitykit",
-            "expression": "[1,10000]",
+            "expression": "[81,10000]",
             "define": "MRUK_AVAILABLE"
+        },
+        {
+            "name": "com.unity.xr.hands",
+            "expression": "[1,10000]",
+            "define": "XRHANDS_AVAILABLE"
         }
     ],
     "noEngineReferences": false

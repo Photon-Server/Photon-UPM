@@ -31,8 +31,8 @@ namespace Fusion.XRShared.GrabbableMagnet
         public IMagnetConfigurator MagnetConfigurator { get; set; } = null;
 
 
-        MagnetCoordinator _magnetCoordinator;
-        public MagnetCoordinator MagnetCoordinator => _magnetCoordinator;
+        // Deprecated class: no coordinator is ever resolved here. Use AttractorMagnet instead.
+        public MagnetCoordinator MagnetCoordinator => null;
 
         private void Awake()
         {

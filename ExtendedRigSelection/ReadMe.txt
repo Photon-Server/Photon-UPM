@@ -7,18 +7,21 @@ https://doc.photonengine.com/fusion/current/industries-samples/industries-addons
 
 ## Version & Changelog
 
-- version 2.1.1: Fix demo scene
-- version 2.1.0: Update to support new XRShared architecture
+- Version 2.1.2: 
+	- Improve platform specific detection
+	- Fix issue when deleted current preference
+- Version 2.1.1: Fix demo scene
+- Version 2.1.0: Update to support new XRShared architecture
 - Version 2.0.6:
-  - Prefab root transform fix to comply to asset store requirements
+	- Prefab root transform fix to comply to asset store requirements
 - Version 2.0.5:
-  - Update ExtendedRigSelection to set the user prefab when connection is managed by a IUserSpawner
+	- Update ExtendedRigSelection to set the user prefab when connection is managed by a IUserSpawner
 - Version 2.0.4: 
-  - Allow to specify a different connection manager for each rig 
-  - Allow to spawn object for a specific rig
+	- Allow to specify a different connection manager for each rig 
+	- Allow to spawn object for a specific rig
 - Version 2.0.3: 
-  - Add the option to auto install a rig on some platforms (unless force selection is choosen)
-  - Add PlatformSpecificMaterial
+	- Add the option to auto install a rig on some platforms (unless force selection is choosen)
+	- Add PlatformSpecificMaterial
 - Version 2.0.2: Fix to register objects with INetworkRunnerCallbacks interface on the runner (if the runner is disabled)
 - Version 2.0.1: Add hardwareRig detection
 - Version 2.0.0: Fusion 2.0 support

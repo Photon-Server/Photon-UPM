@@ -7,6 +7,30 @@ https://doc.photonengine.com/fusion/current/industries-samples/industries-addons
 
 ## Version & Changelog
 
+- Version 2.1.16:
+	- Add Fusion version verification for deprecated INetworkRunnerCallbacks OnUserSimulationMessage callback
+	- Fix unassigned field warning on KnownAddonsWeaving deserialized assembly info
+- Version 2.1.15:
+	- Fix FingerBeamer to avoid unexpected teleportation when grabbing an object
+- Version 2.1.14:
+	- Add world grabbing locomotion
+	- Add named action manager to easily trigger centralized actions from anywhere
+	- Add TogglePassthrough to easily toggle between VR and MR
+	- Add alternative URP only shader for Fader (for passthrough cases compatibility), as well as optional explicit material provisioning
+	- Add option to configure grabbing collider layer in GrabbingSetup
+	- Add WristMarker to hand prefabs
+	- Add FingerBeamer for finger based teleportation
+	- Add move/rotation limit on SelfLocomotionGrabbable
+	- Fix issue on TouchableButton if shouldUpdateMaterial is true but no material is 
+	- Add PopupMessageHandler for basic popup message display (for instance in front of the hardware rig)
+	- Split XRAddonsDependencyManager to have acces to the reusable PackageDependencyManager
+- Version 2.1.13:
+	- Add ObjectTip to track object ends (for pens, ...)
+	- Allow to change during runtime NetworkRigPart.hideRenderersForStateAuthority
+- Version 2.1.12:
+	- Add IWrist to define wrist position in a rig
+	- Add AddObjectContentToAdapt/RemoveObjectContentToAdapt to RigPartVisualizer to handle at runtime a new game object in its hierarchy
+	- Add ITouchableListener/IRegisterableTouchable support to TouchableButton, to send touch event through this interface instead of only through events
 - Version 2.1.11:
     - Add new PermissionsRequester/PermissionWaiter permission system, to ensure that permission are not requested at the same time on Android
 	- Changes for Unity 6.3 Compatibility
@@ -14,11 +38,9 @@ https://doc.photonengine.com/fusion/current/industries-samples/industries-addons
 	- Add non networked visibility group handling in Visibility class
 	- Add TouchingSetup to add Toucher automatically to an hardware rig
 	- Add SimulatedHandSetup to add simulated hand to controllers in an hardware rig
-
 - Version 2.1.10:
     - Add DisableForDesktop
 	- Add new icon in shared design
-
 - Version 2.1.9:
     - Fix bug in XRHandCollectableSkeletonDriverHelper when searching for the root transform
 	- Add helper method to TransformManipulation to compute position offset without scale
@@ -59,5 +81,9 @@ https://doc.photonengine.com/fusion/current/industries-samples/industries-addons
 - Version 2.0.1: Add shared design & UI prefabs
 - Version 2.0.0: First release
 
-
+## Third party components
+- CC0 Icons by Jonas Höbenreich:
+    - https://cc0-icons.jonh.eu/eye
+- OculusSampleFrameworkHands	
+	- See XRShared\Runtime\SimpleHands\ThirdParty\OculusSampleFrameworkHands\OculusSampleFramework_License.txt for license
 

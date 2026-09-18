@@ -10,7 +10,8 @@ https://doc.photonengine.com/fusion/current/industries-samples/industries-addons
 
 ## Version & Changelog
 
-- version 2.2.0: Update to support new XRShared architecture
+- Version 2.2.1: Support for ObjectTip markers
+- Version 2.2.0: Update to support new XRShared architecture
 - Version 2.1.3: Update for Unity 6 compatibility (replace deprecated methods like FindObjectOfType, etc.)
 - Version 2.1.2:
   - Add option to clear a post-it content

@@ -14,6 +14,7 @@ namespace Fusion.XR.Shared.Core
         public INetworkRig LocalUserNetworkRig { get; }
         // should be called by the local user network rig
         public void RegisterLocalUserNetworkRig(INetworkRig localUserNetworkRig);
+        public IHardwareHeadset HardwareHeadset => Headset as IHardwareHeadset;
     }
 
     public interface IMovableHardwareRig : IHardwareRig
@@ -46,7 +47,9 @@ namespace Fusion.XR.Shared.Core
 
     public interface IHardwareController : ILateralizedHardwareRigPart, IController { }
 
-    public interface IHardwareHeadset : IHardwareRigPart, IHeadset { }
+    public interface IHardwareHeadset : IHardwareRigPart, IHeadset { 
+        public Camera HeadsetCamera { get; }
+    }
 
     public static class HardwareRigExtensions
     {

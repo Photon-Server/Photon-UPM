@@ -1,0 +1,25 @@
+{
+    "name": "CineMachineUsersTracker",
+    "rootNamespace": "",
+    "references": [
+        "Unity.Cinemachine",
+        "XRShared.Core",
+        "XRShared.BaseRig",
+        "Unity.InputSystem"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [
+        {
+            "name": "com.unity.cinemachine",
+            "expression": "[1,10000]",
+            "define": "CINEMACHINE_AVAILABLE"
+        }
+    ],
+    "noEngineReferences": false
+}

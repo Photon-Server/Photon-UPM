@@ -68,8 +68,12 @@ namespace Fusion.Addons.ScreenSharing
         bool projectionCameraSetup = false;
         int originalScreenRendererLayer;
         bool registerInScreenProjectionsList = false;
+
+#if XRSHARED_CORE_ADDON_AVAILABLE
         IGrabbable grabbable;
-        #endregion
+#endif
+
+#endregion
 
         private void Awake()
         {
@@ -81,7 +85,10 @@ namespace Fusion.Addons.ScreenSharing
             {
                 Debug.LogError("Missing screen");
             }
+
+#if XRSHARED_CORE_ADDON_AVAILABLE
             grabbable = GetComponentInParent<IGrabbable>();
+#endif
         }
 
         private void RegisterScreenProjection()
@@ -357,7 +364,7 @@ namespace Fusion.Addons.ScreenSharing
             }
             screenRenderTextureCamera.rect = new Rect(xOffset, yOffset, 1, 1);
         }
-        #endregion 
+        #endregion
 
         void DetermineNextCapture()
         {
@@ -408,11 +415,13 @@ namespace Fusion.Addons.ScreenSharing
             {
                 // The video shader for Android has an issue when 2 video are visible at the same time (it does not work): if the screen projection is used only to bypass this issue, the projection is not needed when there is only one screen rendering
                 bool screenProjectionRequired = disableScreenProjectionForSingleScreenProjection == false || ScreenProjections.Count > 1;
+#if XRSHARED_CORE_ADDON_AVAILABLE
                 if(forceProjectionWhenGrabbing && grabbable != null && grabbable.IsGrabbed)
                 {
                     // When moving a screen using the Android external video shader, moving the surface might cause unpleasant visual effect (the world matrix sent to the shader capturing a positioning slightly "late"): in this case, projecting is safer
                     screenProjectionRequired = true;
                 }
+#endif
                 return screenProjectionRequired;
             }
         }

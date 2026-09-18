@@ -8,7 +8,8 @@
         "GUID:f597b6dfa692c0e48a7f878957c693f8",
         "GUID:4fe4a1be2f2c04eecbd2036d47b4b310",
         "GUID:1baf1ffff1031e948b3b228ab3453251",
-        "GUID:d5536e3dc15ece740a3df0017031404a"
+        "GUID:d5536e3dc15ece740a3df0017031404a",
+        "GUID:a9420e37d7990b54abdef6688edbe313"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
@@ -19,6 +20,12 @@
     "defineConstraints": [
         "FUSION_WEAVER"
     ],
-    "versionDefines": [],
+    "versionDefines": [
+        {
+            "name": "com.unity.xr.arfoundation",
+            "expression": "[1,10000]",
+            "define": "ARFOUNDATION_AVAILABLE"
+        }
+    ],
     "noEngineReferences": false
 }

@@ -1,4 +1,8 @@
+
+#if XRSHARED_CORE_ADDON_AVAILABLE
 using Fusion.XR.Shared.Core;
+#endif
+
 #if PHOTON_VOICE_AVAILABLE
 using Photon.Voice;
 #endif
@@ -58,7 +62,11 @@ namespace Fusion.Addons.ScreenSharing
                 StartCoroutine(RequestWebcamAccess());
                 while (status == Status.AccessRequested)
                 {
+#if XRSHARED_CORE_ADDON_AVAILABLE
                     await AsyncTask.Delay(100);
+#else
+                    await Task.Delay(100);
+#endif
                 }
             }
         }

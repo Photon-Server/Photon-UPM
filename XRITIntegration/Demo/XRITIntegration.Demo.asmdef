@@ -1,0 +1,23 @@
+{
+    "name": "XRITIntegration.Demo",
+    "rootNamespace": "",
+    "references": [
+        "GUID:fe685ec1767f73d42b749ea8045bfe43",
+        "GUID:84969bac824196a428b7fdde6b4bb710"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [
+        {
+            "name": "com.unity.xr.interaction.toolkit",
+            "expression": "[1,10000]",
+            "define": "XRIT_ENABLED"
+        }
+    ],
+    "noEngineReferences": false
+}

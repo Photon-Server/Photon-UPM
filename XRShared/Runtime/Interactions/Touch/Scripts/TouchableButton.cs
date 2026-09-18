@@ -16,7 +16,7 @@ namespace Fusion.XR.Shared.Core.Touch
      *
      * 
      ***/
-    public class TouchableButton : MonoBehaviour, ITouchable, IHapticConsumer
+    public class TouchableButton : MonoBehaviour, IRegisterableTouchable, IHapticConsumer
     {
         [Header("Button")]
         public ButtonType buttonType = ButtonType.PressButton;
@@ -86,6 +86,8 @@ namespace Fusion.XR.Shared.Core.Touch
         public bool IsToggleButton => buttonType == ButtonType.ToggleButton;
         public bool IsRadioButton => buttonType == ButtonType.RadioButton;
 
+        List<ITouchableListener> listeners = new List<ITouchableListener>();
+
         private void Awake()
         {
             meshRenderer = GetComponent<MeshRenderer>();
@@ -93,6 +95,12 @@ namespace Fusion.XR.Shared.Core.Touch
 
             if (feedback == null)
                 feedback = GetComponentInParent<IFeedbackHandler>();
+
+            if (shouldUpdateMaterial && touchMaterial == null)
+            {
+                shouldUpdateMaterial = false;
+                Debug.LogWarning("[TouchableButton] shouldUpdateMaterial is true, but there is no touchMaterial. Setting it to false");
+            }
         }
 
         private void OnEnable()
@@ -353,13 +361,29 @@ namespace Fusion.XR.Shared.Core.Touch
         public virtual void OnToucherContactStart(Toucher toucher)
         {
             TouchStartAnalysis(toucher);
+            foreach (var l in listeners) l.OnToucherContactStart(this, toucher);
         }
 
-        public virtual void OnToucherStay(Toucher toucher) { }
+        public virtual void OnToucherStay(Toucher toucher) {
+            foreach (var l in listeners) l.OnToucherStay(this, toucher);
+        }
 
         public virtual void OnToucherContactEnd(Toucher toucher)
         {
             TouchEndAnalysis(toucher);
+            foreach (var l in listeners) l.OnToucherContactEnd(this, toucher);
+        }
+        #endregion
+
+        #region IRegisterableTouchable
+        public void RegisterListener(ITouchableListener listener) {
+            if (listeners.Contains(listener)) return;
+            listeners.Add(listener);
+        }
+
+        public void UnregisterListener(ITouchableListener listener) {
+            if (listeners.Contains(listener) == false) return;
+            listeners.Remove(listener);
         }
         #endregion
 

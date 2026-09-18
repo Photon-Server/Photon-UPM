@@ -1,4 +1,5 @@
 #if UNITY_EDITOR
+using System;
 using System.IO;
 using UnityEditor;
 #endif
@@ -31,7 +32,7 @@ namespace Fusion.XR.Shared.Automatization
                 this.startWithGuidLookupFirst = startWithGuidLookupFirst;
             }
 
-            public AssetLookupCriteria(string name, string extension = null, string requiredPathElement = null, bool requirePerfectNameMatch = true, bool startWithGuidLookupFirst = true)
+            public AssetLookupCriteria(string name, string extension, string requiredPathElement, bool requirePerfectNameMatch = true, bool startWithGuidLookupFirst = true)
             {
                 this.name = name;
                 this.requiredPathElements = new string[] { requiredPathElement };
@@ -64,6 +65,7 @@ namespace Fusion.XR.Shared.Automatization
 #if UNITY_EDITOR
             var guids = AssetDatabase.FindAssets(lookupString);
             T bestCandidateAsset = null;
+
             foreach (var guid in guids)
             {
                 var assetPath = AssetDatabase.GUIDToAssetPath(guid);
@@ -73,7 +75,6 @@ namespace Fusion.XR.Shared.Automatization
                     // Check the requiredPathElements
                     if (IsCompatiblePath(assetPath, criteria.requiredPathElements) == false)
                     {
-                        Debug.LogError(1);
                         validCandidate = false;
                     }
 
@@ -86,7 +87,7 @@ namespace Fusion.XR.Shared.Automatization
                             asset = candidateAsset;
                             return true;
                         }
-                        Debug.LogError(2);
+
                         if (criteria.requirePerfectNameMatch == false)
                         {
                             bestCandidateAsset = candidateAsset;

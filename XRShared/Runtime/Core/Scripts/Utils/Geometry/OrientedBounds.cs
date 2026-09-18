@@ -1,43 +1,83 @@
+using System.Drawing;
 using UnityEngine;
+using UnityEngine.UIElements;
 
+/// <summary>
+/// Struct to have a Bound not aligned with scene axis, but with an additional rotation
+/// Under the hood, manipulate a regular Bound, that is relative to the referential create by the initialCenter and rotation.
+/// </summary>
 public struct OrientedBounds
 {
     Bounds bounds;
     Quaternion rotation;
     Matrix4x4 referenceTransformMatrix;
-    Vector3 initialExtends;
+    Vector3 initialSize;
 
+    /// <summary>
+    /// Center of the oriented bound
+    /// </summary>
     public Vector3 Center => referenceTransformMatrix.MultiplyPoint(bounds.center);
-    public Quaternion Rotation => rotation;
-    public Vector3 Extends => bounds.extents;
 
-    bool matrixInitialized;
+    /// <summary>
+    /// Rotation of the oriented bound
+    /// </summary>
+    public Quaternion Rotation => _rotationInitialized ? rotation : Quaternion.identity;
 
-    public OrientedBounds(Vector3 initialCenter, Quaternion rotation, Vector3 initialExtends)
+    /// <summary>
+    /// The extents of the Bounding Box.This is always half of the size of the Bounds.
+    /// </summary>
+    public Vector3 Extents => bounds.extents;
+
+    /// <summary>
+    /// Size of the bound (twice the extents)
+    /// </summary>
+    public Vector3 Size => bounds.extents * 2f;
+
+    bool _matrixInitialized;
+    bool _rotationInitialized;
+
+    /// <summary>
+    /// Create an oriented bound with base center, rotation, and starting size (aka twice the extent stored)
+    /// </summary>
+    public OrientedBounds(Vector3 initialCenter, Quaternion rotation, Vector3 initialSize)
     {
         this.rotation = rotation;
-        this.initialExtends = initialExtends;
+        this.initialSize = initialSize;
         referenceTransformMatrix = Matrix4x4.TRS(initialCenter, rotation, Vector3.one);
 
-        bounds = new Bounds(Vector3.zero, initialExtends);
-        matrixInitialized = true;
+        bounds = new Bounds(Vector3.zero, initialSize);
+        _matrixInitialized = true;
+        _rotationInitialized = true;
     }
 
-    public OrientedBounds(Quaternion rotation, Vector3 initialExtends)
+    /// <summary>
+    /// Create an oriented bound with base center, rotation, and default starting size (aka twice the extent stored) of 0.05f * Vector3.one 
+    /// </summary>
+    public OrientedBounds(Quaternion rotation) : this(rotation, 0.05f * Vector3.one) {}
+
+    /// <summary>
+    /// Create an oriented bound with Vector3.zero center, rotation, and default starting size (aka twice the extent stored) 
+    /// </summary>
+    public OrientedBounds(Quaternion rotation, Vector3 initialSize = default)
     {
         this.rotation = rotation;
-        this.initialExtends = initialExtends;
-        bounds = new Bounds(Vector3.zero, initialExtends);
+        this.initialSize = initialSize;
+        bounds = new Bounds(Vector3.zero, initialSize);
         referenceTransformMatrix = default;
-        matrixInitialized = false;
+        _matrixInitialized = false;
+        _rotationInitialized = true;
     }
 
+    /// <summary>
+    /// Add a point to be included in the oriented bound
+    /// Optionally, can ignore the contribution on this point on a local axis of the resulting bound
+    /// </summary>
     public void Encapsulate(Vector3 point, bool ignoreXAxis = false, bool ignoreYAxis = false, bool ignoreZAxis = false)
     {
-        if (matrixInitialized == false)
+        if (_matrixInitialized == false)
         {
-            referenceTransformMatrix = Matrix4x4.TRS(point, rotation, Vector3.one);
-            matrixInitialized = true;
+            referenceTransformMatrix = Matrix4x4.TRS(point, Rotation, Vector3.one);
+            _matrixInitialized = true;
         }
         var offset = referenceTransformMatrix.inverse.MultiplyPoint(point);
 
@@ -47,14 +87,20 @@ public struct OrientedBounds
         bounds.Encapsulate(offset);
     }
 
+    /// <summary>
+    /// Expand the bounds by increasing its size by amount along each side.
+    /// </summary>
     public void Expand(float amount)
     {
         bounds.Expand(amount);
     }
 
-    public void Expand(Vector3 sideIncreaze)
+    /// <summary>
+    /// Expand the bounds by increasing its extents (half of the size)
+    /// </summary>
+    public void IncreaseExtents(Vector3 extentsIncrease)
     {
-        bounds.extents = new Vector3(bounds.extents.x + sideIncreaze.x, bounds.extents.y + sideIncreaze.y, bounds.extents.z + sideIncreaze.z);
+        bounds.extents = new Vector3(bounds.extents.x + extentsIncrease.x, bounds.extents.y + extentsIncrease.y, bounds.extents.z + extentsIncrease.z);
     }
 
     /// <summary>
@@ -64,7 +110,7 @@ public struct OrientedBounds
     {
         if (transform == null) return;
         var centerPosition = transform.position;
-        if(matrixInitialized)
+        if(_matrixInitialized)
         {
             centerPosition = Center;
         }
@@ -77,8 +123,8 @@ public struct OrientedBounds
         else
         {
             var parentLossyScale = transform.parent.lossyScale;
-            var localScale = bounds.extents * 2;
-            transform.localScale = new Vector3(localScale.x / parentLossyScale.x, localScale.y / parentLossyScale.y, localScale.z / parentLossyScale.z);
+            var worldScale = bounds.extents * 2;
+            transform.localScale = new Vector3(worldScale.x / parentLossyScale.x, worldScale.y / parentLossyScale.y, worldScale.z / parentLossyScale.z);
         }
     }
 }

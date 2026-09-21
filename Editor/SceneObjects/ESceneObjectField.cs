@@ -22,6 +22,10 @@ namespace Fusion.Addons.Inspector.Editor
 		StateSize                       = 1 << 13,
 		Distance                        = 1 << 14,
 		Components                      = 1 << 15,
+
+		Configuration                   = Components | IsMasterClientObject | AllowStateAuthorityOverride | DestroyWhenStateAuthorityLeaves | InterestMode,
+		Runtime                         = IsInSimulation | HasStateAuthority | HasInputAuthority | NetworkId | StateAuthority | InputAuthority | TotalStateChanges | AverageStateChanges,
+		Other                           = StateSize | Distance,
 	}
 
 	internal static class SceneObjectFieldExtensions

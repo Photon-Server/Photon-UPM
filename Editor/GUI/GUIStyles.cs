@@ -5,11 +5,13 @@ namespace Fusion.Addons.Inspector.Editor
 
 	public static class GUIStyles
 	{
+		public static readonly GUIStyle Dot;
 		public static readonly GUIStyle Icon;
 		public static readonly GUIStyle LeftLabel;
 		public static readonly GUIStyle RightLabel;
 		public static readonly GUIStyle LeftBoldLabel;
 		public static readonly GUIStyle RightBoldLabel;
+		public static readonly GUIStyle CenterBoldLabel;
 		public static readonly GUIStyle ObjectField;
 		public static readonly GUIStyle SearchField;
 		public static readonly GUIStyle ToolbarButton;
@@ -18,6 +20,12 @@ namespace Fusion.Addons.Inspector.Editor
 
 		static GUIStyles()
 		{
+			Dot = new GUIStyle(EditorStyles.boldLabel);
+			Dot.padding = new RectOffset(4, 4, 0, 0);
+			Dot.alignment = TextAnchor.MiddleLeft;
+			Dot.fontSize = 16;
+			Dot.clipping = TextClipping.Clip;
+
 			Icon = new GUIStyle(EditorStyles.label);
 			Icon.alignment = TextAnchor.MiddleCenter;
 
@@ -36,6 +44,10 @@ namespace Fusion.Addons.Inspector.Editor
 			RightBoldLabel = new GUIStyle(EditorStyles.boldLabel);
 			RightBoldLabel.padding = new RectOffset(4, 4, 0, 0);
 			RightBoldLabel.alignment = TextAnchor.MiddleRight;
+
+			CenterBoldLabel = new GUIStyle(EditorStyles.boldLabel);
+			CenterBoldLabel.padding = new RectOffset(4, 4, 0, 0);
+			CenterBoldLabel.alignment = TextAnchor.MiddleCenter;
 
 			ObjectField = new GUIStyle(EditorStyles.label);
 			ObjectField.padding = new RectOffset(3, 3, 1, 1);

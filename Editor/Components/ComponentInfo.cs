@@ -16,49 +16,51 @@ namespace Fusion.Addons.Inspector.Editor
 			public IntLabel    FilteredObjectCount = new IntLabel();
 		}
 
-		public readonly Type          Type;
-		public readonly string        TypeName;
-		public readonly string        TypeHierarchy;
-		public readonly int           TypeLevel;
-		public readonly MonoScript    Script;
-		public readonly ComponentInfo Base;
-		public readonly MethodInfo[]  RPCs;
-		public readonly IntLabel      RPCCount;
-		public readonly MemoryLabel   StateSize;
-		public readonly IntLabel      ExecutionOrder;
+		public readonly Type           Type;
+		public readonly string         TypeName;
+		public readonly string         TypeHierarchy;
+		public readonly int            TypeLevel;
+		public readonly MonoScript     Script;
+		public readonly ComponentInfo  Base;
+		public readonly PropertyInfo[] Properties;
+		public readonly IntLabel       PropertyCount;
+		public readonly MethodInfo[]   RPCs;
+		public readonly IntLabel       RPCCount;
+		public readonly MemoryLabel    StateSize;
+		public readonly IntLabel       ExecutionOrder;
 
-		public readonly bool          HasSpawned;
-		public readonly bool          HasDespawned;
-		public readonly bool          HasFixedUpdateNetwork;
-		public readonly bool          HasRender;
+		public readonly bool           HasSpawned;
+		public readonly bool           HasDespawned;
+		public readonly bool           HasFixedUpdateNetwork;
+		public readonly bool           HasRender;
 
-		public readonly bool          HasAfterSpawned;
-		public readonly bool          HasAfterHostMigration;
-		public readonly bool          HasStateAuthorityChanged;
-		public readonly bool          HasInputAuthorityGained;
-		public readonly bool          HasInputAuthorityLost;
-		public readonly bool          HasSimulationEnter;
-		public readonly bool          HasSimulationExit;
-		public readonly bool          HasInterestEnter;
-		public readonly bool          HasInterestExit;
+		public readonly bool           HasAfterSpawned;
+		public readonly bool           HasAfterHostMigration;
+		public readonly bool           HasStateAuthorityChanged;
+		public readonly bool           HasInputAuthorityGained;
+		public readonly bool           HasInputAuthorityLost;
+		public readonly bool           HasSimulationEnter;
+		public readonly bool           HasSimulationExit;
+		public readonly bool           HasInterestEnter;
+		public readonly bool           HasInterestExit;
 
-		public readonly bool          HasBeforeUpdate;
-		public readonly bool          HasBeforeCopyPreviousState;
-		public readonly bool          HasBeforeClientPredictionReset;
-		public readonly bool          HasAfterClientPredictionReset;
-		public readonly bool          HasBeforeSimulation;
-		public readonly bool          HasBeforeAllTicks;
-		public readonly bool          HasBeforeTick;
-		public readonly bool          HasAfterTick;
-		public readonly bool          HasAfterAllTicks;
-		public readonly bool          HasAfterRender;
-		public readonly bool          HasAfterUpdate;
+		public readonly bool           HasBeforeUpdate;
+		public readonly bool           HasBeforeCopyPreviousState;
+		public readonly bool           HasBeforeClientPredictionReset;
+		public readonly bool           HasAfterClientPredictionReset;
+		public readonly bool           HasBeforeSimulation;
+		public readonly bool           HasBeforeAllTicks;
+		public readonly bool           HasBeforeTick;
+		public readonly bool           HasAfterTick;
+		public readonly bool           HasAfterAllTicks;
+		public readonly bool           HasAfterRender;
+		public readonly bool           HasAfterUpdate;
 
-		public ObjectContext          Prefabs              = new ObjectContext();
-		public ObjectContext          SceneObjects         = new ObjectContext();
-		public MemoryLabel            TotalStateChanges    = new MemoryLabel(true);
-		public MemoryLabel            SelectedStateChanges = new MemoryLabel(true);
-		public MemoryPerSecondLabel   AverageStateChanges  = new MemoryPerSecondLabel();
+		public ObjectContext           Prefabs              = new ObjectContext();
+		public ObjectContext           SceneObjects         = new ObjectContext();
+		public MemoryLabel             TotalStateChanges    = new MemoryLabel(true);
+		public MemoryLabel             SelectedStateChanges = new MemoryLabel(true);
+		public MemoryPerSecondLabel    AverageStateChanges  = new MemoryPerSecondLabel();
 
 		private MemoryTracker _stateTracker = new MemoryTracker();
 
@@ -70,6 +72,8 @@ namespace Fusion.Addons.Inspector.Editor
 			TypeLevel     = default;
 			Script        = script;
 			Base          = baseComponent;
+			Properties    = ReflectionUtility.GetProperties(type);
+			PropertyCount = new IntLabel(Properties.Length);
 			RPCs          = ReflectionUtility.GetRPCs(type);
 			RPCCount      = new IntLabel(RPCs.Length);
 

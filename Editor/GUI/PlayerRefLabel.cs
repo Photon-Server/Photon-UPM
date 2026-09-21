@@ -17,7 +17,11 @@ namespace Fusion.Addons.Inspector.Editor
 				{
 					_labelString = $"Player {_labelValue.PlayerId}";
 				}
+#if FUSION_2_1_OR_NEWER
+				else if (_labelValue.IsInternalMasterClientIdentifier == true)
+#else
 				else if (_labelValue.IsMasterClient == true)
+#endif
 				{
 					_labelString = $"Master";
 				}

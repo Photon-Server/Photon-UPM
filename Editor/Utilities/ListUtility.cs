@@ -21,5 +21,16 @@ namespace Fusion.Addons.Inspector.Editor
 				list[i + 1] = key;
 			}
 		}
+
+		public static int CompareHierarchyDescending(string h1, string h2)
+		{
+			if (h2.Length > h1.Length && h2[h1.Length] == '.' && h2.StartsWith(h1, StringComparison.Ordinal) == true)
+				return -1;
+
+			if (h1.Length > h2.Length && h1[h2.Length] == '.' && h1.StartsWith(h2, StringComparison.Ordinal) == true)
+				return 1;
+
+			return string.CompareOrdinal(h2, h1);
+		}
 	}
 }

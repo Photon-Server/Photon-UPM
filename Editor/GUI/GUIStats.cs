@@ -1,6 +1,7 @@
 namespace Fusion.Addons.Inspector.Editor
 {
 	using System;
+	using System.Globalization;
 	using UnityEngine;
 
 	internal class GUIStat
@@ -31,17 +32,45 @@ namespace Fusion.Addons.Inspector.Editor
 		{
 			IconContent = new GUIContent(iconText, tooltip);
 		}
+
+		public GUIIconStat(GUIStyle style, Texture2D icon, string iconText, string tooltip, float width = 0.0f) : base(style, "", tooltip, width)
+		{
+			Content.image = icon;
+
+			IconContent = new GUIContent(iconText, tooltip);
+		}
 	}
 
 	internal sealed class GUIIntStat : GUIStat
 	{
 		private string _format;
 		private int    _value;
+		private float  _width8;
+		private float  _width88;
+		private float  _width888;
 
 		public GUIIntStat(GUIStyle style, string format, int value, string tooltip, float width = 0.0f) : base(style, string.Format(format, value), tooltip, width)
 		{
 			_format = format;
 			_value  = value;
+
+			if (style != null)
+			{
+				_width8   = style.CalcSize(new GUIContent(string.Format(format, 8))).x;
+				_width88  = style.CalcSize(new GUIContent(string.Format(format, 88))).x;
+				_width888 = style.CalcSize(new GUIContent(string.Format(format, 888))).x;
+			}
+		}
+
+		// The width is based on the order of the value, it changes only when the value crosses an order.
+		public float GetWidth(int value)
+		{
+			if (value < 10)
+				return _width8;
+			if (value < 100)
+				return _width88;
+
+			return _width888;
 		}
 
 		public GUIContent GetContent(int value)
@@ -57,19 +86,62 @@ namespace Fusion.Addons.Inspector.Editor
 		}
 	}
 
+	internal sealed class GUIPlayersStat : GUIStat
+	{
+		private string    _tooltip;
+		private string    _noPlayerTooltip;
+		private int       _count = -1;
+		private PlayerRef _localPlayer;
+		private int       _widthKey = -1;
+
+		public GUIPlayersStat(GUIStyle style, string tooltip, string noPlayerTooltip) : base(style, "", tooltip)
+		{
+			_tooltip         = tooltip;
+			_noPlayerTooltip = noPlayerTooltip;
+		}
+
+		public GUIContent GetContent(int count, PlayerRef localPlayer)
+		{
+			if (_count != count || _localPlayer != localPlayer)
+			{
+				_count       = count;
+				_localPlayer = localPlayer;
+
+				Content.text    = localPlayer.IsRealPlayer == true ? $"{count} (Player {localPlayer.PlayerId})" : $"{count}";
+				Content.tooltip = localPlayer.IsRealPlayer == true ? _tooltip : _noPlayerTooltip;
+
+				// The width is based on the orders of the values, it changes only when a value crosses an order.
+				int widthKey = GetOrder(count) * 10 + (localPlayer.IsRealPlayer == true ? GetOrder(localPlayer.PlayerId) + 1 : 0);
+				if (_widthKey != widthKey)
+				{
+					_widthKey = widthKey;
+
+					Width = Style.CalcSize(new GUIContent(localPlayer.IsRealPlayer == true ? $"{GetTemplate(count)} (Player {GetTemplate(localPlayer.PlayerId)})" : GetTemplate(count))).x;
+				}
+			}
+
+			return Content;
+		}
+
+		private static int    GetOrder(int value)    => value < 10 ? 0 : (value < 100 ? 1 : (value < 1000 ? 2 : 3));
+		private static string GetTemplate(int value) => value < 10 ? "8" : (value < 100 ? "88" : (value < 1000 ? "888" : "8888"));
+	}
+
 	internal sealed class GUITimeStat : GUIStat
 	{
 		private string _format;
 		private int    _seconds;
 		private int    _minutes;
 		private int    _hours;
+		private int    _days;
 
-		public GUITimeStat(GUIStyle style, string format, TimeSpan value, string tooltip, float width = 0.0f) : base(style, string.Format(format, $"{value:hh\\:mm\\:ss}"), tooltip, width)
+		public GUITimeStat(GUIStyle style, string format, TimeSpan value, string tooltip, float width = 0.0f) : base(style, string.Format(format, GetFormattedValue(value)), tooltip, width)
 		{
 			_format  = format;
 			_seconds = value.Seconds;
 			_minutes = value.Minutes;
 			_hours   = value.Hours;
+			_days    = value.Days;
 		}
 
 		public GUIContent GetContent(TimeSpan value)
@@ -77,17 +149,24 @@ namespace Fusion.Addons.Inspector.Editor
 			int seconds = value.Seconds;
 			int minutes = value.Minutes;
 			int hours   = value.Hours;
+			int days    = value.Days;
 
-			if (_seconds != seconds || _minutes != minutes || _hours != hours)
+			if (_seconds != seconds || _minutes != minutes || _hours != hours || _days != days)
 			{
 				_seconds = seconds;
 				_minutes = minutes;
 				_hours   = hours;
+				_days    = days;
 
-				Content.text = string.Format(_format, $"{value:hh\\:mm\\:ss}");
+				Content.text = string.Format(_format, GetFormattedValue(value));
 			}
 
 			return Content;
+		}
+
+		private static string GetFormattedValue(TimeSpan value)
+		{
+			return value.Days > 0 ? $"{(int)value.TotalHours}:{value:mm\\:ss}" : $"{value:hh\\:mm\\:ss}";
 		}
 	}
 
@@ -99,7 +178,7 @@ namespace Fusion.Addons.Inspector.Editor
 		public GUITrafficStat(GUIStyle style, string format, int value, string tooltip, float width = 0.0f) : base(style, GetFormattedValue(format, Mathf.CeilToInt(value / 1024.0f)), tooltip, width)
 		{
 			_format = format;
-			_value  = value;
+			_value  = Mathf.CeilToInt(value / 1024.0f);
 		}
 
 		public GUIContent GetContent(float value)
@@ -118,7 +197,7 @@ namespace Fusion.Addons.Inspector.Editor
 
 		private static string GetFormattedValue(string format, int valueKB)
 		{
-			return valueKB < 1000 ? string.Format(format, $"{valueKB} kB") : string.Format(format, $"{(0.001f * valueKB):F2} MB");
+			return valueKB < 1024 ? string.Format(format, $"{valueKB} kB") : string.Format(format, string.Format(CultureInfo.InvariantCulture, "{0:F2} MB", valueKB / 1024.0f));
 		}
 	}
 

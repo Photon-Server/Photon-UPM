@@ -14,6 +14,9 @@ namespace Fusion.Addons.Inspector.Editor
 		InterestMode                    = 1 << 5,
 		StateSize                       = 1 << 6,
 		Components                      = 1 << 7,
+
+		Configuration                   = Components | IsSpawnable | IsMasterClientObject | AllowStateAuthorityOverride | DestroyWhenStateAuthorityLeaves | InterestMode,
+		Other                           = StateSize,
 	}
 
 	internal static class PrefabFieldExtensions

@@ -7,49 +7,64 @@ namespace Fusion.Addons.Inspector.Editor
 	internal sealed class SceneObjectsInspector
 	{
 		private Vector2                _scrollPosition;
-		private float                  _selectionTime;
+		private double                 _selectionTime;
 		private List<SceneObjectInfo>  _selection = new List<SceneObjectInfo>();
-		private UnityEngine.Object     _scriptSelection;
-		private float                  _scriptSelectionTime;
+		private object                 _scriptSelection;
+		private double                 _scriptSelectionTime;
 		private Vector2                _scriptScrollPosition;
 		private MemoryLabel            _totalSelectionChanges = new MemoryLabel(true);
+		private IntLabel               _totalComponents = new IntLabel();
+		private MemoryLabel            _totalStateSize = new MemoryLabel(false);
+		private MemoryLabel            _totalStateChangesSum = new MemoryLabel(true);
+		private MemoryPerSecondLabel   _totalStateChangesAverage = new MemoryPerSecondLabel();
 		private HashSet<ComponentInfo> _tempScripts = new HashSet<ComponentInfo>();
 		private List<ComponentInfo>    _tempComponents = new List<ComponentInfo>();
-		private string[]               _tempRunnerNames;
 
-		private static GUINameStat _objectStat;
-		private static GUISortStat _componentsStat;
-		private static GUIIconStat _isMasterClientObjectStat;
-		private static GUIIconStat _allowStateAuthorityOverrideStat;
-		private static GUIIconStat _destroyWhenStateAuthorityLeavesStat;
-		private static GUISortStat _interestModeStat;
+		private GUINameStat _objectStat;
+		private GUISortStat _componentsStat;
+		private GUIIconStat _isMasterClientObjectStat;
+		private GUIIconStat _allowStateAuthorityOverrideStat;
+		private GUIIconStat _destroyWhenStateAuthorityLeavesStat;
+		private GUISortStat _interestModeStat;
 
-		private static GUIIconStat _isInSimulationStat;
-		private static GUIIconStat _hasStateAuthorityStat;
-		private static GUIIconStat _hasInputAuthorityStat;
-		private static GUISortStat _networkIdStat;
-		private static GUISortStat _stateAuthorityStat;
-		private static GUISortStat _inputAuthorityStat;
-		private static GUISortStat _totalStateChangesStat;
-		private static GUISortStat _averageStateChangesStat;
-		private static GUISortStat _stateSizeStat;
-		private static GUISortStat _distanceStat;
+		private GUIIconStat _isInSimulationStat;
+		private GUIIconStat _hasStateAuthorityStat;
+		private GUIIconStat _hasInputAuthorityStat;
+		private GUISortStat _networkIdStat;
+		private GUISortStat _stateAuthorityStat;
+		private GUISortStat _inputAuthorityStat;
+		private GUISortStat _totalStateChangesStat;
+		private GUISortStat _averageStateChangesStat;
+		private GUISortStat _stateSizeStat;
+		private GUISortStat _distanceStat;
 
-		private static GUIContent   _objectContent;
-		private static GUIContent   _componentsContent;
-		private static GUIContent   _componentsIconContent;
-		private static GUIContent[] _interestModeContents;
-		private static GUIContent   _localStateAuthorityContent;
-		private static GUIContent   _localInputAuthorityContent;
-		private static GUIContent   _stateSizeContent;
-		private static GUIContent   _filterContent;
-		private static GUIContent   _fieldsContent;
-		private static GUIContent   _scriptContent;
+		private GUIContent   _objectContent;
+		private GUIContent   _componentsContent;
+		private GUIContent   _componentsIconContent;
+		private GUIContent[] _interestModeContents;
+		private GUIContent   _localStateAuthorityContent;
+		private GUIContent   _localInputAuthorityContent;
+		private GUIContent   _stateSizeContent;
+		private GUIContent   _filterContent;
+		private GUIContent   _fieldsContent;
+		private GUIContent   _scriptContent;
+		private GUIContent   _toggleContent;
+		private GUIContent   _totalContent;
+		private GUIContent   _stateAuthorityFilterContent;
+		private GUIContent   _inputAuthorityFilterContent;
+		private GUIContent   _interestModeFilterContent;
+		private GUIContent   _removeFilterContent;
 
-		private static float _sortWidth;
-		private static float _fieldsWidth1;
-		private static float _fieldsWidth2;
-		private static float _fieldsWidth3;
+		private PlayerRef      _stateAuthorityFilterPlayer;
+		private PlayerRef      _inputAuthorityFilterPlayer;
+		private int            _interestModeFilterMode = -1;
+		private PlayerRefLabel _authorityFilterLabel = new PlayerRefLabel();
+
+		private float _sortWidth;
+		private float _fieldsWidth1;
+		private float _fieldsWidth2;
+		private float _fieldsWidth3;
+		private float _localDotWidth;
 
 		public SceneObjectsInspector()
 		{
@@ -84,12 +99,19 @@ namespace Fusion.Addons.Inspector.Editor
 			_componentsContent          = new GUIContent("", "# of NetworkBehaviour components on the object");
 			_componentsIconContent      = new GUIContent(scriptIcon, "# of NetworkBehaviour components on the object");
 			_interestModeContents       = new GUIContent[] { new GUIContent("Area"), new GUIContent("Global"), new GUIContent("Explicit") };
-			_localStateAuthorityContent = new GUIContent(" •", "State authority of this object is the local player");
-			_localInputAuthorityContent = new GUIContent(" •", "Input authority of this object is the local player");
+			_localStateAuthorityContent = new GUIContent("•", "Local player has state authority over this object");
+			_localInputAuthorityContent = new GUIContent("•", "Local player has input authority over this object");
 			_stateSizeContent           = new GUIContent("", "Size of the networked state of the object in Bytes");
 			_filterContent              = new GUIContent(filterIcon, "Filter by component type");
 			_fieldsContent              = new GUIContent(fieldsIcon, "Visible fields");
 			_scriptContent              = new GUIContent(scriptIcon);
+			_toggleContent              = new GUIContent();
+			_totalContent               = new GUIContent("Total", "Totals for all listed objects");
+
+			_stateAuthorityFilterContent = new GUIContent();
+			_inputAuthorityFilterContent = new GUIContent();
+			_interestModeFilterContent   = new GUIContent();
+			_removeFilterContent         = new GUIContent(GUISymbols.CROSS, "Remove filter");
 
 			_sortWidth = GUIStyles.RightBoldLabel.CalcSize(new GUIContent($"{GUISymbols.ARROW_UP} ")).x - GUIStyles.RightBoldLabel.CalcSize(new GUIContent($"")).x;
 
@@ -103,15 +125,19 @@ namespace Fusion.Addons.Inspector.Editor
 			_stateSizeStat.Width           += _sortWidth;
 			_distanceStat.Width            += _sortWidth;
 
-			_fieldsWidth1 = FusionInspector.FieldPadding + EditorStyles.toggle.CalcSize(new GUIContent("Destroy When State Authority Leaves")).x;
-			_fieldsWidth2 = FusionInspector.FieldPadding + EditorStyles.toggle.CalcSize(new GUIContent("Has State Authority")).x;
-			_fieldsWidth3 = FusionInspector.FieldPadding + EditorStyles.toggle.CalcSize(new GUIContent("Min. Field Fill")).x;
+			float playerLabelWidth = GUIStyles.RightLabel.CalcSize(new GUIContent(" Player 8888 ")).x;
+
+			_stateAuthorityStat.Width = Mathf.Max(_stateAuthorityStat.Width, playerLabelWidth);
+			_inputAuthorityStat.Width = Mathf.Max(_inputAuthorityStat.Width, playerLabelWidth);
+
+			_fieldsWidth1  = FusionInspector.GetCategoryWidth("Configuration", "Components (NB)", "Is Master Client Object", "Allow State Authority Override", "Destroy When State Authority Leaves", "Object Interest Mode");
+			_fieldsWidth2  = FusionInspector.GetCategoryWidth("Runtime", "Is In Simulation", "Has State Authority", "Has Input Authority", "Network Id", "State Authority", "Input Authority", "Σ State Changes", "Ø State Changes");
+			_fieldsWidth3  = FusionInspector.GetCategoryWidth("Other", "State Size", "Distance");
+			_localDotWidth = GUIStyles.Dot.CalcSize(_localStateAuthorityContent).x;
 		}
 
 		public void DrawGUI(Rect window, Rect region, FusionInspectorDB db)
 		{
-			DrawRunnersGUI(ref region, db);
-
 			GameMode          gameMode         = db.CurrentRunner != null ? db.CurrentRunner.GameMode : default;
 			ESceneObjectField visibleFields    = db.SceneObjects.VisibleFields | ESceneObjectField.Object;
 			ESceneObjectField toggleableFields = ~ESceneObjectField.Object;
@@ -157,49 +183,14 @@ namespace Fusion.Addons.Inspector.Editor
 			DrawSelectionGUI(window, ref region, db);
 		}
 
-		private void DrawRunnersGUI(ref Rect region, FusionInspectorDB db)
-		{
-			if (db.Runners.Count < 2)
-				return;
-
-			int currentRunnerIndex = db.Runners.IndexOf(db.CurrentRunner);
-
-			if (_tempRunnerNames == null || _tempRunnerNames.Length != db.Runners.Count)
-			{
-				_tempRunnerNames = new string[db.Runners.Count];
-			}
-
-			for (int i = 0; i < db.Runners.Count; ++i)
-			{
-				_tempRunnerNames[i] = $"ID:[{db.Runners[i].GetInstanceID()}] {db.Runners[i].name}";
-			}
-
-			region.yMin += FusionInspector.LinePadding;
-
-			Rect popupRect = region;
-			popupRect.xMin += FusionInspector.LinePadding;
-			popupRect.xMax -= FusionInspector.LinePadding;
-			popupRect.height = FusionInspector.LineHeight;
-
-			int pendingRunnerIndex = EditorGUI.Popup(popupRect, currentRunnerIndex, _tempRunnerNames);
-			if (pendingRunnerIndex != currentRunnerIndex)
-			{
-				db.PendingRunner = db.Runners[pendingRunnerIndex];
-			}
-
-			region.yMin += popupRect.height;
-			region.yMin += FusionInspector.LinePadding;
-		}
-
 		private void DrawSceneObjectsGUI(Rect window, ref Rect region, FusionInspectorDB db, ESceneObjectField visibleFields, ESceneObjectField toggleableFields)
 		{
 			SceneObjects sceneObjects = db.SceneObjects;
 			if (sceneObjects.All.Count <= 0)
 				return;
 
-			PlayerRef localPlayer  = db.LocalPlayer;
-			int       minSelection = int.MaxValue;
-			int       maxSelection = int.MinValue;
+			int minSelection = int.MaxValue;
+			int maxSelection = int.MinValue;
 
 			_selection.Clear();
 			for (int i = 0, count = sceneObjects.Filtered.Count; i < count; ++i)
@@ -280,26 +271,38 @@ namespace Fusion.Addons.Inspector.Editor
 			GUIColor.Set(FusionInspector.FilterColors[Mathf.Min(sceneObjects.ComponentFilterInclude.Count + sceneObjects.ComponentFilterExclude.Count, 1)]);
 			if (GUI.Button(componentFilterRect, _filterContent, GUIStyles.Icon) == true)
 			{
-				sceneObjects.ComponentFilterFoldout = !sceneObjects.ComponentFilterFoldout;
-				sceneObjects.VisibleFieldsFoldout = false;
+				if (Event.current.button == 1)
+				{
+					GenericMenu menu = new GenericMenu();
+					menu.AddItem(new GUIContent("Reset"), false, () =>
+					{
+						for (int i = 0, count = db.Components.All.Count; i < count; ++i)
+						{
+							db.Components.All[i].SceneObjects.FilterMode = EFilterMode.None;
+						}
+					});
+					menu.ShowAsContext();
+				}
+				else
+				{
+					sceneObjects.ComponentFilterFoldout = !sceneObjects.ComponentFilterFoldout;
+					sceneObjects.VisibleFieldsFoldout = false;
+				}
 			}
 			GUIColor.Reset();
 
-			Rect nameFilterRect = headerRect;
-			nameFilterRect.xMax = componentFilterRect.xMin;
-			nameFilterRect.xMin = nameFilterRect.xMax - headerRect.width * 0.4f;
-			nameFilterRect.y += 0.5f;
-			if (nameFilterRect.height > EditorGUIUtility.singleLineHeight)
-			{
-				nameFilterRect.y += (nameFilterRect.height - EditorGUIUtility.singleLineHeight) * 0.5f;
-				nameFilterRect.height = EditorGUIUtility.singleLineHeight;
-			}
-			sceneObjects.ObjectNameFilter = EditorGUI.TextField(nameFilterRect, sceneObjects.ObjectNameFilter, GUIStyles.SearchField);
+			GUIContent nameContent = _objectStat.GetContent(sceneObjects.All.Count, sceneObjects.Filtered.Count, _selection.Count, (int)sceneObjects.SortMode);
 
 			Rect nameRect = headerRect;
-			nameRect.xMax = nameFilterRect.xMin;
 			nameRect.xMin += _objectStat.IsSorted((int)sceneObjects.SortMode) ? 0.0f : _sortWidth;
-			if (GUI.Button(nameRect, _objectStat.GetContent(sceneObjects.All.Count, sceneObjects.Filtered.Count, _selection.Count, (int)sceneObjects.SortMode), _objectStat.Style) == true)
+
+			Rect nameFilterRect = headerRect;
+			nameFilterRect.xMax = componentFilterRect.xMin;
+			FusionInspector.ApplyFilterRect(ref nameFilterRect, nameRect.xMin + _objectStat.Style.CalcSize(nameContent).x);
+			sceneObjects.ObjectNameFilter = FusionInspector.DrawFilterField(nameFilterRect, sceneObjects.ObjectNameFilter);
+
+			nameRect.xMax = nameFilterRect.xMin;
+			if (GUI.Button(nameRect, nameContent, _objectStat.Style) == true)
 			{
 				ToggleSortMode(ref sceneObjects.SortMode, ESceneObjectSortMode.NameAscending, ESceneObjectSortMode.NameDescending);
 			}
@@ -335,8 +338,12 @@ namespace Fusion.Addons.Inspector.Editor
 
 			DrawFieldsGUI(ref content, sceneObjects, visibleFields, toggleableFields);
 			DrawComponentFilterGUI(ref content, sceneObjects, db.Components);
+			DrawFilterBarGUI(window, ref content, sceneObjects);
 
 			GUISeparators.AddY(content.y);
+
+			// One line is reserved for the always visible Total row below the list.
+			content.yMax -= FusionInspector.LineHeight + 2.0f;
 
 			Rect scrollRect     = new Rect(content.x, content.y, content.width + FusionInspector.RightWindowOffset, content.height);
 			Rect scrollViewRect = new Rect(0.0f, 0.0f, content.width, FusionInspector.LineHeight * sceneObjects.Filtered.Count);
@@ -380,7 +387,7 @@ namespace Fusion.Addons.Inspector.Editor
 					selectionRect.y += scrollRect.y - _scrollPosition.y;
 					GUIHighlights.Add(selectionRect, FusionInspector.SelectionColor);
 				}
-				else if (mousePosition.x >= content.xMin && mousePosition.x <= content.xMax && mousePosition.y >= minScrollY && mousePosition.y <= maxScrollY && mousePosition.y > drawRect.yMin && mousePosition.y < drawRect.yMax)
+				else if (mousePosition.x >= 0.0f && mousePosition.x <= content.width && mousePosition.y >= minScrollY && mousePosition.y <= maxScrollY && mousePosition.y > drawRect.yMin && mousePosition.y < drawRect.yMax)
 				{
 					Rect hoverRect = drawRect;
 					hoverRect.xMin = 0.0f;
@@ -401,55 +408,127 @@ namespace Fusion.Addons.Inspector.Editor
 				drawRect.height += 1.0f; // GUI.Button dead zone fix
 				if (GUI.Button(drawRect, _objectContent, GUIStyles.ObjectField) == true)
 				{
-					if (_selection.Count == 1 && _selection.Contains(sceneObject) == true && Time.unscaledTime < (_selectionTime + FusionInspector.SelectionDelay))
+					if (Event.current.button == 1)
 					{
-						_selectionTime = default;
+						GenericMenu menu = new GenericMenu();
 
-						Selection.SetActiveObjectWithContext(sceneObject.GameObject, sceneObject.GameObject);
-					}
-					else
-					{
-						db.Components.ClearSelectedStateChanges();
-
-						if (Event.current.shift == true)
+						if (_selection.Count > 1 && _selection.Contains(sceneObject) == true)
 						{
-							minSelection = Mathf.Min(minSelection, i);
-							maxSelection = Mathf.Max(maxSelection, i);
+							List<string> names = new List<string>();
+							List<string> paths = new List<string>();
 
-							for (int j = minSelection; j <= maxSelection; ++j)
+							for (int j = 0; j < _selection.Count; ++j)
 							{
-								sceneObjects.Filtered[j].IsSelected = true;
+								names.Add(_selection[j].Name);
+								paths.Add(GetHierarchyPath(_selection[j].Transform));
 							}
 
-							EditorGUIUtility.PingObject(sceneObject.GameObject);
-						}
-						else if (Event.current.control == true)
-						{
-							sceneObject.IsSelected = !sceneObject.IsSelected;
-							if (sceneObject.IsSelected == true)
-							{
-								EditorGUIUtility.PingObject(sceneObject.GameObject);
-							}
+							menu.AddItem(new GUIContent("Copy Names"), false, (data) => { EditorGUIUtility.systemCopyBuffer = (string)data; }, string.Join("\n", names));
+							menu.AddItem(new GUIContent("Copy Paths"), false, (data) => { EditorGUIUtility.systemCopyBuffer = (string)data; }, string.Join("\n", paths));
 						}
 						else
 						{
-							for (int j = 0; j < _selection.Count; ++j)
+							string objectName = sceneObject.Name;
+							menu.AddItem(new GUIContent($"Filter Name: {objectName}"), sceneObjects.ObjectNameFilter == objectName, () => { sceneObjects.ObjectNameFilter = sceneObjects.ObjectNameFilter == objectName ? default : objectName; });
+
+							PlayerRef stateAuthority = sceneObject.StateAuthority.Value;
+							PlayerRef inputAuthority = sceneObject.InputAuthority.Value;
+
+							if (stateAuthority.IsNone == false)
 							{
-								_selection[j].IsSelected = false;
+								menu.AddItem(new GUIContent($"Filter State Authority: {sceneObject.StateAuthority.GetLabel()}"), sceneObjects.StateAuthorityFilter == stateAuthority, () => { sceneObjects.StateAuthorityFilter = sceneObjects.StateAuthorityFilter == stateAuthority ? PlayerRef.None : stateAuthority; });
 							}
 
-							if (_selection.Count != 1 || _selection.Contains(sceneObject) == false)
+							if (inputAuthority.IsNone == false)
 							{
-								sceneObject.IsSelected = true;
-								EditorGUIUtility.PingObject(sceneObject.GameObject);
+								menu.AddItem(new GUIContent($"Filter Input Authority: {sceneObject.InputAuthority.GetLabel()}"), sceneObjects.InputAuthorityFilter == inputAuthority, () => { sceneObjects.InputAuthorityFilter = sceneObjects.InputAuthorityFilter == inputAuthority ? PlayerRef.None : inputAuthority; });
 							}
+
+							int interestMode = sceneObject.InterestMode;
+							menu.AddItem(new GUIContent($"Filter Interest: {_interestModeContents[interestMode].text}"), sceneObjects.InterestModeFilter == interestMode, () => { sceneObjects.InterestModeFilter = sceneObjects.InterestModeFilter == interestMode ? -1 : interestMode; });
+
+							menu.AddSeparator("");
+							menu.AddItem(new GUIContent("Copy Name"), false, (data) => { EditorGUIUtility.systemCopyBuffer = (string)data; }, sceneObject.Name);
+							menu.AddItem(new GUIContent("Copy Path"), false, (data) => { EditorGUIUtility.systemCopyBuffer = (string)data; }, GetHierarchyPath(sceneObject.Transform));
 						}
 
-						_selectionTime = Time.unscaledTime;
+						menu.ShowAsContext();
+					}
+					else
+					{
+						if (_selection.Count == 1 && _selection.Contains(sceneObject) == true && EditorApplication.timeSinceStartup < (_selectionTime + FusionInspector.SelectionDelay))
+						{
+							_selectionTime = default;
+
+							Selection.SetActiveObjectWithContext(sceneObject.GameObject, sceneObject.GameObject);
+						}
+						else
+						{
+							db.Components.ClearSelectedStateChanges();
+
+							if (Event.current.shift == true)
+							{
+								minSelection = Mathf.Min(minSelection, i);
+								maxSelection = Mathf.Max(maxSelection, i);
+
+								for (int j = minSelection; j <= maxSelection; ++j)
+								{
+									sceneObjects.Filtered[j].IsSelected = true;
+								}
+
+								EditorGUIUtility.PingObject(sceneObject.GameObject);
+							}
+							else if (Event.current.control == true)
+							{
+								sceneObject.IsSelected = !sceneObject.IsSelected;
+								if (sceneObject.IsSelected == true)
+								{
+									EditorGUIUtility.PingObject(sceneObject.GameObject);
+								}
+							}
+							else
+							{
+								for (int j = 0; j < _selection.Count; ++j)
+								{
+									_selection[j].IsSelected = false;
+								}
+
+								if (_selection.Count != 1 || _selection.Contains(sceneObject) == false)
+								{
+									sceneObject.IsSelected = true;
+									EditorGUIUtility.PingObject(sceneObject.GameObject);
+								}
+							}
+
+							_selectionTime = EditorApplication.timeSinceStartup;
+						}
 					}
 				}
 				drawRect.height -= 1.0f; // GUI.Button dead zone fix
 				GUIColor.Reset();
+
+				if ((sceneObject.HasStateAuthority == true || sceneObject.HasInputAuthority == true) && drawRect.yMin >= minScrollY && drawRect.yMax <= maxScrollY)
+				{
+					Rect dotRect = drawRect;
+					dotRect.xMin  = drawRect.xMax - _localDotWidth - 3.0f;
+					dotRect.width = _localDotWidth;
+
+					if (sceneObject.HasStateAuthority == true)
+					{
+						GUIColor.Set(Color.green);
+						EditorGUI.LabelField(dotRect, _localStateAuthorityContent, GUIStyles.Dot);
+						GUIColor.Reset();
+					}
+
+					dotRect.x -= _localDotWidth - 4.0f;
+
+					if (sceneObject.HasInputAuthority == true)
+					{
+						GUIColor.Set(Color.yellow);
+						EditorGUI.LabelField(dotRect, _localInputAuthorityContent, GUIStyles.Dot);
+						GUIColor.Reset();
+					}
+				}
 
 				if (showComponents == true)
 				{
@@ -468,7 +547,7 @@ namespace Fusion.Addons.Inspector.Editor
 								for (int componentIndex = 0; componentIndex < sceneObject.Components.Length; ++componentIndex)
 								{
 									ComponentInfo component = sceneObject.Components[componentIndex];
-									menu.AddItem(new GUIContent($"ID:[{sceneObject.NetworkObject.NetworkedBehaviours[componentIndex].GetInstanceID()}] {component.TypeName}"), false, (script) =>
+									menu.AddItem(new GUIContent($"ID:[{ObjectUtility.GetObjectId(sceneObject.NetworkObject.NetworkedBehaviours[componentIndex])}] {component.TypeName}"), false, (script) =>
 									{
 										MonoScript monoScript = script as MonoScript;
 										if (monoScript != null)
@@ -494,6 +573,17 @@ namespace Fusion.Addons.Inspector.Editor
 					drawRect.width = _interestModeStat.Width;
 
 					EditorGUI.LabelField(drawRect, _interestModeContents[(int)sceneObject.InterestMode], GUIStyles.RightLabel);
+
+					if (Event.current.type == EventType.MouseDown && Event.current.button == 1 && drawRect.Contains(Event.current.mousePosition) == true)
+					{
+						int interestMode = sceneObject.InterestMode;
+
+						GenericMenu menu = new GenericMenu();
+						menu.AddItem(new GUIContent($"Filter Interest: {_interestModeContents[interestMode].text}"), sceneObjects.InterestModeFilter == interestMode, () => { sceneObjects.InterestModeFilter = sceneObjects.InterestModeFilter == interestMode ? -1 : interestMode; });
+						menu.ShowAsContext();
+
+						Event.current.Use();
+					}
 				}
 
 				if (showIsInSimulation    == true) { FusionInspector.DrawIcon(_isInSimulationStat,    ref drawRect, sceneObject.IsInSimulation);    }
@@ -515,12 +605,26 @@ namespace Fusion.Addons.Inspector.Editor
 
 					if (sceneObject.StateAuthority.Value != PlayerRef.None)
 					{
-						EditorGUI.LabelField(drawRect, sceneObject.StateAuthority.GetLabel(), GUIStyles.RightLabel);
-						if (sceneObject.StateAuthority.Value == localPlayer)
+						if (sceneObject.HasStateAuthority == true)
 						{
 							GUIColor.Set(Color.green);
-							EditorGUI.LabelField(drawRect, _localStateAuthorityContent, GUIStyles.LeftBoldLabel);
+							EditorGUI.LabelField(drawRect, sceneObject.StateAuthority.GetLabel(), GUIStyles.RightLabel);
 							GUIColor.Reset();
+						}
+						else
+						{
+							EditorGUI.LabelField(drawRect, sceneObject.StateAuthority.GetLabel(), GUIStyles.RightLabel);
+						}
+
+						if (Event.current.type == EventType.MouseDown && Event.current.button == 1 && drawRect.Contains(Event.current.mousePosition) == true)
+						{
+							PlayerRef stateAuthority = sceneObject.StateAuthority.Value;
+
+							GenericMenu menu = new GenericMenu();
+							menu.AddItem(new GUIContent($"Filter State Authority: {sceneObject.StateAuthority.GetLabel()}"), sceneObjects.StateAuthorityFilter == stateAuthority, () => { sceneObjects.StateAuthorityFilter = sceneObjects.StateAuthorityFilter == stateAuthority ? PlayerRef.None : stateAuthority; });
+							menu.ShowAsContext();
+
+							Event.current.Use();
 						}
 					}
 				}
@@ -532,12 +636,26 @@ namespace Fusion.Addons.Inspector.Editor
 
 					if (sceneObject.InputAuthority.Value != PlayerRef.None)
 					{
-						EditorGUI.LabelField(drawRect, sceneObject.InputAuthority.GetLabel(), GUIStyles.RightLabel);
-						if (sceneObject.InputAuthority.Value == localPlayer)
+						if (sceneObject.HasInputAuthority == true)
 						{
 							GUIColor.Set(Color.green);
-							EditorGUI.LabelField(drawRect, _localInputAuthorityContent, GUIStyles.LeftBoldLabel);
+							EditorGUI.LabelField(drawRect, sceneObject.InputAuthority.GetLabel(), GUIStyles.RightLabel);
 							GUIColor.Reset();
+						}
+						else
+						{
+							EditorGUI.LabelField(drawRect, sceneObject.InputAuthority.GetLabel(), GUIStyles.RightLabel);
+						}
+
+						if (Event.current.type == EventType.MouseDown && Event.current.button == 1 && drawRect.Contains(Event.current.mousePosition) == true)
+						{
+							PlayerRef inputAuthority = sceneObject.InputAuthority.Value;
+
+							GenericMenu menu = new GenericMenu();
+							menu.AddItem(new GUIContent($"Filter Input Authority: {sceneObject.InputAuthority.GetLabel()}"), sceneObjects.InputAuthorityFilter == inputAuthority, () => { sceneObjects.InputAuthorityFilter = sceneObjects.InputAuthorityFilter == inputAuthority ? PlayerRef.None : inputAuthority; });
+							menu.ShowAsContext();
+
+							Event.current.Use();
 						}
 					}
 				}
@@ -591,9 +709,109 @@ namespace Fusion.Addons.Inspector.Editor
 
 			float scrollHeight = Mathf.Min(scrollRect.height, scrollViewRect.height);
 
-			GUISeparators.AddY(scrollRect.yMin + scrollHeight);
+			GUISeparators.AddY(scrollRect.yMin + scrollHeight + 2.0f);
+			GUISeparators.AddY(scrollRect.yMin + scrollHeight + 2.0f + FusionInspector.LineHeight);
 
-			GUISeparators.DrawAll(new Rect(0.0f, 0.0f, window.width, window.height), headerRect.yMin, headerRect.height, scrollRect.yMin, scrollHeight);
+			DrawTotalGUI(window, new Rect(content.x, scrollRect.yMin + scrollHeight + 2.0f, content.width, FusionInspector.LineHeight), sceneObjects,
+				showComponents, showIsMasterClientObject, showAllowStateAuthorityOverride, showDestroyWhenStateAuthorityLeaves, showInterestMode,
+				showIsInSimulation, showHasStateAuthority, showHasInputAuthority, showNetworkId, showStateAuthority, showInputAuthority,
+				showTotalStateChanges, showAverageStateChanges, showStateSize);
+
+			GUISeparators.DrawAll(new Rect(0.0f, 0.0f, window.width, window.height), headerRect.yMin, headerRect.height, scrollRect.yMin, scrollHeight + 2.0f);
+		}
+
+		private void DrawTotalGUI(Rect window, Rect totalRect, SceneObjects sceneObjects,
+			bool showComponents, bool showIsMasterClientObject, bool showAllowStateAuthorityOverride, bool showDestroyWhenStateAuthorityLeaves, bool showInterestMode,
+			bool showIsInSimulation, bool showHasStateAuthority, bool showHasInputAuthority, bool showNetworkId, bool showStateAuthority, bool showInputAuthority,
+			bool showTotalStateChanges, bool showAverageStateChanges, bool showStateSize)
+		{
+			int totalComponents          = 0;
+			int totalStateSize           = 0;
+			int totalStateChanges        = 0;
+			int totalAverageStateChanges = 0;
+
+			for (int i = 0, count = sceneObjects.Filtered.Count; i < count; ++i)
+			{
+				SceneObjectInfo sceneObject = sceneObjects.Filtered[i];
+
+				totalComponents          += Mathf.Max(0, sceneObject.ComponentCount.Value);
+				totalStateChanges        += Mathf.Max(0, sceneObject.TotalStateChanges.Value);
+				totalAverageStateChanges += Mathf.Max(0, sceneObject.AverageStateChanges.Value);
+
+				if (sceneObject.StateSize.Value > 0)
+				{
+					totalStateSize += sceneObject.StateSize.Value;
+				}
+			}
+
+			_totalComponents.Value          = totalComponents;
+			_totalStateSize.Value           = totalStateSize;
+			_totalStateChangesSum.Value     = totalStateChanges;
+			_totalStateChangesAverage.Value = totalAverageStateChanges;
+
+			TextureUtility.DrawTexture(new Rect(0.0f, totalRect.yMin, window.width, totalRect.height), FusionInspector.HeaderColor);
+
+			FusionInspector.ApplyLinePadding(ref totalRect);
+
+			Rect drawRect = totalRect;
+			drawRect.width = _objectStat.Width;
+
+			Rect totalLabelRect = drawRect;
+			totalLabelRect.xMin += GUIStyles.ObjectField.padding.left + (totalLabelRect.height - GUIStyles.ObjectField.padding.vertical) - GUIStyles.LeftBoldLabel.padding.left + 2.0f;
+
+			EditorGUI.LabelField(totalLabelRect, _totalContent, GUIStyles.LeftBoldLabel);
+
+			if (showComponents == true)
+			{
+				drawRect.xMin += drawRect.width;
+				drawRect.width = _componentsStat.Width;
+
+				drawRect.xMax -= 2.0f;
+				EditorGUI.LabelField(drawRect, _totalComponents.GetLabel(), GUIStyles.RightBoldLabel);
+				drawRect.xMax += 2.0f;
+			}
+
+			if (showIsMasterClientObject            == true) { drawRect.xMin += drawRect.width; drawRect.width = _isMasterClientObjectStat.Width;            }
+			if (showAllowStateAuthorityOverride     == true) { drawRect.xMin += drawRect.width; drawRect.width = _allowStateAuthorityOverrideStat.Width;     }
+			if (showDestroyWhenStateAuthorityLeaves == true) { drawRect.xMin += drawRect.width; drawRect.width = _destroyWhenStateAuthorityLeavesStat.Width; }
+			if (showInterestMode                    == true) { drawRect.xMin += drawRect.width; drawRect.width = _interestModeStat.Width;                    }
+			if (showIsInSimulation                  == true) { drawRect.xMin += drawRect.width; drawRect.width = _isInSimulationStat.Width;                  }
+			if (showHasStateAuthority               == true) { drawRect.xMin += drawRect.width; drawRect.width = _hasStateAuthorityStat.Width;               }
+			if (showHasInputAuthority               == true) { drawRect.xMin += drawRect.width; drawRect.width = _hasInputAuthorityStat.Width;               }
+			if (showNetworkId                       == true) { drawRect.xMin += drawRect.width; drawRect.width = _networkIdStat.Width;                       }
+			if (showStateAuthority                  == true) { drawRect.xMin += drawRect.width; drawRect.width = _stateAuthorityStat.Width;                  }
+			if (showInputAuthority                  == true) { drawRect.xMin += drawRect.width; drawRect.width = _inputAuthorityStat.Width;                  }
+			if (showTotalStateChanges == true)
+			{
+				drawRect.xMin += drawRect.width;
+				drawRect.width = _totalStateChangesStat.Width;
+
+				if (_totalStateChangesSum.Value > 0)
+				{
+					EditorGUI.LabelField(drawRect, _totalStateChangesSum.GetLabel(), GUIStyles.RightBoldLabel);
+				}
+			}
+
+			if (showAverageStateChanges == true)
+			{
+				drawRect.xMin += drawRect.width;
+				drawRect.width = _averageStateChangesStat.Width;
+
+				if (_totalStateChangesAverage.Value > 0)
+				{
+					EditorGUI.LabelField(drawRect, _totalStateChangesAverage.GetLabel(), GUIStyles.RightBoldLabel);
+				}
+			}
+
+			if (showStateSize == true)
+			{
+				drawRect.xMin += drawRect.width;
+				drawRect.width = _stateSizeStat.Width;
+
+				EditorGUI.LabelField(drawRect, _totalStateSize.GetLabel(), GUIStyles.RightBoldLabel);
+			}
+
+			FusionInspector.RestoreLinePadding(ref totalRect);
 		}
 
 		private void DrawFieldsGUI(ref Rect sectionRect, SceneObjects sceneObjects, ESceneObjectField visibleFields, ESceneObjectField toggleableFields)
@@ -610,7 +828,7 @@ namespace Fusion.Addons.Inspector.Editor
 			innerRect.height = EditorGUIUtility.singleLineHeight;
 
 			float totalWidth      = _fieldsWidth1 + _fieldsWidth2 + _fieldsWidth3;
-			float widthMultiplier = innerRect.width / totalWidth;
+			float widthMultiplier = Mathf.Min(1.0f, innerRect.width / totalWidth);
 
 			//----------------------------------------------------------------
 
@@ -620,15 +838,14 @@ namespace Fusion.Addons.Inspector.Editor
 
 			configRect.y += yOffset;
 
-			EditorGUI.LabelField(configRect, "Configuration", EditorStyles.boldLabel);
-			configRect.y += configRect.height;
+			DrawCategoryToggle(ref configRect, "Configuration", ESceneObjectField.Configuration);
 			configRect.y += yOffset;
 
-			DrawToggle(ref configRect, "Components (NB)",                     ESceneObjectField.Components);
-			DrawToggle(ref configRect, "Is Master Client Object",             ESceneObjectField.IsMasterClientObject);
-			DrawToggle(ref configRect, "Allow State Authority Override",      ESceneObjectField.AllowStateAuthorityOverride);
-			DrawToggle(ref configRect, "Destroy When State Authority Leaves", ESceneObjectField.DestroyWhenStateAuthorityLeaves);
-			DrawToggle(ref configRect, "Object Interest Mode",                ESceneObjectField.InterestMode);
+			DrawToggle(ref configRect, "Components (NB)",                     _componentsStat.Content.tooltip,                      ESceneObjectField.Components);
+			DrawToggle(ref configRect, "Is Master Client Object",             _isMasterClientObjectStat.Content.tooltip,            ESceneObjectField.IsMasterClientObject);
+			DrawToggle(ref configRect, "Allow State Authority Override",      _allowStateAuthorityOverrideStat.Content.tooltip,     ESceneObjectField.AllowStateAuthorityOverride);
+			DrawToggle(ref configRect, "Destroy When State Authority Leaves", _destroyWhenStateAuthorityLeavesStat.Content.tooltip, ESceneObjectField.DestroyWhenStateAuthorityLeaves);
+			DrawToggle(ref configRect, "Object Interest Mode",                _interestModeStat.Content.tooltip,                    ESceneObjectField.InterestMode);
 
 			configRect.y += yOffset;
 
@@ -640,18 +857,17 @@ namespace Fusion.Addons.Inspector.Editor
 
 			runtimeRect.y += yOffset;
 
-			EditorGUI.LabelField(runtimeRect, "Runtime", EditorStyles.boldLabel);
-			runtimeRect.y += runtimeRect.height;
+			DrawCategoryToggle(ref runtimeRect, "Runtime", ESceneObjectField.Runtime);
 			runtimeRect.y += yOffset;
 
-			DrawToggle(ref runtimeRect, "Is In Simulation",    ESceneObjectField.IsInSimulation);
-			DrawToggle(ref runtimeRect, "Has State Authority", ESceneObjectField.HasStateAuthority);
-			DrawToggle(ref runtimeRect, "Has Input Authority", ESceneObjectField.HasInputAuthority);
-			DrawToggle(ref runtimeRect, "Network Id",          ESceneObjectField.NetworkId);
-			DrawToggle(ref runtimeRect, "State Authority",     ESceneObjectField.StateAuthority);
-			DrawToggle(ref runtimeRect, "Input Authority",     ESceneObjectField.InputAuthority);
-			DrawToggle(ref runtimeRect, "Σ State Changes",     ESceneObjectField.TotalStateChanges);
-			DrawToggle(ref runtimeRect, "Ø State Changes",     ESceneObjectField.AverageStateChanges);
+			DrawToggle(ref runtimeRect, "Is In Simulation",    _isInSimulationStat.Content.tooltip,      ESceneObjectField.IsInSimulation);
+			DrawToggle(ref runtimeRect, "Has State Authority", _hasStateAuthorityStat.Content.tooltip,   ESceneObjectField.HasStateAuthority);
+			DrawToggle(ref runtimeRect, "Has Input Authority", _hasInputAuthorityStat.Content.tooltip,   ESceneObjectField.HasInputAuthority);
+			DrawToggle(ref runtimeRect, "Network Id",          _networkIdStat.Content.tooltip,           ESceneObjectField.NetworkId);
+			DrawToggle(ref runtimeRect, "State Authority",     _stateAuthorityStat.Content.tooltip,      ESceneObjectField.StateAuthority);
+			DrawToggle(ref runtimeRect, "Input Authority",     _inputAuthorityStat.Content.tooltip,      ESceneObjectField.InputAuthority);
+			DrawToggle(ref runtimeRect, "Σ State Changes",     _totalStateChangesStat.Content.tooltip,   ESceneObjectField.TotalStateChanges);
+			DrawToggle(ref runtimeRect, "Ø State Changes",     _averageStateChangesStat.Content.tooltip, ESceneObjectField.AverageStateChanges);
 
 			runtimeRect.y += yOffset;
 
@@ -663,12 +879,11 @@ namespace Fusion.Addons.Inspector.Editor
 
 			otherRect.y += yOffset;
 
-			EditorGUI.LabelField(otherRect, "Other", EditorStyles.boldLabel);
-			otherRect.y += otherRect.height;
+			DrawCategoryToggle(ref otherRect, "Other", ESceneObjectField.Other);
 			otherRect.y += yOffset;
 
-			DrawToggle(ref otherRect, "State Size", ESceneObjectField.StateSize);
-			DrawToggle(ref otherRect, "Distance",   ESceneObjectField.Distance);
+			DrawToggle(ref otherRect, "State Size", _stateSizeStat.Content.tooltip, ESceneObjectField.StateSize);
+			DrawToggle(ref otherRect, "Distance",   _distanceStat.Content.tooltip,  ESceneObjectField.Distance);
 
 			otherRect.y += yOffset;
 
@@ -678,12 +893,39 @@ namespace Fusion.Addons.Inspector.Editor
 
 			return;
 
-			void DrawToggle(ref Rect rect, string label, ESceneObjectField field)
+			void DrawCategoryToggle(ref Rect rect, string label, ESceneObjectField categoryFields)
 			{
+				ESceneObjectField enabledFields = sceneObjects.VisibleFields & categoryFields;
+
+				bool allEnabled = enabledFields == categoryFields;
+
+				EditorGUI.BeginDisabledGroup((toggleableFields & categoryFields) == ESceneObjectField.None);
+
+				EditorGUI.showMixedValue = allEnabled == false && enabledFields != ESceneObjectField.None;
+				bool toggleState = EditorGUI.ToggleLeft(new Rect(rect.x, rect.y, rect.width - FusionInspector.CategorySpacing * widthMultiplier, rect.height), label, allEnabled, EditorStyles.boldLabel);
+				EditorGUI.showMixedValue = false;
+
+				EditorGUI.EndDisabledGroup();
+
+				if (toggleState != allEnabled)
+				{
+					sceneObjects.SetVisibleFields(categoryFields, toggleState);
+				}
+
+				rect.y += rect.height;
+
+				TextureUtility.DrawTexture(new Rect(rect.x, rect.y + 2.0f, rect.width - FusionInspector.CategorySpacing * widthMultiplier, FusionInspector.SeparatorSize), FusionInspector.SeparatorColor);
+			}
+
+			void DrawToggle(ref Rect rect, string label, string tooltip, ESceneObjectField field)
+			{
+				_toggleContent.text    = label;
+				_toggleContent.tooltip = tooltip;
+
 				EditorGUI.BeginDisabledGroup(toggleableFields.Has(field) == false);
 
 				bool previousState = sceneObjects.VisibleFields.Has(field);
-				bool currentState  = EditorGUI.ToggleLeft(rect, label, previousState);
+				bool currentState  = EditorGUI.ToggleLeft(new Rect(rect.x, rect.y, rect.width - FusionInspector.CategorySpacing * widthMultiplier, rect.height), _toggleContent, previousState);
 
 				EditorGUI.EndDisabledGroup();
 
@@ -787,6 +1029,77 @@ namespace Fusion.Addons.Inspector.Editor
 			_tempComponents.Clear();
 		}
 
+		private void DrawFilterBarGUI(Rect window, ref Rect region, SceneObjects sceneObjects)
+		{
+			bool hasStateAuthorityFilter = sceneObjects.StateAuthorityFilter.IsNone == false;
+			bool hasInputAuthorityFilter = sceneObjects.InputAuthorityFilter.IsNone == false;
+			bool hasInterestModeFilter   = sceneObjects.InterestModeFilter >= 0;
+
+			if (hasStateAuthorityFilter == false && hasInputAuthorityFilter == false && hasInterestModeFilter == false)
+				return;
+
+			if (hasStateAuthorityFilter == true && _stateAuthorityFilterPlayer != sceneObjects.StateAuthorityFilter)
+			{
+				_stateAuthorityFilterPlayer = sceneObjects.StateAuthorityFilter;
+				_authorityFilterLabel.Value = _stateAuthorityFilterPlayer;
+				_stateAuthorityFilterContent.text = $"State Authority: {_authorityFilterLabel.GetLabel()}";
+			}
+
+			if (hasInputAuthorityFilter == true && _inputAuthorityFilterPlayer != sceneObjects.InputAuthorityFilter)
+			{
+				_inputAuthorityFilterPlayer = sceneObjects.InputAuthorityFilter;
+				_authorityFilterLabel.Value = _inputAuthorityFilterPlayer;
+				_inputAuthorityFilterContent.text = $"Input Authority: {_authorityFilterLabel.GetLabel()}";
+			}
+
+			if (hasInterestModeFilter == true && _interestModeFilterMode != sceneObjects.InterestModeFilter)
+			{
+				_interestModeFilterMode = sceneObjects.InterestModeFilter;
+				_interestModeFilterContent.text = $"Interest: {_interestModeContents[_interestModeFilterMode].text}";
+			}
+
+			Rect barRect = region;
+			barRect.height = FusionInspector.LineHeight;
+
+			TextureUtility.DrawTexture(new Rect(0.0f, barRect.yMin, window.width, barRect.height), FusionInspector.HeaderColor);
+
+			region.yMin += barRect.height;
+
+			if (hasStateAuthorityFilter == true && DrawFilterChip(ref barRect, _stateAuthorityFilterContent) == true)
+			{
+				sceneObjects.StateAuthorityFilter = PlayerRef.None;
+			}
+
+			if (hasInputAuthorityFilter == true && DrawFilterChip(ref barRect, _inputAuthorityFilterContent) == true)
+			{
+				sceneObjects.InputAuthorityFilter = PlayerRef.None;
+			}
+
+			if (hasInterestModeFilter == true && DrawFilterChip(ref barRect, _interestModeFilterContent) == true)
+			{
+				sceneObjects.InterestModeFilter = -1;
+			}
+		}
+
+		private bool DrawFilterChip(ref Rect rect, GUIContent content)
+		{
+			Rect buttonRect = rect;
+			buttonRect.width = rect.height;
+
+			GUIColor.Set(Color.red);
+			bool remove = GUI.Button(buttonRect, _removeFilterContent, GUIStyles.Icon);
+			GUIColor.Reset();
+
+			Rect labelRect = rect;
+			labelRect.xMin  = buttonRect.xMax - 4.0f;
+			labelRect.width = GUIStyles.LeftLabel.CalcSize(content).x;
+			EditorGUI.LabelField(labelRect, content, GUIStyles.LeftLabel);
+
+			rect.xMin = labelRect.xMax + 16.0f;
+
+			return remove;
+		}
+
 		private void DrawSelectionGUI(Rect window, ref Rect region, FusionInspectorDB db)
 		{
 			SceneObjects sceneObjects = db.SceneObjects;
@@ -842,7 +1155,7 @@ namespace Fusion.Addons.Inspector.Editor
 			FusionInspector.ApplyLinePadding(ref headerRect);
 
 			Rect typeRect = headerRect;
-			typeRect.xMin += _sortWidth;
+			typeRect.xMin += _sortWidth + 2.0f;
 			GUI.Label(typeRect, "Type", _objectStat.Style);
 
 			if (isInPlayMode == true)
@@ -897,17 +1210,32 @@ namespace Fusion.Addons.Inspector.Editor
 				_scriptContent.text = component.TypeName;
 				if (GUI.Button(drawRect, _scriptContent, GUIStyles.ObjectField) == true && component.Script != null)
 				{
-					if (_scriptSelection == component.Script && Time.unscaledTime < (_scriptSelectionTime + FusionInspector.SelectionDelay))
+					if (Event.current.button == 1)
 					{
-						AssetDatabase.OpenAsset(component.Script);
-						_scriptSelection     = default;
-						_scriptSelectionTime = default;
+						string assetPath = AssetDatabase.GetAssetPath(component.Script);
+
+						GenericMenu menu = new GenericMenu();
+						menu.AddItem(new GUIContent("Copy Name"), false, (data) => { EditorGUIUtility.systemCopyBuffer = (string)data; }, component.TypeName);
+						menu.AddItem(new GUIContent("Copy Path"), false, (data) => { EditorGUIUtility.systemCopyBuffer = (string)data; }, assetPath);
+						menu.AddItem(new GUIContent("Copy Full Path"), false, (data) => { EditorGUIUtility.systemCopyBuffer = (string)data; }, string.IsNullOrEmpty(assetPath) == false ? System.IO.Path.GetFullPath(assetPath) : "");
+						menu.AddSeparator("");
+						menu.AddItem(new GUIContent(Application.platform == RuntimePlatform.OSXEditor ? "Reveal in Finder" : "Show in Explorer"), false, (data) => { EditorUtility.RevealInFinder((string)data); }, assetPath);
+						menu.ShowAsContext();
 					}
 					else
 					{
-						EditorGUIUtility.PingObject(component.Script);
-						_scriptSelection     = component.Script;
-						_scriptSelectionTime = Time.unscaledTime;
+						if (_scriptSelection == component && EditorApplication.timeSinceStartup < (_scriptSelectionTime + FusionInspector.SelectionDelay))
+						{
+							AssetDatabase.OpenAsset(component.Script);
+							_scriptSelection     = default;
+							_scriptSelectionTime = default;
+						}
+						else
+						{
+							EditorGUIUtility.PingObject(component.Script);
+							_scriptSelection     = component;
+							_scriptSelectionTime = EditorApplication.timeSinceStartup;
+						}
 					}
 				}
 
@@ -926,6 +1254,23 @@ namespace Fusion.Addons.Inspector.Editor
 			GUI.EndScrollView();
 
 			GUISeparators.DrawAll(new Rect(0.0f, 0.0f, content.width, region.height), headerRect.yMin, headerRect.height, headerRect.yMax, region.height - headerRect.height);
+		}
+
+		private static string GetHierarchyPath(Transform transform)
+		{
+			if (transform == null)
+				return "";
+
+			string path = transform.name;
+
+			Transform parent = transform.parent;
+			while (parent != null)
+			{
+				path = $"{parent.name}/{path}";
+				parent = parent.parent;
+			}
+
+			return path;
 		}
 
 		private static void DrawHeader(GUIStat stat, ref Rect rect, ref EFilterMode filter)

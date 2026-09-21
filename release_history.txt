@@ -1,6 +1,32 @@
 Photon Fusion Inspector Addon - Release History
 
-Last tested with Fusion SDK 2.0.6 Stable 1034
+Last tested with Fusion SDK 2.1.1 Build 2177
+
+Version 2.1.0
+- Added support for RPC tracking with new [RPCs] and [RPCs - Log] sections.
+- [RPCs] shows all RPC methods with their configuration and Sent / Received counts.
+- [RPCs - Log] shows a chronological list of RPC events recorded per NetworkRunner, with filtering support.
+- Added quick filter actions to context menus - by player, object, object name, RPC name and interest mode.
+- Added filter bar with active filters to [Scene Objects], [Prefabs] and [RPCs - Log].
+- Added RPC event selection - clicking an event highlights all events of the same object.
+- Added color coding for local player, state / input authority and proxies.
+- Added Total row to [Scene Objects], [Prefabs] and [RPCs] sections.
+- Added runner selector to the header, visible when multiple runners are active.
+- Added Select in Fusion Inspector context menu action to game objects and prefabs.
+- Added context menus to objects, components, scripts and RPCs.
+- Redesigned footer with infographics.
+- Improved tooltips - now reliably shown during play mode.
+- Compatibility with Unity 2021.3 - 6000.7.
+- Optimizations and bug fixes.
+
+Version 2.0.4
+- Compatibility with Fusion 2.1.
+
+Version 2.0.3
+- Added Properties field to Components section. This shows # of [Networked] properties for each component.
+
+Version 2.0.2
+- Forward compatibility with Fusion 2.1.
 
 Version 2.0.1
 - Added NetworkBehaviour component count to [Scene Objects] and [Prefabs].

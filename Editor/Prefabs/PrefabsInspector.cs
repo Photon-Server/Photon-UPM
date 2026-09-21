@@ -7,36 +7,43 @@ namespace Fusion.Addons.Inspector.Editor
 	internal sealed class PrefabsInspector
 	{
 		private Vector2                _scrollPosition;
-		private float                  _selectionTime;
+		private double                 _selectionTime;
 		private List<PrefabInfo>       _selection = new List<PrefabInfo>();
-		private UnityEngine.Object     _scriptSelection;
-		private float                  _scriptSelectionTime;
+		private object                 _scriptSelection;
+		private double                 _scriptSelectionTime;
 		private Vector2                _scriptScrollPosition;
 		private HashSet<ComponentInfo> _tempScripts = new HashSet<ComponentInfo>();
 		private List<ComponentInfo>    _tempComponents = new List<ComponentInfo>();
+		private IntLabel               _totalComponents = new IntLabel();
+		private MemoryLabel            _totalStateSize = new MemoryLabel(false);
 
-		private static GUINameStat _objectStat;
-		private static GUISortStat _componentsStat;
-		private static GUIIconStat _isSpawnableStat;
-		private static GUIIconStat _isMasterClientObjectStat;
-		private static GUIIconStat _allowStateAuthorityOverrideStat;
-		private static GUIIconStat _destroyWhenStateAuthorityLeavesStat;
-		private static GUISortStat _interestModeStat;
-		private static GUISortStat _stateSizeStat;
+		private GUINameStat _objectStat;
+		private GUISortStat _componentsStat;
+		private GUIIconStat _isSpawnableStat;
+		private GUIIconStat _isMasterClientObjectStat;
+		private GUIIconStat _allowStateAuthorityOverrideStat;
+		private GUIIconStat _destroyWhenStateAuthorityLeavesStat;
+		private GUISortStat _interestModeStat;
+		private GUISortStat _stateSizeStat;
 
-		private static GUIContent   _objectContent;
-		private static GUIContent   _componentsContent;
-		private static GUIContent   _componentsIconContent;
-		private static GUIContent[] _interestModeContents;
-		private static GUIContent   _stateSizeContent;
-		private static GUIContent   _filterContent;
-		private static GUIContent   _fieldsContent;
-		private static GUIContent   _scriptContent;
+		private GUIContent   _objectContent;
+		private GUIContent   _componentsContent;
+		private GUIContent   _componentsIconContent;
+		private GUIContent[] _interestModeContents;
+		private GUIContent   _stateSizeContent;
+		private GUIContent   _filterContent;
+		private GUIContent   _fieldsContent;
+		private GUIContent   _scriptContent;
+		private GUIContent   _toggleContent;
+		private GUIContent   _totalContent;
+		private GUIContent   _interestModeFilterContent;
+		private GUIContent   _removeFilterContent;
 
-		private static float _sortWidth;
-		private static float _fieldsWidth1;
-		private static float _fieldsWidth2;
-		private static float _fieldsWidth3;
+		private int _interestModeFilterMode = -1;
+
+		private float _sortWidth;
+		private float _fieldsWidth1;
+		private float _fieldsWidth2;
 
 		public PrefabsInspector()
 		{
@@ -66,6 +73,11 @@ namespace Fusion.Addons.Inspector.Editor
 			_filterContent         = new GUIContent(filterIcon, "Filter by component type");
 			_fieldsContent         = new GUIContent(fieldsIcon, "Visible fields");
 			_scriptContent         = new GUIContent(scriptIcon);
+			_toggleContent         = new GUIContent();
+			_totalContent          = new GUIContent("Total", "Totals for all listed prefabs");
+
+			_interestModeFilterContent = new GUIContent();
+			_removeFilterContent       = new GUIContent(GUISymbols.CROSS, "Remove filter");
 
 			_sortWidth = GUIStyles.RightBoldLabel.CalcSize(new GUIContent($"{GUISymbols.ARROW_UP} ")).x - GUIStyles.RightBoldLabel.CalcSize(new GUIContent($"")).x;
 
@@ -73,9 +85,8 @@ namespace Fusion.Addons.Inspector.Editor
 			_interestModeStat.Width += _sortWidth;
 			_stateSizeStat.Width    += _sortWidth;
 
-			_fieldsWidth1 = FusionInspector.FieldPadding + EditorStyles.toggle.CalcSize(new GUIContent("Destroy When State Authority Leaves")).x;
-			_fieldsWidth2 = FusionInspector.FieldPadding + EditorStyles.toggle.CalcSize(new GUIContent("Min. Field Fill")).x;
-			_fieldsWidth3 = FusionInspector.FieldPadding + EditorStyles.toggle.CalcSize(new GUIContent("Min. Field Fill")).x;
+			_fieldsWidth1 = FusionInspector.GetCategoryWidth("Configuration", "Components (NB)", "Is Spawnable", "Is Master Client Object", "Allow State Authority Override", "Destroy When State Authority Leaves", "Object Interest Mode");
+			_fieldsWidth2 = FusionInspector.GetCategoryWidth("Other", "State Size");
 		}
 
 		public void DrawGUI(Rect window, Rect region, FusionInspectorDB db)
@@ -162,26 +173,38 @@ namespace Fusion.Addons.Inspector.Editor
 			GUIColor.Set(FusionInspector.FilterColors[Mathf.Min(prefabs.ComponentFilterInclude.Count + prefabs.ComponentFilterExclude.Count, 1)]);
 			if (GUI.Button(componentFilterRect, _filterContent, GUIStyles.Icon) == true)
 			{
-				prefabs.ComponentFilterFoldout = !prefabs.ComponentFilterFoldout;
-				prefabs.VisibleFieldsFoldout = false;
+				if (Event.current.button == 1)
+				{
+					GenericMenu menu = new GenericMenu();
+					menu.AddItem(new GUIContent("Reset"), false, () =>
+					{
+						for (int i = 0, count = db.Components.All.Count; i < count; ++i)
+						{
+							db.Components.All[i].Prefabs.FilterMode = EFilterMode.None;
+						}
+					});
+					menu.ShowAsContext();
+				}
+				else
+				{
+					prefabs.ComponentFilterFoldout = !prefabs.ComponentFilterFoldout;
+					prefabs.VisibleFieldsFoldout = false;
+				}
 			}
 			GUIColor.Reset();
 
-			Rect nameFilterRect = headerRect;
-			nameFilterRect.xMax = componentFilterRect.xMin;
-			nameFilterRect.xMin = nameFilterRect.xMax - headerRect.width * 0.4f;
-			nameFilterRect.y += 0.5f;
-			if (nameFilterRect.height > EditorGUIUtility.singleLineHeight)
-			{
-				nameFilterRect.y += (nameFilterRect.height - EditorGUIUtility.singleLineHeight) * 0.5f;
-				nameFilterRect.height = EditorGUIUtility.singleLineHeight;
-			}
-			prefabs.ObjectNameFilter = EditorGUI.TextField(nameFilterRect, prefabs.ObjectNameFilter, GUIStyles.SearchField);
+			GUIContent nameContent = _objectStat.GetContent(prefabs.All.Count, prefabs.Filtered.Count, _selection.Count, (int)prefabs.SortMode);
 
 			Rect nameRect = headerRect;
-			nameRect.xMax = nameFilterRect.xMin;
 			nameRect.xMin += _objectStat.IsSorted((int)prefabs.SortMode) ? 0.0f : _sortWidth;
-			if (GUI.Button(nameRect, _objectStat.GetContent(prefabs.All.Count, prefabs.Filtered.Count, _selection.Count, (int)prefabs.SortMode), _objectStat.Style) == true)
+
+			Rect nameFilterRect = headerRect;
+			nameFilterRect.xMax = componentFilterRect.xMin;
+			FusionInspector.ApplyFilterRect(ref nameFilterRect, nameRect.xMin + _objectStat.Style.CalcSize(nameContent).x);
+			prefabs.ObjectNameFilter = FusionInspector.DrawFilterField(nameFilterRect, prefabs.ObjectNameFilter);
+
+			nameRect.xMax = nameFilterRect.xMin;
+			if (GUI.Button(nameRect, nameContent, _objectStat.Style) == true)
 			{
 				ToggleSortMode(ref prefabs.SortMode, EPrefabSortMode.NameAscending, EPrefabSortMode.NameDescending);
 			}
@@ -208,8 +231,12 @@ namespace Fusion.Addons.Inspector.Editor
 
 			DrawFieldsGUI(ref content, prefabs, visibleFields, toggleableFields);
 			DrawComponentFilterGUI(ref content, prefabs, db.Components);
+			DrawFilterBarGUI(window, ref content, prefabs);
 
 			GUISeparators.AddY(content.y);
+
+			// One line is reserved for the always visible Total row below the list.
+			content.yMax -= FusionInspector.LineHeight + 2.0f;
 
 			Rect scrollRect     = new Rect(content.x, content.y, content.width + FusionInspector.RightWindowOffset, content.height);
 			Rect scrollViewRect = new Rect(0.0f, 0.0f, content.width, FusionInspector.LineHeight * prefabs.Filtered.Count);
@@ -253,7 +280,7 @@ namespace Fusion.Addons.Inspector.Editor
 					selectionRect.y += scrollRect.y - _scrollPosition.y;
 					GUIHighlights.Add(selectionRect, FusionInspector.SelectionColor);
 				}
-				else if (mousePosition.x >= content.xMin && mousePosition.x <= content.xMax && mousePosition.y >= minScrollY && mousePosition.y <= maxScrollY && mousePosition.y > drawRect.yMin && mousePosition.y < drawRect.yMax)
+				else if (mousePosition.x >= 0.0f && mousePosition.x <= content.width && mousePosition.y >= minScrollY && mousePosition.y <= maxScrollY && mousePosition.y > drawRect.yMin && mousePosition.y < drawRect.yMax)
 				{
 					Rect hoverRect = drawRect;
 					hoverRect.xMin = 0.0f;
@@ -274,49 +301,92 @@ namespace Fusion.Addons.Inspector.Editor
 				drawRect.height += 1.0f; // GUI.Button dead zone fix
 				if (GUI.Button(drawRect, _objectContent, GUIStyles.ObjectField) == true)
 				{
-					if (_selection.Count == 1 && _selection.Contains(prefab) == true && Time.unscaledTime < (_selectionTime + FusionInspector.SelectionDelay))
+					if (Event.current.button == 1)
 					{
-						_selectionTime = default;
+						GenericMenu menu = new GenericMenu();
 
-						Selection.SetActiveObjectWithContext(prefab.GameObject, prefab.GameObject);
-					}
-					else
-					{
-						if (Event.current.shift == true)
+						if (_selection.Count > 1 && _selection.Contains(prefab) == true)
 						{
-							minSelection = Mathf.Min(minSelection, i);
-							maxSelection = Mathf.Max(maxSelection, i);
+							List<string> names     = new List<string>();
+							List<string> paths     = new List<string>();
+							List<string> fullPaths = new List<string>();
 
-							for (int j = minSelection; j <= maxSelection; ++j)
+							for (int j = 0; j < _selection.Count; ++j)
 							{
-								prefabs.Filtered[j].IsSelected = true;
+								string selectionPath = AssetDatabase.GetAssetPath(_selection[j].GameObject);
+
+								names.Add(_selection[j].Name);
+								paths.Add(selectionPath);
+								fullPaths.Add(string.IsNullOrEmpty(selectionPath) == false ? System.IO.Path.GetFullPath(selectionPath) : "");
 							}
 
-							EditorGUIUtility.PingObject(prefab.GameObject);
-						}
-						else if (Event.current.control == true)
-						{
-							prefab.IsSelected = !prefab.IsSelected;
-							if (prefab.IsSelected == true)
-							{
-								EditorGUIUtility.PingObject(prefab.GameObject);
-							}
+							menu.AddItem(new GUIContent("Copy Names"), false, (data) => { EditorGUIUtility.systemCopyBuffer = (string)data; }, string.Join("\n", names));
+							menu.AddItem(new GUIContent("Copy Paths"), false, (data) => { EditorGUIUtility.systemCopyBuffer = (string)data; }, string.Join("\n", paths));
+							menu.AddItem(new GUIContent("Copy Full Paths"), false, (data) => { EditorGUIUtility.systemCopyBuffer = (string)data; }, string.Join("\n", fullPaths));
 						}
 						else
 						{
-							for (int j = 0; j < _selection.Count; ++j)
-							{
-								_selection[j].IsSelected = false;
-							}
+							string assetPath = AssetDatabase.GetAssetPath(prefab.GameObject);
 
-							if (_selection.Count != 1 || _selection.Contains(prefab) == false)
-							{
-								prefab.IsSelected = true;
-								EditorGUIUtility.PingObject(prefab.GameObject);
-							}
+							int interestMode = prefab.InterestMode;
+							menu.AddItem(new GUIContent($"Filter Interest: {_interestModeContents[interestMode].text}"), prefabs.InterestModeFilter == interestMode, () => { prefabs.InterestModeFilter = prefabs.InterestModeFilter == interestMode ? -1 : interestMode; });
+
+							menu.AddSeparator("");
+							menu.AddItem(new GUIContent("Copy Name"), false, (data) => { EditorGUIUtility.systemCopyBuffer = (string)data; }, prefab.Name);
+							menu.AddItem(new GUIContent("Copy Path"), false, (data) => { EditorGUIUtility.systemCopyBuffer = (string)data; }, assetPath);
+							menu.AddItem(new GUIContent("Copy Full Path"), false, (data) => { EditorGUIUtility.systemCopyBuffer = (string)data; }, string.IsNullOrEmpty(assetPath) == false ? System.IO.Path.GetFullPath(assetPath) : "");
+							menu.AddSeparator("");
+							menu.AddItem(new GUIContent(Application.platform == RuntimePlatform.OSXEditor ? "Reveal in Finder" : "Show in Explorer"), false, (data) => { EditorUtility.RevealInFinder((string)data); }, assetPath);
 						}
 
-						_selectionTime = Time.unscaledTime;
+						menu.ShowAsContext();
+					}
+					else
+					{
+						if (_selection.Count == 1 && _selection.Contains(prefab) == true && EditorApplication.timeSinceStartup < (_selectionTime + FusionInspector.SelectionDelay))
+						{
+							_selectionTime = default;
+
+							Selection.SetActiveObjectWithContext(prefab.GameObject, prefab.GameObject);
+						}
+						else
+						{
+							if (Event.current.shift == true)
+							{
+								minSelection = Mathf.Min(minSelection, i);
+								maxSelection = Mathf.Max(maxSelection, i);
+
+								for (int j = minSelection; j <= maxSelection; ++j)
+								{
+									prefabs.Filtered[j].IsSelected = true;
+								}
+
+								EditorGUIUtility.PingObject(prefab.GameObject);
+							}
+							else if (Event.current.control == true)
+							{
+								prefab.IsSelected = !prefab.IsSelected;
+								if (prefab.IsSelected == true)
+								{
+									EditorGUIUtility.PingObject(prefab.GameObject);
+								}
+							}
+							else
+							{
+								for (int j = 0; j < _selection.Count; ++j)
+								{
+									_selection[j].IsSelected = false;
+								}
+
+								if (_selection.Count != 1 || _selection.Contains(prefab) == false)
+								{
+									prefab.IsSelected = true;
+									EditorGUIUtility.PingObject(prefab.GameObject);
+								}
+							}
+
+							_selectionTime = EditorApplication.timeSinceStartup;
+						}
 					}
 				}
 				drawRect.height -= 1.0f; // GUI.Button dead zone fix
@@ -339,7 +409,7 @@ namespace Fusion.Addons.Inspector.Editor
 								for (int componentIndex = 0; componentIndex < prefab.Components.Length; ++componentIndex)
 								{
 									ComponentInfo component = prefab.Components[componentIndex];
-									menu.AddItem(new GUIContent($"ID:[{prefab.NetworkObject.NetworkedBehaviours[componentIndex].GetInstanceID()}] {component.TypeName}"), false, (script) =>
+									menu.AddItem(new GUIContent($"ID:[{ObjectUtility.GetObjectId(prefab.NetworkObject.NetworkedBehaviours[componentIndex])}] {component.TypeName}"), false, (script) =>
 									{
 										MonoScript monoScript = script as MonoScript;
 										if (monoScript != null)
@@ -366,6 +436,17 @@ namespace Fusion.Addons.Inspector.Editor
 					drawRect.width = _interestModeStat.Width;
 
 					EditorGUI.LabelField(drawRect, _interestModeContents[(int)prefab.InterestMode], GUIStyles.RightLabel);
+
+					if (Event.current.type == EventType.MouseDown && Event.current.button == 1 && drawRect.Contains(Event.current.mousePosition) == true)
+					{
+						int interestMode = prefab.InterestMode;
+
+						GenericMenu menu = new GenericMenu();
+						menu.AddItem(new GUIContent($"Filter Interest: {_interestModeContents[interestMode].text}"), prefabs.InterestModeFilter == interestMode, () => { prefabs.InterestModeFilter = prefabs.InterestModeFilter == interestMode ? -1 : interestMode; });
+						menu.ShowAsContext();
+
+						Event.current.Use();
+					}
 				}
 
 				if (showStateSize == true)
@@ -387,9 +468,71 @@ namespace Fusion.Addons.Inspector.Editor
 
 			float scrollHeight = Mathf.Min(scrollRect.height, scrollViewRect.height);
 
-			GUISeparators.AddY(scrollRect.yMin + scrollHeight);
+			GUISeparators.AddY(scrollRect.yMin + scrollHeight + 2.0f);
+			GUISeparators.AddY(scrollRect.yMin + scrollHeight + 2.0f + FusionInspector.LineHeight);
 
-			GUISeparators.DrawAll(new Rect(0.0f, 0.0f, window.width, window.height), headerRect.yMin, headerRect.height, scrollRect.yMin, scrollHeight);
+			DrawTotalGUI(window, new Rect(content.x, scrollRect.yMin + scrollHeight + 2.0f, content.width, FusionInspector.LineHeight), prefabs, showComponents, showIsSpawnable, showIsMasterClientObject, showAllowStateAuthorityOverride, showDestroyWhenStateAuthorityLeaves, showInterestMode, showStateSize);
+
+			GUISeparators.DrawAll(new Rect(0.0f, 0.0f, window.width, window.height), headerRect.yMin, headerRect.height, scrollRect.yMin, scrollHeight + 2.0f);
+		}
+
+		private void DrawTotalGUI(Rect window, Rect totalRect, Prefabs prefabs, bool showComponents, bool showIsSpawnable, bool showIsMasterClientObject, bool showAllowStateAuthorityOverride, bool showDestroyWhenStateAuthorityLeaves, bool showInterestMode, bool showStateSize)
+		{
+			int totalComponents = 0;
+			int totalStateSize  = 0;
+
+			for (int i = 0, count = prefabs.Filtered.Count; i < count; ++i)
+			{
+				PrefabInfo prefab = prefabs.Filtered[i];
+
+				totalComponents += Mathf.Max(0, prefab.ComponentCount.Value);
+
+				if (prefab.StateSize.Value > 0)
+				{
+					totalStateSize += prefab.StateSize.Value;
+				}
+			}
+
+			_totalComponents.Value = totalComponents;
+			_totalStateSize.Value  = totalStateSize;
+
+			TextureUtility.DrawTexture(new Rect(0.0f, totalRect.yMin, window.width, totalRect.height), FusionInspector.HeaderColor);
+
+			FusionInspector.ApplyLinePadding(ref totalRect);
+
+			Rect drawRect = totalRect;
+			drawRect.width = _objectStat.Width;
+
+			Rect totalLabelRect = drawRect;
+			totalLabelRect.xMin += GUIStyles.ObjectField.padding.left + (totalLabelRect.height - GUIStyles.ObjectField.padding.vertical) - GUIStyles.LeftBoldLabel.padding.left + 2.0f;
+
+			EditorGUI.LabelField(totalLabelRect, _totalContent, GUIStyles.LeftBoldLabel);
+
+			if (showComponents == true)
+			{
+				drawRect.xMin += drawRect.width;
+				drawRect.width = _componentsStat.Width;
+
+				drawRect.xMax -= 2.0f;
+				EditorGUI.LabelField(drawRect, _totalComponents.GetLabel(), GUIStyles.RightBoldLabel);
+				drawRect.xMax += 2.0f;
+			}
+
+			if (showIsSpawnable                     == true) { drawRect.xMin += drawRect.width; drawRect.width = _isSpawnableStat.Width;                     }
+			if (showIsMasterClientObject            == true) { drawRect.xMin += drawRect.width; drawRect.width = _isMasterClientObjectStat.Width;            }
+			if (showAllowStateAuthorityOverride     == true) { drawRect.xMin += drawRect.width; drawRect.width = _allowStateAuthorityOverrideStat.Width;     }
+			if (showDestroyWhenStateAuthorityLeaves == true) { drawRect.xMin += drawRect.width; drawRect.width = _destroyWhenStateAuthorityLeavesStat.Width; }
+			if (showInterestMode                    == true) { drawRect.xMin += drawRect.width; drawRect.width = _interestModeStat.Width;                    }
+
+			if (showStateSize == true)
+			{
+				drawRect.xMin += drawRect.width;
+				drawRect.width = _stateSizeStat.Width;
+
+				EditorGUI.LabelField(drawRect, _totalStateSize.GetLabel(), GUIStyles.RightBoldLabel);
+			}
+
+			FusionInspector.RestoreLinePadding(ref totalRect);
 		}
 
 		private void DrawFieldsGUI(ref Rect sectionRect, Prefabs prefabs, EPrefabField visibleFields, EPrefabField toggleableFields)
@@ -405,8 +548,8 @@ namespace Fusion.Addons.Inspector.Editor
 			innerRect.xMax -= xOffset;
 			innerRect.height = EditorGUIUtility.singleLineHeight;
 
-			float totalWidth      = _fieldsWidth1 + _fieldsWidth2 + _fieldsWidth3;
-			float widthMultiplier = innerRect.width / totalWidth;
+			float totalWidth      = _fieldsWidth1 + _fieldsWidth2;
+			float widthMultiplier = Mathf.Min(1.0f, innerRect.width / totalWidth);
 
 			//----------------------------------------------------------------
 
@@ -416,16 +559,15 @@ namespace Fusion.Addons.Inspector.Editor
 
 			configRect.y += yOffset;
 
-			EditorGUI.LabelField(configRect, "Configuration", EditorStyles.boldLabel);
-			configRect.y += configRect.height;
+			DrawCategoryToggle(ref configRect, "Configuration", EPrefabField.Configuration);
 			configRect.y += yOffset;
 
-			DrawToggle(ref configRect, "Components (NB)",                     EPrefabField.Components);
-			DrawToggle(ref configRect, "Is Spawnable",                        EPrefabField.IsSpawnable);
-			DrawToggle(ref configRect, "Is Master Client Object",             EPrefabField.IsMasterClientObject);
-			DrawToggle(ref configRect, "Allow State Authority Override",      EPrefabField.AllowStateAuthorityOverride);
-			DrawToggle(ref configRect, "Destroy When State Authority Leaves", EPrefabField.DestroyWhenStateAuthorityLeaves);
-			DrawToggle(ref configRect, "Object Interest Mode",                EPrefabField.InterestMode);
+			DrawToggle(ref configRect, "Components (NB)",                     _componentsStat.Content.tooltip,                      EPrefabField.Components);
+			DrawToggle(ref configRect, "Is Spawnable",                        _isSpawnableStat.Content.tooltip,                     EPrefabField.IsSpawnable);
+			DrawToggle(ref configRect, "Is Master Client Object",             _isMasterClientObjectStat.Content.tooltip,            EPrefabField.IsMasterClientObject);
+			DrawToggle(ref configRect, "Allow State Authority Override",      _allowStateAuthorityOverrideStat.Content.tooltip,     EPrefabField.AllowStateAuthorityOverride);
+			DrawToggle(ref configRect, "Destroy When State Authority Leaves", _destroyWhenStateAuthorityLeavesStat.Content.tooltip, EPrefabField.DestroyWhenStateAuthorityLeaves);
+			DrawToggle(ref configRect, "Object Interest Mode",                _interestModeStat.Content.tooltip,                    EPrefabField.InterestMode);
 
 			configRect.y += yOffset;
 
@@ -437,11 +579,10 @@ namespace Fusion.Addons.Inspector.Editor
 
 			otherRect.y += yOffset;
 
-			EditorGUI.LabelField(otherRect, "Other", EditorStyles.boldLabel);
-			otherRect.y += otherRect.height;
+			DrawCategoryToggle(ref otherRect, "Other", EPrefabField.Other);
 			otherRect.y += yOffset;
 
-			DrawToggle(ref otherRect, "State Size", EPrefabField.StateSize);
+			DrawToggle(ref otherRect, "State Size", _stateSizeStat.Content.tooltip, EPrefabField.StateSize);
 
 			otherRect.y += yOffset;
 
@@ -451,12 +592,39 @@ namespace Fusion.Addons.Inspector.Editor
 
 			return;
 
-			void DrawToggle(ref Rect rect, string label, EPrefabField field)
+			void DrawCategoryToggle(ref Rect rect, string label, EPrefabField categoryFields)
 			{
+				EPrefabField enabledFields = prefabs.VisibleFields & categoryFields;
+
+				bool allEnabled = enabledFields == categoryFields;
+
+				EditorGUI.BeginDisabledGroup((toggleableFields & categoryFields) == EPrefabField.None);
+
+				EditorGUI.showMixedValue = allEnabled == false && enabledFields != EPrefabField.None;
+				bool toggleState = EditorGUI.ToggleLeft(new Rect(rect.x, rect.y, rect.width - FusionInspector.CategorySpacing * widthMultiplier, rect.height), label, allEnabled, EditorStyles.boldLabel);
+				EditorGUI.showMixedValue = false;
+
+				EditorGUI.EndDisabledGroup();
+
+				if (toggleState != allEnabled)
+				{
+					prefabs.SetVisibleFields(categoryFields, toggleState);
+				}
+
+				rect.y += rect.height;
+
+				TextureUtility.DrawTexture(new Rect(rect.x, rect.y + 2.0f, rect.width - FusionInspector.CategorySpacing * widthMultiplier, FusionInspector.SeparatorSize), FusionInspector.SeparatorColor);
+			}
+
+			void DrawToggle(ref Rect rect, string label, string tooltip, EPrefabField field)
+			{
+				_toggleContent.text    = label;
+				_toggleContent.tooltip = tooltip;
+
 				EditorGUI.BeginDisabledGroup(toggleableFields.Has(field) == false);
 
 				bool previousState = prefabs.VisibleFields.Has(field);
-				bool currentState  = EditorGUI.ToggleLeft(rect, label, previousState);
+				bool currentState  = EditorGUI.ToggleLeft(new Rect(rect.x, rect.y, rect.width - FusionInspector.CategorySpacing * widthMultiplier, rect.height), _toggleContent, previousState);
 
 				EditorGUI.EndDisabledGroup();
 
@@ -560,6 +728,51 @@ namespace Fusion.Addons.Inspector.Editor
 			_tempComponents.Clear();
 		}
 
+		private void DrawFilterBarGUI(Rect window, ref Rect region, Prefabs prefabs)
+		{
+			bool hasInterestModeFilter = prefabs.InterestModeFilter >= 0;
+
+			if (hasInterestModeFilter == false)
+				return;
+
+			if (_interestModeFilterMode != prefabs.InterestModeFilter)
+			{
+				_interestModeFilterMode = prefabs.InterestModeFilter;
+				_interestModeFilterContent.text = $"Interest: {_interestModeContents[_interestModeFilterMode].text}";
+			}
+
+			Rect barRect = region;
+			barRect.height = FusionInspector.LineHeight;
+
+			TextureUtility.DrawTexture(new Rect(0.0f, barRect.yMin, window.width, barRect.height), FusionInspector.HeaderColor);
+
+			region.yMin += barRect.height;
+
+			if (DrawFilterChip(ref barRect, _interestModeFilterContent) == true)
+			{
+				prefabs.InterestModeFilter = -1;
+			}
+		}
+
+		private bool DrawFilterChip(ref Rect rect, GUIContent content)
+		{
+			Rect buttonRect = rect;
+			buttonRect.width = rect.height;
+
+			GUIColor.Set(Color.red);
+			bool remove = GUI.Button(buttonRect, _removeFilterContent, GUIStyles.Icon);
+			GUIColor.Reset();
+
+			Rect labelRect = rect;
+			labelRect.xMin  = buttonRect.xMax - 4.0f;
+			labelRect.width = GUIStyles.LeftLabel.CalcSize(content).x;
+			EditorGUI.LabelField(labelRect, content, GUIStyles.LeftLabel);
+
+			rect.xMin = labelRect.xMax + 16.0f;
+
+			return remove;
+		}
+
 		private void DrawSelectionGUI(Rect window, ref Rect region, FusionInspectorDB db)
 		{
 			Prefabs prefabs = db.Prefabs;
@@ -608,7 +821,7 @@ namespace Fusion.Addons.Inspector.Editor
 			FusionInspector.ApplyLinePadding(ref headerRect);
 
 			Rect typeRect = headerRect;
-			typeRect.xMin += _sortWidth;
+			typeRect.xMin += _sortWidth + 2.0f;
 			GUI.Label(typeRect, "Type", _objectStat.Style);
 			GUI.Label(typeRect, "State", _stateSizeStat.Style);
 
@@ -641,17 +854,32 @@ namespace Fusion.Addons.Inspector.Editor
 				_scriptContent.text = component.TypeName;
 				if (GUI.Button(drawRect, _scriptContent, GUIStyles.ObjectField) == true && component.Script != null)
 				{
-					if (_scriptSelection == component.Script && Time.unscaledTime < (_scriptSelectionTime + FusionInspector.SelectionDelay))
+					if (Event.current.button == 1)
 					{
-						AssetDatabase.OpenAsset(component.Script);
-						_scriptSelection     = default;
-						_scriptSelectionTime = default;
+						string assetPath = AssetDatabase.GetAssetPath(component.Script);
+
+						GenericMenu menu = new GenericMenu();
+						menu.AddItem(new GUIContent("Copy Name"), false, (data) => { EditorGUIUtility.systemCopyBuffer = (string)data; }, component.TypeName);
+						menu.AddItem(new GUIContent("Copy Path"), false, (data) => { EditorGUIUtility.systemCopyBuffer = (string)data; }, assetPath);
+						menu.AddItem(new GUIContent("Copy Full Path"), false, (data) => { EditorGUIUtility.systemCopyBuffer = (string)data; }, string.IsNullOrEmpty(assetPath) == false ? System.IO.Path.GetFullPath(assetPath) : "");
+						menu.AddSeparator("");
+						menu.AddItem(new GUIContent(Application.platform == RuntimePlatform.OSXEditor ? "Reveal in Finder" : "Show in Explorer"), false, (data) => { EditorUtility.RevealInFinder((string)data); }, assetPath);
+						menu.ShowAsContext();
 					}
 					else
 					{
-						EditorGUIUtility.PingObject(component.Script);
-						_scriptSelection     = component.Script;
-						_scriptSelectionTime = Time.unscaledTime;
+						if (_scriptSelection == component && EditorApplication.timeSinceStartup < (_scriptSelectionTime + FusionInspector.SelectionDelay))
+						{
+							AssetDatabase.OpenAsset(component.Script);
+							_scriptSelection     = default;
+							_scriptSelectionTime = default;
+						}
+						else
+						{
+							EditorGUIUtility.PingObject(component.Script);
+							_scriptSelection     = component;
+							_scriptSelectionTime = EditorApplication.timeSinceStartup;
+						}
 					}
 				}
 

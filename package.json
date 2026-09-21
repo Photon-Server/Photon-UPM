@@ -1,8 +1,8 @@
 {
     "name": "com.photonengine.fusion-inspector",
     "displayName": "Fusion Inspector",
-    "version": "2.0.1",
+    "version": "2.1.0",
     "documentationUrl": "https://doc.photonengine.com/fusion/current/addons/inspector",
-    "description": "Fusion Inspector addon description.",
-    "author": ""
+    "description": "Fusion Inspector is a tool for visualizing and debugging projects built with Photon Fusion. It provides detailed insights into networked objects, components and RPCs - all in real time.",
+    "author": "Photon Engine"
 }

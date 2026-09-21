@@ -7,63 +7,66 @@ namespace Fusion.Addons.Inspector.Editor
 	internal sealed class ComponentsInspector
 	{
 		private Vector2               _scrollPosition;
-		private UnityEngine.Object    _selectionObject;
-		private float                 _selectionTime;
+		private object                _selectionObject;
+		private double                _selectionTime;
 		private List<PrefabInfo>      _tempPrefabs = new List<PrefabInfo>();
 		private List<SceneObjectInfo> _tempSceneObjects = new List<SceneObjectInfo>();
 
-		private static GUINameStat _componentStat;
+		private GUINameStat _componentStat;
 
-		private static GUIIconStat _hasSpawnedStat;
-		private static GUIIconStat _hasDespawnedStat;
-		private static GUIIconStat _hasFixedUpdateNetworkStat;
-		private static GUIIconStat _hasRenderStat;
+		private GUIIconStat _hasSpawnedStat;
+		private GUIIconStat _hasDespawnedStat;
+		private GUIIconStat _hasFixedUpdateNetworkStat;
+		private GUIIconStat _hasRenderStat;
 
-		private static GUIIconStat _hasAfterSpawnedStat;
-		private static GUIIconStat _hasAfterHostMigrationStat;
-		private static GUIIconStat _hasStateAuthorityChangedStat;
-		private static GUIIconStat _hasInputAuthorityGainedStat;
-		private static GUIIconStat _hasInputAuthorityLostStat;
-		private static GUIIconStat _hasSimulationEnterStat;
-		private static GUIIconStat _hasSimulationExitStat;
-		private static GUIIconStat _hasInterestEnterStat;
-		private static GUIIconStat _hasInterestExitStat;
+		private GUIIconStat _hasAfterSpawnedStat;
+		private GUIIconStat _hasAfterHostMigrationStat;
+		private GUIIconStat _hasStateAuthorityChangedStat;
+		private GUIIconStat _hasInputAuthorityGainedStat;
+		private GUIIconStat _hasInputAuthorityLostStat;
+		private GUIIconStat _hasSimulationEnterStat;
+		private GUIIconStat _hasSimulationExitStat;
+		private GUIIconStat _hasInterestEnterStat;
+		private GUIIconStat _hasInterestExitStat;
 
-		private static GUIIconStat _hasBeforeUpdateStat;
-		private static GUIIconStat _hasBeforeCopyPreviousStateStat;
-		private static GUIIconStat _hasBeforeClientPredictionResetStat;
-		private static GUIIconStat _hasAfterClientPredictionResetStat;
-		private static GUIIconStat _hasBeforeSimulationStat;
-		private static GUIIconStat _hasBeforeAllTicksStat;
-		private static GUIIconStat _hasBeforeTickStat;
-		private static GUIIconStat _hasAfterTickStat;
-		private static GUIIconStat _hasAfterAllTicksStat;
-		private static GUIIconStat _hasAfterRenderStat;
-		private static GUIIconStat _hasAfterUpdateStat;
+		private GUIIconStat _hasBeforeUpdateStat;
+		private GUIIconStat _hasBeforeCopyPreviousStateStat;
+		private GUIIconStat _hasBeforeClientPredictionResetStat;
+		private GUIIconStat _hasAfterClientPredictionResetStat;
+		private GUIIconStat _hasBeforeSimulationStat;
+		private GUIIconStat _hasBeforeAllTicksStat;
+		private GUIIconStat _hasBeforeTickStat;
+		private GUIIconStat _hasAfterTickStat;
+		private GUIIconStat _hasAfterAllTicksStat;
+		private GUIIconStat _hasAfterRenderStat;
+		private GUIIconStat _hasAfterUpdateStat;
 
-		private static GUISortStat _sceneObjectsStat;
-		private static GUISortStat _prefabsStat;
-		private static GUISortStat _rpcsStat;
-		private static GUISortStat _stateSizeStat;
-		private static GUISortStat _executionOrderStat;
-		private static GUISortStat _totalStateChangesStat;
-		private static GUISortStat _averageStateChangesStat;
+		private GUISortStat _sceneObjectsStat;
+		private GUISortStat _prefabsStat;
+		private GUISortStat _propertiesStat;
+		private GUISortStat _rpcsStat;
+		private GUISortStat _stateSizeStat;
+		private GUISortStat _executionOrderStat;
+		private GUISortStat _totalStateChangesStat;
+		private GUISortStat _averageStateChangesStat;
 
-		private static GUIContent _sceneObjectsContent;
-		private static GUIContent _sceneObjectsIconContent;
-		private static GUIContent _prefabsContent;
-		private static GUIContent _prefabsIconContent;
-		private static GUIContent _rpcsContent;
-		private static GUIContent _stateSizeContent;
-		private static GUIContent _executionOrderContent;
-		private static GUIContent _scriptContent;
-		private static GUIContent _fieldsContent;
+		private GUIContent _sceneObjectsContent;
+		private GUIContent _sceneObjectsIconContent;
+		private GUIContent _prefabsContent;
+		private GUIContent _prefabsIconContent;
+		private GUIContent _propertiesContent;
+		private GUIContent _rpcsContent;
+		private GUIContent _stateSizeContent;
+		private GUIContent _executionOrderContent;
+		private GUIContent _scriptContent;
+		private GUIContent _fieldsContent;
+		private GUIContent _toggleContent;
 
-		private static float _sortWidth;
-		private static float _fieldsWidth1;
-		private static float _fieldsWidth2;
-		private static float _fieldsWidth3;
-		private static float _fieldsWidth4;
+		private float _sortWidth;
+		private float _fieldsWidth1;
+		private float _fieldsWidth2;
+		private float _fieldsWidth3;
+		private float _fieldsWidth4;
 
 		public ComponentsInspector()
 		{
@@ -106,6 +109,7 @@ namespace Fusion.Addons.Inspector.Editor
 
 			_sceneObjectsStat        = new GUISortStat(GUIStyles.RightBoldLabel, "     ", "# of Scene Objects with the component", (int)EComponentSortMode.SceneObjectsAscending, (int)EComponentSortMode.SceneObjectsDescending);
 			_prefabsStat             = new GUISortStat(GUIStyles.RightBoldLabel, "     ", "# of Prefabs with the component", (int)EComponentSortMode.PrefabsAscending, (int)EComponentSortMode.PrefabsDescending);
+			_propertiesStat          = new GUISortStat(GUIStyles.RightBoldLabel, "Properties", "# of [Networked] properties declared in the component", (int)EComponentSortMode.PropertiesAscending, (int)EComponentSortMode.PropertiesDescending);
 			_rpcsStat                = new GUISortStat(GUIStyles.RightBoldLabel, "RPCs", "# of RPCs declared in the component", (int)EComponentSortMode.RPCsAscending, (int)EComponentSortMode.RPCsDescending);
 			_stateSizeStat           = new GUISortStat(GUIStyles.RightBoldLabel, "State", "Size of the networked state in Bytes", (int)EComponentSortMode.StateSizeAscending, (int)EComponentSortMode.StateSizeDescending, stateSizeWidth);
 			_executionOrderStat      = new GUISortStat(GUIStyles.RightBoldLabel, "Execution", "Script execution order", (int)EComponentSortMode.ExecutionOrderAscending, (int)EComponentSortMode.ExecutionOrderDescending);
@@ -116,32 +120,35 @@ namespace Fusion.Addons.Inspector.Editor
 			_sceneObjectsIconContent = new GUIContent(gameObjectIcon, "# of Scene Objects with this component");
 			_prefabsContent          = new GUIContent("", "# of Prefabs with this component");
 			_prefabsIconContent      = new GUIContent(prefabIcon, "# of Prefabs with this component");
+			_propertiesContent       = new GUIContent("", "# of [Networked] properties declared in the component");
 			_rpcsContent             = new GUIContent("", "# of RPCs declared in this component");
 			_stateSizeContent        = new GUIContent("", "Size of the networked state in Bytes");
 			_executionOrderContent   = new GUIContent("", "Script execution order");
 			_scriptContent           = new GUIContent(scriptIcon);
 			_fieldsContent           = new GUIContent(fieldsIcon, "Visible fields");
+			_toggleContent           = new GUIContent();
 
 			_sortWidth = GUIStyles.RightBoldLabel.CalcSize(new GUIContent($"{GUISymbols.ARROW_UP} ")).x - GUIStyles.RightBoldLabel.CalcSize(new GUIContent($"")).x;
 
 			_sceneObjectsStat.Width        += _sortWidth;
 			_prefabsStat.Width             += _sortWidth;
+			_propertiesStat.Width          += _sortWidth;
 			_rpcsStat.Width                += _sortWidth;
 			_stateSizeStat.Width           += _sortWidth;
 			_executionOrderStat.Width      += _sortWidth;
 			_totalStateChangesStat.Width   += _sortWidth;
 			_averageStateChangesStat.Width += _sortWidth;
 
-			_fieldsWidth1 = FusionInspector.FieldPadding + EditorStyles.toggle.CalcSize(new GUIContent("FixedUpdateNetwork()")).x;
-			_fieldsWidth2 = FusionInspector.FieldPadding + EditorStyles.toggle.CalcSize(new GUIContent("IStateAuthorityChanged")).x;
-			_fieldsWidth3 = FusionInspector.FieldPadding + EditorStyles.toggle.CalcSize(new GUIContent("IBeforeClientPredictionReset")).x;
-			_fieldsWidth4 = FusionInspector.FieldPadding + EditorStyles.toggle.CalcSize(new GUIContent("Ø State Changes")).x;
+			_fieldsWidth1 = FusionInspector.GetCategoryWidth("Virtual Methods", "Spawned()", "Despawned()", "FixedUpdateNetwork()", "Render()");
+			_fieldsWidth2 = FusionInspector.GetCategoryWidth("Interfaces (1)", "IAfterSpawned", "IAfterHostMigration", "IStateAuthorityChanged", "IInputAuthorityGained", "IInputAuthorityLost", "ISimulationEnter", "ISimulationExit", "IInterestEnter", "IInterestExit");
+			_fieldsWidth3 = FusionInspector.GetCategoryWidth("Interfaces (2)", "IBeforeUpdate", "IBeforeCopyPreviousState", "IBeforeClientPredictionReset", "IAfterClientPredictionReset", "IBeforeSimulation", "IBeforeAllTicks", "IBeforeTick", "IAfterTick", "IAfterAllTicks", "IAfterRender", "IAfterUpdate");
+			_fieldsWidth4 = FusionInspector.GetCategoryWidth("Other", "Scene Objects", "Prefabs", "Properties", "RPCs", "State Size", "Execution Order", "Σ State Changes", "Ø State Changes");
 		}
 
 		public void DrawGUI(Rect window, Rect region, FusionInspectorDB db)
 		{
 			GameMode        gameMode         = db.CurrentRunner != null ? db.CurrentRunner.GameMode : default;
-			EComponentField visibleFields    = db.Components.VisibleFields | EComponentField.Type;
+			EComponentField visibleFields    = db.Components.GetVisibleFields() | EComponentField.Type;
 			EComponentField toggleableFields = ~EComponentField.Type;
 
 			bool showRuntimeInfo = gameMode != default;
@@ -190,6 +197,7 @@ namespace Fusion.Addons.Inspector.Editor
 
 			bool showSceneObjects                   = visibleFields.Has(EComponentField.SceneObjects);
 			bool showPrefabs                        = visibleFields.Has(EComponentField.Prefabs);
+			bool showProperties                     = visibleFields.Has(EComponentField.Properties);
 			bool showRPCs                           = visibleFields.Has(EComponentField.RPCs);
 			bool showStateSize                      = visibleFields.Has(EComponentField.StateSize);
 			bool showExecutionOrder                 = visibleFields.Has(EComponentField.ExecutionOrder);
@@ -232,6 +240,7 @@ namespace Fusion.Addons.Inspector.Editor
 
 			if (showSceneObjects                   == true) { _componentStat.Width -= _sceneObjectsStat.Width;        }
 			if (showPrefabs                        == true) { _componentStat.Width -= _prefabsStat.Width;             }
+			if (showProperties                     == true) { _componentStat.Width -= _propertiesStat.Width;          }
 			if (showRPCs                           == true) { _componentStat.Width -= _rpcsStat.Width;                }
 			if (showStateSize                      == true) { _componentStat.Width -= _stateSizeStat.Width;           }
 			if (showExecutionOrder                 == true) { _componentStat.Width -= _executionOrderStat.Width;      }
@@ -249,21 +258,18 @@ namespace Fusion.Addons.Inspector.Editor
 
 			FusionInspector.ApplyLinePadding(ref headerRect);
 
-			Rect typeFilterRect = headerRect;
-			typeFilterRect.xMax -= 4.0f;
-			typeFilterRect.xMin = typeFilterRect.xMax - headerRect.width * 0.4f;
-			typeFilterRect.y += 0.5f;
-			if (typeFilterRect.height > EditorGUIUtility.singleLineHeight)
-			{
-				typeFilterRect.y += (typeFilterRect.height - EditorGUIUtility.singleLineHeight) * 0.5f;
-				typeFilterRect.height = EditorGUIUtility.singleLineHeight;
-			}
-			components.TypeNameFilter = EditorGUI.TextField(typeFilterRect, components.TypeNameFilter, GUIStyles.SearchField);
+			GUIContent typeContent = _componentStat.GetContent(components.All.Count, components.Filtered.Count, default, (int)components.SortMode);
 
 			Rect typeRect = headerRect;
-			typeRect.xMax = typeFilterRect.xMin;
 			typeRect.xMin += _componentStat.IsSorted((int)components.SortMode) ? 0.0f : _sortWidth;
-			if (GUI.Button(typeRect, _componentStat.GetContent(components.All.Count, components.Filtered.Count, default, (int)components.SortMode), _componentStat.Style) == true)
+
+			Rect typeFilterRect = headerRect;
+			typeFilterRect.xMax -= 4.0f;
+			FusionInspector.ApplyFilterRect(ref typeFilterRect, typeRect.xMin + _componentStat.Style.CalcSize(typeContent).x);
+			components.TypeNameFilter = FusionInspector.DrawFilterField(typeFilterRect, components.TypeNameFilter);
+
+			typeRect.xMax = typeFilterRect.xMin;
+			if (GUI.Button(typeRect, typeContent, _componentStat.Style) == true)
 			{
 				ToggleSortMode(ref components.SortMode, EComponentSortMode.TypeHierarchyAscending, EComponentSortMode.TypeHierarchyDescending);
 			}
@@ -297,6 +303,7 @@ namespace Fusion.Addons.Inspector.Editor
 
 			if (showSceneObjects                   == true) { DrawHeader(_sceneObjectsStat,        _sceneObjectsIconContent, ref headerRect, ref components.SortMode, EComponentSortMode.SceneObjectsDescending,        EComponentSortMode.SceneObjectsAscending);        }
 			if (showPrefabs                        == true) { DrawHeader(_prefabsStat,             _prefabsIconContent,      ref headerRect, ref components.SortMode, EComponentSortMode.PrefabsDescending,             EComponentSortMode.PrefabsAscending);             }
+			if (showProperties                     == true) { DrawHeader(_propertiesStat,          null,                     ref headerRect, ref components.SortMode, EComponentSortMode.PropertiesDescending,          EComponentSortMode.PropertiesAscending);          }
 			if (showRPCs                           == true) { DrawHeader(_rpcsStat,                null,                     ref headerRect, ref components.SortMode, EComponentSortMode.RPCsDescending,                EComponentSortMode.RPCsAscending);                }
 			if (showStateSize                      == true) { DrawHeader(_stateSizeStat,           null,                     ref headerRect, ref components.SortMode, EComponentSortMode.StateSizeDescending,           EComponentSortMode.StateSizeAscending);           }
 			if (showExecutionOrder                 == true) { DrawHeader(_executionOrderStat,      null,                     ref headerRect, ref components.SortMode, EComponentSortMode.ExecutionOrderAscending,       EComponentSortMode.ExecutionOrderDescending);     }
@@ -349,7 +356,7 @@ namespace Fusion.Addons.Inspector.Editor
 				drawRect.xMin  = 0.0f;
 				drawRect.width = _componentStat.Width;
 
-				if (mousePosition.x >= region.xMin && mousePosition.x <= region.xMax && mousePosition.y >= minScrollY && mousePosition.y <= maxScrollY && mousePosition.y > drawRect.yMin && mousePosition.y < drawRect.yMax)
+				if (mousePosition.x >= 0.0f && mousePosition.x <= region.width && mousePosition.y >= minScrollY && mousePosition.y <= maxScrollY && mousePosition.y > drawRect.yMin && mousePosition.y < drawRect.yMax)
 				{
 					Rect hoverRect = drawRect;
 					hoverRect.xMin = 0.0f;
@@ -377,17 +384,32 @@ namespace Fusion.Addons.Inspector.Editor
 				drawRect.height += 1.0f; // GUI.Button dead zone fix
 				if (GUI.Button(drawRect, _scriptContent, GUIStyles.ObjectField) == true && component.Script != null)
 				{
-					if (_selectionObject == component.Script && Time.unscaledTime < (_selectionTime + FusionInspector.SelectionDelay))
+					if (Event.current.button == 1)
 					{
-						AssetDatabase.OpenAsset(component.Script);
-						_selectionObject = default;
-						_selectionTime   = default;
+						string assetPath = AssetDatabase.GetAssetPath(component.Script);
+
+						GenericMenu menu = new GenericMenu();
+						menu.AddItem(new GUIContent("Copy Name"), false, (data) => { EditorGUIUtility.systemCopyBuffer = (string)data; }, component.TypeName);
+						menu.AddItem(new GUIContent("Copy Path"), false, (data) => { EditorGUIUtility.systemCopyBuffer = (string)data; }, assetPath);
+						menu.AddItem(new GUIContent("Copy Full Path"), false, (data) => { EditorGUIUtility.systemCopyBuffer = (string)data; }, string.IsNullOrEmpty(assetPath) == false ? System.IO.Path.GetFullPath(assetPath) : "");
+						menu.AddSeparator("");
+						menu.AddItem(new GUIContent(Application.platform == RuntimePlatform.OSXEditor ? "Reveal in Finder" : "Show in Explorer"), false, (data) => { EditorUtility.RevealInFinder((string)data); }, assetPath);
+						menu.ShowAsContext();
 					}
 					else
 					{
-						EditorGUIUtility.PingObject(component.Script);
-						_selectionObject = component.Script;
-						_selectionTime   = Time.unscaledTime;
+						if (_selectionObject == component && EditorApplication.timeSinceStartup < (_selectionTime + FusionInspector.SelectionDelay))
+						{
+							AssetDatabase.OpenAsset(component.Script);
+							_selectionObject = default;
+							_selectionTime   = default;
+						}
+						else
+						{
+							EditorGUIUtility.PingObject(component.Script);
+							_selectionObject = component;
+							_selectionTime   = EditorApplication.timeSinceStartup;
+						}
 					}
 				}
 				drawRect.height -= 1.0f; // GUI.Button dead zone fix
@@ -431,7 +453,7 @@ namespace Fusion.Addons.Inspector.Editor
 						drawRect.xMax -= 2.0f;
 						if (GUI.Button(drawRect, _sceneObjectsContent, GUIStyles.RightLabel) == true)
 						{
-							db.SceneObjects.GetObjects(_tempSceneObjects, component.Type);
+							db.SceneObjects.GetObjects(_tempSceneObjects, component.Type, false);
 
 							if (_tempSceneObjects.Count > 0)
 							{
@@ -439,7 +461,7 @@ namespace Fusion.Addons.Inspector.Editor
 								for (int objectIndex = 0; objectIndex < _tempSceneObjects.Count; ++objectIndex)
 								{
 									SceneObjectInfo sceneObject = _tempSceneObjects[objectIndex];
-									menu.AddItem(new GUIContent($"ID:[{sceneObject.GameObject.GetInstanceID()}] {sceneObject.Name}"), false, (gameObject) =>
+									menu.AddItem(new GUIContent($"ID:[{ObjectUtility.GetObjectId(sceneObject.GameObject)}] {sceneObject.Name}"), false, (gameObject) =>
 									{
 										GameObject go = gameObject as GameObject;
 										if (go != null)
@@ -468,7 +490,7 @@ namespace Fusion.Addons.Inspector.Editor
 						drawRect.xMax -= 2.0f;
 						if (GUI.Button(drawRect, _prefabsContent, GUIStyles.RightLabel) == true)
 						{
-							db.Prefabs.GetObjects(_tempPrefabs, component.Type);
+							db.Prefabs.GetObjects(_tempPrefabs, component.Type, false);
 
 							if (_tempPrefabs.Count > 0)
 							{
@@ -476,7 +498,7 @@ namespace Fusion.Addons.Inspector.Editor
 								for (int objectIndex = 0; objectIndex < _tempPrefabs.Count; ++objectIndex)
 								{
 									PrefabInfo prefab = _tempPrefabs[objectIndex];
-									menu.AddItem(new GUIContent($"ID:[{prefab.GameObject.GetInstanceID()}] {prefab.Name}"), false, (gameObject) =>
+									menu.AddItem(new GUIContent($"ID:[{ObjectUtility.GetObjectId(prefab.GameObject)}] {prefab.Name}"), false, (gameObject) =>
 									{
 										GameObject go = gameObject as GameObject;
 										if (go != null)
@@ -489,6 +511,36 @@ namespace Fusion.Addons.Inspector.Editor
 							}
 
 							_tempPrefabs.Clear();
+						}
+						drawRect.xMax += 2.0f;
+					}
+				}
+
+				if (showProperties == true)
+				{
+					drawRect.xMin += drawRect.width;
+					drawRect.width = _propertiesStat.Width;
+
+					if (component.PropertyCount.Value > 0)
+					{
+						_propertiesContent.text = component.PropertyCount.GetLabel();
+						drawRect.xMax -= 2.0f;
+						if (GUI.Button(drawRect, _propertiesContent, GUIStyles.RightLabel) == true)
+						{
+							GenericMenu menu = new GenericMenu();
+							foreach (System.Reflection.PropertyInfo property in component.Properties)
+							{
+								menu.AddItem(new GUIContent(ReflectionUtility.GetPropertyDeclaration(property)), false, (script) =>
+								{
+									MonoScript monoScript = script as MonoScript;
+									if (monoScript != null)
+									{
+										int propertyLineNumber = ScriptUtility.GetLineNumber(property);
+										AssetDatabase.OpenAsset(monoScript, propertyLineNumber);
+									}
+								}, component.Script);
+							}
+							menu.ShowAsContext();
 						}
 						drawRect.xMax += 2.0f;
 					}
@@ -513,7 +565,7 @@ namespace Fusion.Addons.Inspector.Editor
 									MonoScript monoScript = script as MonoScript;
 									if (monoScript != null)
 									{
-										int methodLineNumber = ScriptUtility.GetLineNumber(monoScript, method);
+										int methodLineNumber = ScriptUtility.GetLineNumber(method);
 										AssetDatabase.OpenAsset(monoScript, methodLineNumber);
 									}
 								}, component.Script);
@@ -599,7 +651,7 @@ namespace Fusion.Addons.Inspector.Editor
 			innerRect.height = EditorGUIUtility.singleLineHeight;
 
 			float totalWidth      = _fieldsWidth1 + _fieldsWidth2 + _fieldsWidth3 + _fieldsWidth4;
-			float widthMultiplier = innerRect.width / totalWidth;
+			float widthMultiplier = Mathf.Min(1.0f, innerRect.width / totalWidth);
 
 			//----------------------------------------------------------------
 
@@ -609,14 +661,13 @@ namespace Fusion.Addons.Inspector.Editor
 
 			virtualMethodsRect.y += yOffset;
 
-			EditorGUI.LabelField(virtualMethodsRect, "Virtual Methods", EditorStyles.boldLabel);
-			virtualMethodsRect.y += virtualMethodsRect.height;
+			DrawCategoryToggle(ref virtualMethodsRect, "Virtual Methods", EComponentField.VirtualMethods);
 			virtualMethodsRect.y += yOffset;
 
-			DrawToggle(ref virtualMethodsRect, "Spawned()",            EComponentField.HasSpawned);
-			DrawToggle(ref virtualMethodsRect, "Despawned()",          EComponentField.HasDespawned);
-			DrawToggle(ref virtualMethodsRect, "FixedUpdateNetwork()", EComponentField.HasFixedUpdateNetwork);
-			DrawToggle(ref virtualMethodsRect, "Render()",             EComponentField.HasRender);
+			DrawToggle(ref virtualMethodsRect, "Spawned()",            _hasSpawnedStat.Content.tooltip,            EComponentField.HasSpawned);
+			DrawToggle(ref virtualMethodsRect, "Despawned()",          _hasDespawnedStat.Content.tooltip,          EComponentField.HasDespawned);
+			DrawToggle(ref virtualMethodsRect, "FixedUpdateNetwork()", _hasFixedUpdateNetworkStat.Content.tooltip, EComponentField.HasFixedUpdateNetwork);
+			DrawToggle(ref virtualMethodsRect, "Render()",             _hasRenderStat.Content.tooltip,             EComponentField.HasRender);
 
 			virtualMethodsRect.y += yOffset;
 
@@ -628,19 +679,18 @@ namespace Fusion.Addons.Inspector.Editor
 
 			interfaces1Rect.y += yOffset;
 
-			EditorGUI.LabelField(interfaces1Rect, "Interfaces (1)", EditorStyles.boldLabel);
-			interfaces1Rect.y += interfaces1Rect.height;
+			DrawCategoryToggle(ref interfaces1Rect, "Interfaces (1)", EComponentField.Interfaces1);
 			interfaces1Rect.y += yOffset;
 
-			DrawToggle(ref interfaces1Rect, "IAfterSpawned",                EComponentField.HasAfterSpawned);
-			DrawToggle(ref interfaces1Rect, "IAfterHostMigration",          EComponentField.HasAfterHostMigration);
-			DrawToggle(ref interfaces1Rect, "IStateAuthorityChanged",       EComponentField.HasStateAuthorityChanged);
-			DrawToggle(ref interfaces1Rect, "IInputAuthorityGained",        EComponentField.HasInputAuthorityGained);
-			DrawToggle(ref interfaces1Rect, "IInputAuthorityLost",          EComponentField.HasInputAuthorityLost);
-			DrawToggle(ref interfaces1Rect, "ISimulationEnter",             EComponentField.HasSimulationEnter);
-			DrawToggle(ref interfaces1Rect, "ISimulationExit",              EComponentField.HasSimulationExit);
-			DrawToggle(ref interfaces1Rect, "IInterestEnter",               EComponentField.HasInterestEnter);
-			DrawToggle(ref interfaces1Rect, "IInterestExit",                EComponentField.HasInterestExit);
+			DrawToggle(ref interfaces1Rect, "IAfterSpawned",                _hasAfterSpawnedStat.Content.tooltip,          EComponentField.HasAfterSpawned);
+			DrawToggle(ref interfaces1Rect, "IAfterHostMigration",          _hasAfterHostMigrationStat.Content.tooltip,    EComponentField.HasAfterHostMigration);
+			DrawToggle(ref interfaces1Rect, "IStateAuthorityChanged",       _hasStateAuthorityChangedStat.Content.tooltip, EComponentField.HasStateAuthorityChanged);
+			DrawToggle(ref interfaces1Rect, "IInputAuthorityGained",        _hasInputAuthorityGainedStat.Content.tooltip,  EComponentField.HasInputAuthorityGained);
+			DrawToggle(ref interfaces1Rect, "IInputAuthorityLost",          _hasInputAuthorityLostStat.Content.tooltip,    EComponentField.HasInputAuthorityLost);
+			DrawToggle(ref interfaces1Rect, "ISimulationEnter",             _hasSimulationEnterStat.Content.tooltip,       EComponentField.HasSimulationEnter);
+			DrawToggle(ref interfaces1Rect, "ISimulationExit",              _hasSimulationExitStat.Content.tooltip,        EComponentField.HasSimulationExit);
+			DrawToggle(ref interfaces1Rect, "IInterestEnter",               _hasInterestEnterStat.Content.tooltip,         EComponentField.HasInterestEnter);
+			DrawToggle(ref interfaces1Rect, "IInterestExit",                _hasInterestExitStat.Content.tooltip,          EComponentField.HasInterestExit);
 
 			interfaces1Rect.y += yOffset;
 
@@ -652,21 +702,20 @@ namespace Fusion.Addons.Inspector.Editor
 
 			interfaces2Rect.y += yOffset;
 
-			EditorGUI.LabelField(interfaces2Rect, "Interfaces (2)", EditorStyles.boldLabel);
-			interfaces2Rect.y += interfaces2Rect.height;
+			DrawCategoryToggle(ref interfaces2Rect, "Interfaces (2)", EComponentField.Interfaces2);
 			interfaces2Rect.y += yOffset;
 
-			DrawToggle(ref interfaces2Rect, "IBeforeUpdate",                EComponentField.HasBeforeUpdate);
-			DrawToggle(ref interfaces2Rect, "IBeforeCopyPreviousState",     EComponentField.HasBeforeCopyPreviousState);
-			DrawToggle(ref interfaces2Rect, "IBeforeClientPredictionReset", EComponentField.HasBeforeClientPredictionReset);
-			DrawToggle(ref interfaces2Rect, "IAfterClientPredictionReset",  EComponentField.HasAfterClientPredictionReset);
-			DrawToggle(ref interfaces2Rect, "IBeforeSimulation",            EComponentField.HasBeforeSimulation);
-			DrawToggle(ref interfaces2Rect, "IBeforeAllTicks",              EComponentField.HasBeforeAllTicks);
-			DrawToggle(ref interfaces2Rect, "IBeforeTick",                  EComponentField.HasBeforeTick);
-			DrawToggle(ref interfaces2Rect, "IAfterTick",                   EComponentField.HasAfterTick);
-			DrawToggle(ref interfaces2Rect, "IAfterAllTicks",               EComponentField.HasAfterAllTicks);
-			DrawToggle(ref interfaces2Rect, "IAfterRender",                 EComponentField.HasAfterRender);
-			DrawToggle(ref interfaces2Rect, "IAfterUpdate",                 EComponentField.HasAfterUpdate);
+			DrawToggle(ref interfaces2Rect, "IBeforeUpdate",                _hasBeforeUpdateStat.Content.tooltip,                EComponentField.HasBeforeUpdate);
+			DrawToggle(ref interfaces2Rect, "IBeforeCopyPreviousState",     _hasBeforeCopyPreviousStateStat.Content.tooltip,     EComponentField.HasBeforeCopyPreviousState);
+			DrawToggle(ref interfaces2Rect, "IBeforeClientPredictionReset", _hasBeforeClientPredictionResetStat.Content.tooltip, EComponentField.HasBeforeClientPredictionReset);
+			DrawToggle(ref interfaces2Rect, "IAfterClientPredictionReset",  _hasAfterClientPredictionResetStat.Content.tooltip,  EComponentField.HasAfterClientPredictionReset);
+			DrawToggle(ref interfaces2Rect, "IBeforeSimulation",            _hasBeforeSimulationStat.Content.tooltip,            EComponentField.HasBeforeSimulation);
+			DrawToggle(ref interfaces2Rect, "IBeforeAllTicks",              _hasBeforeAllTicksStat.Content.tooltip,              EComponentField.HasBeforeAllTicks);
+			DrawToggle(ref interfaces2Rect, "IBeforeTick",                  _hasBeforeTickStat.Content.tooltip,                  EComponentField.HasBeforeTick);
+			DrawToggle(ref interfaces2Rect, "IAfterTick",                   _hasAfterTickStat.Content.tooltip,                   EComponentField.HasAfterTick);
+			DrawToggle(ref interfaces2Rect, "IAfterAllTicks",               _hasAfterAllTicksStat.Content.tooltip,               EComponentField.HasAfterAllTicks);
+			DrawToggle(ref interfaces2Rect, "IAfterRender",                 _hasAfterRenderStat.Content.tooltip,                 EComponentField.HasAfterRender);
+			DrawToggle(ref interfaces2Rect, "IAfterUpdate",                 _hasAfterUpdateStat.Content.tooltip,                 EComponentField.HasAfterUpdate);
 
 			interfaces2Rect.y += yOffset;
 
@@ -678,17 +727,17 @@ namespace Fusion.Addons.Inspector.Editor
 
 			otherRect.y += yOffset;
 
-			EditorGUI.LabelField(otherRect, "Other", EditorStyles.boldLabel);
-			otherRect.y += otherRect.height;
+			DrawCategoryToggle(ref otherRect, "Other", EComponentField.Other);
 			otherRect.y += yOffset;
 
-			DrawToggle(ref otherRect, "Scene Objects",   EComponentField.SceneObjects);
-			DrawToggle(ref otherRect, "Prefabs",         EComponentField.Prefabs);
-			DrawToggle(ref otherRect, "RPCs",            EComponentField.RPCs);
-			DrawToggle(ref otherRect, "State Size",      EComponentField.StateSize);
-			DrawToggle(ref otherRect, "Execution Order", EComponentField.ExecutionOrder);
-			DrawToggle(ref otherRect, "Σ State Changes", EComponentField.TotalStateChanges);
-			DrawToggle(ref otherRect, "Ø State Changes", EComponentField.AverageStateChanges);
+			DrawToggle(ref otherRect, "Scene Objects",   _sceneObjectsStat.Content.tooltip,        EComponentField.SceneObjects);
+			DrawToggle(ref otherRect, "Prefabs",         _prefabsStat.Content.tooltip,             EComponentField.Prefabs);
+			DrawToggle(ref otherRect, "Properties",      _propertiesStat.Content.tooltip,          EComponentField.Properties);
+			DrawToggle(ref otherRect, "RPCs",            _rpcsStat.Content.tooltip,                EComponentField.RPCs);
+			DrawToggle(ref otherRect, "State Size",      _stateSizeStat.Content.tooltip,           EComponentField.StateSize);
+			DrawToggle(ref otherRect, "Execution Order", _executionOrderStat.Content.tooltip,      EComponentField.ExecutionOrder);
+			DrawToggle(ref otherRect, "Σ State Changes", _totalStateChangesStat.Content.tooltip,   EComponentField.TotalStateChanges);
+			DrawToggle(ref otherRect, "Ø State Changes", _averageStateChangesStat.Content.tooltip, EComponentField.AverageStateChanges);
 
 			otherRect.y += yOffset;
 
@@ -698,12 +747,39 @@ namespace Fusion.Addons.Inspector.Editor
 
 			return;
 
-			void DrawToggle(ref Rect rect, string label, EComponentField field)
+			void DrawCategoryToggle(ref Rect rect, string label, EComponentField categoryFields)
 			{
+				EComponentField enabledFields = components.GetVisibleFields() & categoryFields;
+
+				bool allEnabled = enabledFields == categoryFields;
+
+				EditorGUI.BeginDisabledGroup((toggleableFields & categoryFields) == EComponentField.None);
+
+				EditorGUI.showMixedValue = allEnabled == false && enabledFields != EComponentField.None;
+				bool toggleState = EditorGUI.ToggleLeft(new Rect(rect.x, rect.y, rect.width - FusionInspector.CategorySpacing * widthMultiplier, rect.height), label, allEnabled, EditorStyles.boldLabel);
+				EditorGUI.showMixedValue = false;
+
+				EditorGUI.EndDisabledGroup();
+
+				if (toggleState != allEnabled)
+				{
+					components.SetVisibleFields(categoryFields, toggleState);
+				}
+
+				rect.y += rect.height;
+
+				TextureUtility.DrawTexture(new Rect(rect.x, rect.y + 2.0f, rect.width - FusionInspector.CategorySpacing * widthMultiplier, FusionInspector.SeparatorSize), FusionInspector.SeparatorColor);
+			}
+
+			void DrawToggle(ref Rect rect, string label, string tooltip, EComponentField field)
+			{
+				_toggleContent.text    = label;
+				_toggleContent.tooltip = tooltip;
+
 				EditorGUI.BeginDisabledGroup(toggleableFields.Has(field) == false);
 
-				bool previousState = components.VisibleFields.Has(field);
-				bool currentState  = EditorGUI.ToggleLeft(rect, label, previousState);
+				bool previousState = components.GetVisibleFields().Has(field);
+				bool currentState  = EditorGUI.ToggleLeft(new Rect(rect.x, rect.y, rect.width - FusionInspector.CategorySpacing * widthMultiplier, rect.height), _toggleContent, previousState);
 
 				EditorGUI.EndDisabledGroup();
 

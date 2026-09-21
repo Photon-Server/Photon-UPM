@@ -23,12 +23,16 @@ namespace Fusion.Addons.Inspector.Editor
 		public Components          Components   = new Components();
 		public SceneObjects        SceneObjects = new SceneObjects();
 		public Prefabs             Prefabs      = new Prefabs();
+		public RPCs                RPCs         = new RPCs();
+		[NonSerialized]
+		public List<RPCEvent>      RPCEvents;
 
 		public int CurrentSection => _currentSection;
 
 		[SerializeField]
 		private int                 _currentSection;
 		private int                 _lastFrameCount;
+		private bool                _isPlaying;
 		private float               _captureTime;
 		private NetworkRunner       _sessionRunner;
 		private Queue<int>          _rtts = new Queue<int>();
@@ -42,10 +46,11 @@ namespace Fusion.Addons.Inspector.Editor
 			_profilerMarker.Begin();
 
 			UpdateRunners();
-			UpdateSession();
+			UpdateSession(synchronize);
 			UpdateComponents(synchronize);
 			UpdateSceneObjects(synchronize);
 			UpdatePrefabs(synchronize);
+			UpdateRPCs(synchronize);
 
 			if (synchronize == true)
 			{
@@ -60,6 +65,7 @@ namespace Fusion.Addons.Inspector.Editor
 		public void ResetSession(bool refresh)
 		{
 			RTTMs        = default;
+			SmoothRTTMs  = default;
 			PlayerCount  = default;
 			SessionTime  = default;
 			CaptureTime  = default;
@@ -69,6 +75,8 @@ namespace Fusion.Addons.Inspector.Editor
 			_captureTime   = Time.unscaledTime;
 			_sessionRunner = CurrentRunner;
 
+			_rtts.Clear();
+
 			foreach (ComponentInfo component in Components.All)
 			{
 				component.ResetSession();
@@ -77,6 +85,17 @@ namespace Fusion.Addons.Inspector.Editor
 			foreach (SceneObjectInfo sceneObject in SceneObjects.All)
 			{
 				sceneObject.ResetSession(refresh);
+			}
+
+			foreach (RPCInfo rpc in RPCs.All)
+			{
+				rpc.ResetSession();
+			}
+
+			if (refresh == true)
+			{
+				RPCEventTracker.ClearEvents(CurrentRunner);
+				RPCEvents = default;
 			}
 		}
 
@@ -94,6 +113,7 @@ namespace Fusion.Addons.Inspector.Editor
 			Components.LoadEditorPrefs();
 			SceneObjects.LoadEditorPrefs();
 			Prefabs.LoadEditorPrefs();
+			RPCs.LoadEditorPrefs();
 		}
 
 		private void UpdateRunners()
@@ -129,7 +149,7 @@ namespace Fusion.Addons.Inspector.Editor
 			}
 		}
 
-		private void UpdateSession()
+		private void UpdateSession(bool synchronize)
 		{
 			if (_sessionRunner != CurrentRunner)
 			{
@@ -153,6 +173,11 @@ namespace Fusion.Addons.Inspector.Editor
 				}
 			}
 			catch {}
+
+			// Accumulations below run once per frame, otherwise the traffic totals and
+			// the RTT smoothing window would scale with the OnGUI event rate.
+			if (synchronize == false)
+				return;
 
 #if FUSION_2_1_OR_NEWER
 			if (_sessionRunner.TryGetFusionStatistics(out FusionStatisticsManager statisticsManager) == true && statisticsManager.SimulationSnapshot != null)
@@ -195,6 +220,12 @@ namespace Fusion.Addons.Inspector.Editor
 
 		private void UpdateSceneObjects(bool synchronize)
 		{
+			if (Application.isPlaying == false)
+			{
+				SceneObjects.StateAuthorityFilter = PlayerRef.None;
+				SceneObjects.InputAuthorityFilter = PlayerRef.None;
+			}
+
 			if (synchronize == true)
 			{
 				_tempObjects.Clear();
@@ -205,7 +236,7 @@ namespace Fusion.Addons.Inspector.Editor
 				}
 				else
 				{
-					UnityEngine.Object[] objects = UnityEngine.Object.FindObjectsByType(typeof(NetworkObject), FindObjectsInactive.Include, FindObjectsSortMode.InstanceID);
+					UnityEngine.Object[] objects = ObjectUtility.FindObjectsByType(typeof(NetworkObject), FindObjectsInactive.Include);
 					for (int i = 0, count = objects.Length; i < count; ++i)
 					{
 						_tempObjects.Add((NetworkObject)objects[i]);
@@ -268,7 +299,11 @@ namespace Fusion.Addons.Inspector.Editor
 				NetworkPrefabTable prefabTable = NetworkProjectConfig.Global.PrefabTable;
 				for (int i = 0, count = prefabTable.Prefabs.Count; i < count; ++i)
 				{
-					_tempObjects.Add(prefabTable.Load(NetworkPrefabId.FromIndex(i), true));
+					NetworkObject prefab = prefabTable.Load(NetworkPrefabId.FromIndex(i), true);
+					if (ReferenceEquals(prefab, null) == false)
+					{
+						_tempObjects.Add(prefab);
+					}
 				}
 
 				Prefabs.Synchronize(Components, _tempObjects);
@@ -277,6 +312,36 @@ namespace Fusion.Addons.Inspector.Editor
 			}
 
 			Prefabs.Refresh(Components);
+		}
+
+		private void UpdateRPCs(bool synchronize)
+		{
+			if (synchronize == true)
+			{
+				RPCs.Synchronize(Components);
+			}
+
+			if (CurrentRunner != null)
+			{
+				RPCEventTracker.TryGetEvents(CurrentRunner, out RPCEvents);
+			}
+
+			if (Application.isPlaying == true && _isPlaying == false)
+			{
+				RPCEvents = default;
+
+				RPCs.EventSourceFilter         = PlayerRef.None;
+				RPCs.EventTargetFilter         = PlayerRef.None;
+				RPCs.EventStateAuthorityFilter = PlayerRef.None;
+				RPCs.EventInputAuthorityFilter = PlayerRef.None;
+				RPCs.EventAnyPlayerFilter      = PlayerRef.None;
+				RPCs.EventObjectFilter         = default;
+				RPCs.EventObjectFilterName     = default;
+			}
+
+			_isPlaying = Application.isPlaying;
+
+			RPCs.Refresh(Components, CurrentRunner);
 		}
 	}
 }

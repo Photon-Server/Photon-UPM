@@ -1,36 +1,115 @@
-﻿namespace Fusion.Addons.Inspector.Editor
+namespace Fusion.Addons.Inspector.Editor
 {
-	using System;
 	using System.Reflection;
-	using UnityEditor;
+	using Mono.Cecil;
+	using Mono.Cecil.Cil;
+	using Mono.Collections.Generic;
+	using UnityEngine;
 
 	internal static class ScriptUtility
 	{
-		public static int GetLineNumber(MonoScript script, MethodInfo method)
+		public static int GetLineNumber(PropertyInfo propertyInfo)
 		{
-			string[] lines = script.text.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
+			MethodInfo accessor = propertyInfo.GetGetMethod(true) ?? propertyInfo.GetSetMethod(true);
+			if (accessor == null)
+				return -1;
 
-			string keyword1 = method.Name;
-			string keyword2 = "";
-			string keyword3 = "";
+			return GetLineNumber(accessor);
+		}
 
-			     if (method.IsPublic   == true) { keyword2 = "public";    }
-			else if (method.IsPrivate  == true) { keyword2 = "private";   }
-			else if (method.IsFamily   == true) { keyword2 = "protected"; }
-			else if (method.IsAssembly == true) { keyword2 = "internal";  }
+		public static int GetLineNumber(MethodInfo methodInfo)
+		{
+			AssemblyDefinition assemblyDefinition = LoadAssembly(methodInfo.DeclaringType.Assembly);
+			if (assemblyDefinition == null)
+				return -1;
 
-			if (method.IsStatic   == true)                       { keyword3 = "static";   }
-			if (method.IsAbstract == true)                       { keyword3 = "abstract"; }
-			if (method.IsVirtual  == true && !method.IsAbstract) { keyword3 = "virtual";  }
-
-			for (int i = 0; i < lines.Length; ++i)
+			using (assemblyDefinition)
 			{
-				string line = lines[i];
-				if (line.Contains(keyword1) == true && line.Contains(keyword2) == true && line.Contains(keyword3) == true)
-					return i + 1;
+				MethodDefinition methodDefinition = FindMethod(assemblyDefinition, methodInfo);
+				if (methodDefinition == null || methodDefinition.HasBody == false || methodDefinition.DebugInformation == null)
+					return -1;
+
+				Collection<SequencePoint> sequencePoints = methodDefinition.DebugInformation.SequencePoints;
+				if (sequencePoints == null)
+					return -1;
+
+				foreach (SequencePoint sequencePoint in sequencePoints)
+				{
+					if (sequencePoint.StartLine > 0)
+						return sequencePoint.StartLine;
+				}
+
+				return -1;
+			}
+		}
+
+		private static MethodDefinition FindMethod(AssemblyDefinition assemblyDefinition, MethodInfo methodInfo)
+		{
+			string typeFullName = methodInfo.DeclaringType.FullName.Replace('+', '/');
+
+			ParameterInfo[] parameters = methodInfo.GetParameters();
+
+			foreach (ModuleDefinition module in assemblyDefinition.Modules)
+			{
+				foreach (TypeDefinition type in module.GetTypes())
+				{
+					if (type.FullName != typeFullName)
+						continue;
+
+					MethodDefinition arityMatch = default;
+
+					foreach (MethodDefinition method in type.Methods)
+					{
+						if (method.Name != methodInfo.Name || method.Parameters.Count != parameters.Length)
+							continue;
+
+						if (HasMatchingParameters(method, parameters) == true)
+							return method;
+
+						if (arityMatch == default)
+						{
+							arityMatch = method;
+						}
+					}
+
+					return arityMatch;
+				}
 			}
 
-			return -1;
+			return default;
+		}
+
+		private static bool HasMatchingParameters(MethodDefinition method, ParameterInfo[] parameters)
+		{
+			for (int i = 0; i < parameters.Length; ++i)
+			{
+				if (method.Parameters[i].ParameterType.Name != parameters[i].ParameterType.Name)
+					return false;
+			}
+
+			return true;
+		}
+
+		private static AssemblyDefinition LoadAssembly(Assembly assembly)
+		{
+			try
+			{
+				ReaderParameters readerParameters = new ReaderParameters
+				{
+					ReadSymbols = true,
+					ReadingMode = ReadingMode.Immediate
+				};
+
+#if UNITY_6000_6_OR_NEWER
+				return AssemblyDefinition.ReadAssembly(assembly.GetLoadedAssemblyPath(), readerParameters);
+#else
+				return AssemblyDefinition.ReadAssembly(assembly.Location, readerParameters);
+#endif
+			}
+			catch
+			{
+				return default;
+			}
 		}
 	}
 }

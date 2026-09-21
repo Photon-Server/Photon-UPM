@@ -8,7 +8,9 @@ namespace Fusion.Addons.Inspector.Editor
 	[Serializable]
 	internal sealed class SceneObjects
 	{
+		[NonSerialized]
 		public List<SceneObjectInfo> All = new List<SceneObjectInfo>(512);
+		[NonSerialized]
 		public List<SceneObjectInfo> Filtered = new List<SceneObjectInfo>(512);
 		public HashSet<Type>         ComponentFilterInclude = new HashSet<Type>();
 		public HashSet<Type>         ComponentFilterExclude = new HashSet<Type>();
@@ -19,6 +21,9 @@ namespace Fusion.Addons.Inspector.Editor
 		public EFilterMode           IsMasterClientObjectFilter;
 		public EFilterMode           AllowStateAuthorityOverrideFilter;
 		public EFilterMode           DestroyWhenStateAuthorityLeavesFilter;
+		public PlayerRef             StateAuthorityFilter;
+		public PlayerRef             InputAuthorityFilter;
+		public int                   InterestModeFilter = -1;
 		public ESceneObjectSortMode  SortMode = ESceneObjectSortMode.NameAscending;
 		public ESceneObjectField     VisibleFields;
 		public bool                  VisibleFieldsFoldout;
@@ -28,7 +33,7 @@ namespace Fusion.Addons.Inspector.Editor
 		private HashSet<ComponentInfo> _tempComponents = new HashSet<ComponentInfo>();
 		private Dictionary<NetworkObject, SceneObjectInfo> _allByNO = new Dictionary<NetworkObject, SceneObjectInfo>();
 
-		public void GetObjects(List<SceneObjectInfo> objects, Type type)
+		public void GetObjects(List<SceneObjectInfo> objects, Type type, bool includeDerived)
 		{
 			objects.Clear();
 
@@ -36,7 +41,8 @@ namespace Fusion.Addons.Inspector.Editor
 			{
 				foreach (ComponentInfo component in sceneObject.Components)
 				{
-					if (type.IsAssignableFrom(component.Type) == true)
+					bool isMatch = includeDerived == true ? type.IsAssignableFrom(component.Type) : component.Type == type;
+					if (isMatch == true)
 					{
 						objects.Add(sceneObject);
 						break;
@@ -105,6 +111,9 @@ namespace Fusion.Addons.Inspector.Editor
 			bool hasIsMasterClientObjectFilter            = IsMasterClientObjectFilter            != EFilterMode.None;
 			bool hasAllowStateAuthorityOverrideFilter     = AllowStateAuthorityOverrideFilter     != EFilterMode.None;
 			bool hasDestroyWhenStateAuthorityLeavesFilter = DestroyWhenStateAuthorityLeavesFilter != EFilterMode.None;
+			bool hasStateAuthorityFilter                  = StateAuthorityFilter.IsNone == false;
+			bool hasInputAuthorityFilter                  = InputAuthorityFilter.IsNone == false;
+			bool hasInterestModeFilter                    = InterestModeFilter >= 0;
 			bool hasComponentFilterInclude                = ComponentFilterInclude.Count > 0;
 			bool hasComponentFilterExclude                = ComponentFilterExclude.Count > 0;
 
@@ -116,6 +125,9 @@ namespace Fusion.Addons.Inspector.Editor
 			hasAnyFilter |= hasIsMasterClientObjectFilter;
 			hasAnyFilter |= hasAllowStateAuthorityOverrideFilter;
 			hasAnyFilter |= hasDestroyWhenStateAuthorityLeavesFilter;
+			hasAnyFilter |= hasStateAuthorityFilter;
+			hasAnyFilter |= hasInputAuthorityFilter;
+			hasAnyFilter |= hasInterestModeFilter;
 			hasAnyFilter |= hasComponentFilterInclude;
 			hasAnyFilter |= hasComponentFilterExclude;
 
@@ -128,10 +140,13 @@ namespace Fusion.Addons.Inspector.Editor
 					if (hasNameFilter                            == true) isFiltered &= sceneObject.Name.Contains(ObjectNameFilter, StringComparison.OrdinalIgnoreCase);
 					if (hasIsInSimulationFilter                  == true) isFiltered &= (IsInSimulationFilter                  == EFilterMode.Include && sceneObject.IsInSimulation                  == true) || (IsInSimulationFilter                  == EFilterMode.Exclude && sceneObject.IsInSimulation                  == false);
 					if (hasHasStateAuthorityFilter               == true) isFiltered &= (HasStateAuthorityFilter               == EFilterMode.Include && sceneObject.HasStateAuthority               == true) || (HasStateAuthorityFilter               == EFilterMode.Exclude && sceneObject.HasStateAuthority               == false);
-					if (hasHasInputAuthorityFilter               == true) isFiltered &= (HasInputAuthorityFilter               == EFilterMode.Include && sceneObject.HasInputAuthority               == true) || (HasStateAuthorityFilter               == EFilterMode.Exclude && sceneObject.HasStateAuthority               == false);
+					if (hasHasInputAuthorityFilter               == true) isFiltered &= (HasInputAuthorityFilter               == EFilterMode.Include && sceneObject.HasInputAuthority               == true) || (HasInputAuthorityFilter               == EFilterMode.Exclude && sceneObject.HasInputAuthority               == false);
 					if (hasIsMasterClientObjectFilter            == true) isFiltered &= (IsMasterClientObjectFilter            == EFilterMode.Include && sceneObject.IsMasterClientObject            == true) || (IsMasterClientObjectFilter            == EFilterMode.Exclude && sceneObject.IsMasterClientObject            == false);
 					if (hasAllowStateAuthorityOverrideFilter     == true) isFiltered &= (AllowStateAuthorityOverrideFilter     == EFilterMode.Include && sceneObject.AllowStateAuthorityOverride     == true) || (AllowStateAuthorityOverrideFilter     == EFilterMode.Exclude && sceneObject.AllowStateAuthorityOverride     == false);
 					if (hasDestroyWhenStateAuthorityLeavesFilter == true) isFiltered &= (DestroyWhenStateAuthorityLeavesFilter == EFilterMode.Include && sceneObject.DestroyWhenStateAuthorityLeaves == true) || (DestroyWhenStateAuthorityLeavesFilter == EFilterMode.Exclude && sceneObject.DestroyWhenStateAuthorityLeaves == false);
+					if (hasStateAuthorityFilter                  == true) isFiltered &= sceneObject.StateAuthority.Value == StateAuthorityFilter;
+					if (hasInputAuthorityFilter                  == true) isFiltered &= sceneObject.InputAuthority.Value == InputAuthorityFilter;
+					if (hasInterestModeFilter                    == true) isFiltered &= sceneObject.InterestMode == InterestModeFilter;
 					if (hasComponentFilterInclude                == true) isFiltered &= sceneObject.HasAnyComponentRecursive(ComponentFilterInclude) == true;
 					if (hasComponentFilterExclude                == true) isFiltered &= sceneObject.HasAnyComponentRecursive(ComponentFilterExclude) == false;
 				}
@@ -197,6 +212,20 @@ namespace Fusion.Addons.Inspector.Editor
 			defaultFields |= ESceneObjectField.Distance;
 			defaultFields |= ESceneObjectField.Components;
 			VisibleFields = (ESceneObjectField)EditorPrefs.GetInt($"{nameof(FusionInspector)}.{nameof(SceneObjects)}.{nameof(VisibleFields)}", (int)defaultFields);
+		}
+
+		public void SetVisibleFields(ESceneObjectField fields, bool enabled)
+		{
+			if (enabled == true)
+			{
+				VisibleFields |= fields;
+			}
+			else
+			{
+				VisibleFields &= ~fields;
+			}
+
+			EditorPrefs.SetInt($"{nameof(FusionInspector)}.{nameof(SceneObjects)}.{nameof(VisibleFields)}", (int)VisibleFields);
 		}
 
 		public void ToggleVisibleField(ESceneObjectField field)

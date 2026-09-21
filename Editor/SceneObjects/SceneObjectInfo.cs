@@ -164,8 +164,13 @@ namespace Fusion.Addons.Inspector.Editor
 			if (authority.IsRealPlayer == true)
 				return authority == localPlayer ? int.MinValue : authority.RawEncoded;
 
+#if FUSION_2_1_OR_NEWER
+			if (authority.IsInternalMasterClientIdentifier == true)
+				return int.MinValue + 1;
+#else
 			if (authority.IsMasterClient == true)
 				return int.MinValue + 1;
+#endif
 
 			return int.MaxValue;
 		}

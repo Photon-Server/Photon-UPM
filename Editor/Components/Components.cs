@@ -7,11 +7,13 @@ namespace Fusion.Addons.Inspector.Editor
 	[Serializable]
 	internal sealed class Components
 	{
-		public List<ComponentInfo> All      = new List<ComponentInfo>(512);
+		[NonSerialized]
+		public List<ComponentInfo> All = new List<ComponentInfo>(512);
+		[NonSerialized]
 		public List<ComponentInfo> Filtered = new List<ComponentInfo>(512);
 		public EComponentSortMode  SortMode = EComponentSortMode.TypeHierarchyAscending;
 		public string              TypeNameFilter;
-		public EComponentField     VisibleFields;
+		public long                VisibleFieldsStore;
 		public bool                VisibleFieldsFoldout;
 
 		public EFilterMode         HasSpawnedFilter;
@@ -42,6 +44,8 @@ namespace Fusion.Addons.Inspector.Editor
 		public EFilterMode         HasAfterUpdateFilter;
 
 		private Dictionary<Type, ComponentInfo> _allByType = new Dictionary<Type, ComponentInfo>();
+
+		private static readonly string VISIBLE_FIELDS_KEY = $"{nameof(FusionInspector)}.{nameof(Components)}.{nameof(VisibleFieldsStore)}";
 
 		public ComponentInfo GetComponent(Type type)
 		{
@@ -227,6 +231,12 @@ namespace Fusion.Addons.Inspector.Editor
 
 		public void LoadEditorPrefs()
 		{
+			if (EditorPrefs.HasKey(VISIBLE_FIELDS_KEY))
+			{
+				if (long.TryParse(EditorPrefs.GetString(VISIBLE_FIELDS_KEY), out VisibleFieldsStore))
+					return;
+			}
+
 			EComponentField defaultFields = EComponentField.Type;
 			defaultFields |= EComponentField.HasSpawned;
 			defaultFields |= EComponentField.HasDespawned;
@@ -234,17 +244,37 @@ namespace Fusion.Addons.Inspector.Editor
 			defaultFields |= EComponentField.HasRender;
 			defaultFields |= EComponentField.SceneObjects;
 			defaultFields |= EComponentField.Prefabs;
+			defaultFields |= EComponentField.Properties;
 			defaultFields |= EComponentField.RPCs;
 			defaultFields |= EComponentField.StateSize;
 			defaultFields |= EComponentField.ExecutionOrder;
 			defaultFields |= EComponentField.TotalStateChanges;
-			VisibleFields = (EComponentField)EditorPrefs.GetInt($"{nameof(FusionInspector)}.{nameof(Components)}.{nameof(VisibleFields)}", (int)defaultFields);
+			VisibleFieldsStore = (long)defaultFields;
+		}
+
+		public EComponentField GetVisibleFields()
+		{
+			return (EComponentField)VisibleFieldsStore;
+		}
+
+		public void SetVisibleFields(EComponentField fields, bool enabled)
+		{
+			if (enabled == true)
+			{
+				VisibleFieldsStore |= (long)fields;
+			}
+			else
+			{
+				VisibleFieldsStore &= ~(long)fields;
+			}
+
+			EditorPrefs.SetString(VISIBLE_FIELDS_KEY, VisibleFieldsStore.ToString());
 		}
 
 		public void ToggleVisibleField(EComponentField field)
 		{
-			VisibleFields ^= field;
-			EditorPrefs.SetInt($"{nameof(FusionInspector)}.{nameof(Components)}.{nameof(VisibleFields)}", (int)VisibleFields);
+			VisibleFieldsStore ^= (long)field;
+			EditorPrefs.SetString(VISIBLE_FIELDS_KEY, VisibleFieldsStore.ToString());
 		}
 
 		public static void Sort(List<ComponentInfo> components, EComponentSortMode sortMode)
@@ -254,14 +284,16 @@ namespace Fusion.Addons.Inspector.Editor
 				case EComponentSortMode.None:
 					break;
 
-				case EComponentSortMode.TypeNameAscending:             { ListUtility.InsertionSort(components, (c1, c2) => c2.TypeName.StartsWith(c1.TypeName, StringComparison.Ordinal) ? -1 : string.CompareOrdinal(c1.TypeName, c2.TypeName)); break; }
-				case EComponentSortMode.TypeNameDescending:            { ListUtility.InsertionSort(components, (c1, c2) => c2.TypeName.StartsWith(c1.TypeName, StringComparison.Ordinal) ? -1 : string.CompareOrdinal(c2.TypeName, c1.TypeName)); break; }
-				case EComponentSortMode.TypeHierarchyAscending:        { ListUtility.InsertionSort(components, (c1, c2) => c2.TypeHierarchy.StartsWith(c1.TypeHierarchy, StringComparison.Ordinal) ? -1 : string.CompareOrdinal(c1.TypeHierarchy, c2.TypeHierarchy)); break; }
-				case EComponentSortMode.TypeHierarchyDescending:       { ListUtility.InsertionSort(components, (c1, c2) => c2.TypeHierarchy.StartsWith(c1.TypeHierarchy, StringComparison.Ordinal) ? -1 : string.CompareOrdinal(c2.TypeHierarchy, c1.TypeHierarchy)); break; }
+				case EComponentSortMode.TypeNameAscending:             { ListUtility.InsertionSort(components, (c1, c2) => string.CompareOrdinal(c1.TypeName, c2.TypeName)); break; }
+				case EComponentSortMode.TypeNameDescending:            { ListUtility.InsertionSort(components, (c1, c2) => string.CompareOrdinal(c2.TypeName, c1.TypeName)); break; }
+				case EComponentSortMode.TypeHierarchyAscending:        { ListUtility.InsertionSort(components, (c1, c2) => string.CompareOrdinal(c1.TypeHierarchy, c2.TypeHierarchy)); break; }
+				case EComponentSortMode.TypeHierarchyDescending:       { ListUtility.InsertionSort(components, (c1, c2) => ListUtility.CompareHierarchyDescending(c1.TypeHierarchy, c2.TypeHierarchy)); break; }
 				case EComponentSortMode.SceneObjectsAscending:         { ListUtility.InsertionSort(components, (c1, c2) => c1.SceneObjects.ScriptCount.Value.CompareTo(c2.SceneObjects.ScriptCount.Value)); break; }
 				case EComponentSortMode.SceneObjectsDescending:        { ListUtility.InsertionSort(components, (c1, c2) => c2.SceneObjects.ScriptCount.Value.CompareTo(c1.SceneObjects.ScriptCount.Value)); break; }
 				case EComponentSortMode.PrefabsAscending:              { ListUtility.InsertionSort(components, (c1, c2) => c1.Prefabs.ScriptCount.Value.CompareTo(c2.Prefabs.ScriptCount.Value)); break; }
 				case EComponentSortMode.PrefabsDescending:             { ListUtility.InsertionSort(components, (c1, c2) => c2.Prefabs.ScriptCount.Value.CompareTo(c1.Prefabs.ScriptCount.Value)); break; }
+				case EComponentSortMode.PropertiesAscending:           { ListUtility.InsertionSort(components, (c1, c2) => c1.Properties.Length.CompareTo(c2.Properties.Length)); break; }
+				case EComponentSortMode.PropertiesDescending:          { ListUtility.InsertionSort(components, (c1, c2) => c2.Properties.Length.CompareTo(c1.Properties.Length)); break; }
 				case EComponentSortMode.RPCsAscending:                 { ListUtility.InsertionSort(components, (c1, c2) => c1.RPCs.Length.CompareTo(c2.RPCs.Length)); break; }
 				case EComponentSortMode.RPCsDescending:                { ListUtility.InsertionSort(components, (c1, c2) => c2.RPCs.Length.CompareTo(c1.RPCs.Length)); break; }
 				case EComponentSortMode.StateSizeAscending:            { ListUtility.InsertionSort(components, (c1, c2) => c1.StateSize.Value.CompareTo(c2.StateSize.Value)); break; }

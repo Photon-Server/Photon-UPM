@@ -11,15 +11,17 @@ namespace Fusion.Addons.Inspector.Editor
 		SceneObjectsDescending        =  6,
 		PrefabsAscending              =  7,
 		PrefabsDescending             =  8,
-		RPCsAscending                 =  9,
-		RPCsDescending                = 10,
-		StateSizeAscending            = 11,
-		StateSizeDescending           = 12,
-		ExecutionOrderAscending       = 13,
-		ExecutionOrderDescending      = 14,
-		TotalStateChangesAscending    = 15,
-		TotalStateChangesDescending   = 16,
-		AverageStateChangesAscending  = 17,
-		AverageStateChangesDescending = 18
+		PropertiesAscending           =  9,
+		PropertiesDescending          = 10,
+		RPCsAscending                 = 11,
+		RPCsDescending                = 12,
+		StateSizeAscending            = 13,
+		StateSizeDescending           = 14,
+		ExecutionOrderAscending       = 15,
+		ExecutionOrderDescending      = 16,
+		TotalStateChangesAscending    = 17,
+		TotalStateChangesDescending   = 18,
+		AverageStateChangesAscending  = 19,
+		AverageStateChangesDescending = 20
 	}
 }

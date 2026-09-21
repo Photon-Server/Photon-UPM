@@ -6,8 +6,8 @@ namespace Fusion.Addons.Inspector.Editor
 	{
 		public float Value;
 
-		private int    _labelValue  = -1;
-		private string _labelString = "---";
+		private int    _labelValue  = default;
+		private string _labelString = "";
 
 		public string GetLabel()
 		{
@@ -24,8 +24,10 @@ namespace Fusion.Addons.Inspector.Editor
 
 		public void Clear()
 		{
-			_labelValue  = -1;
-			_labelString = "---";
+			Value = default;
+
+			_labelValue  = default;
+			_labelString = "";
 		}
 	}
 }

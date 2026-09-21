@@ -7,7 +7,9 @@ namespace Fusion.Addons.Inspector.Editor
 	[Serializable]
 	internal sealed class Prefabs
 	{
+		[NonSerialized]
 		public List<PrefabInfo> All = new List<PrefabInfo>(512);
+		[NonSerialized]
 		public List<PrefabInfo> Filtered = new List<PrefabInfo>(512);
 		public HashSet<Type>    ComponentFilterInclude = new HashSet<Type>();
 		public HashSet<Type>    ComponentFilterExclude = new HashSet<Type>();
@@ -17,6 +19,7 @@ namespace Fusion.Addons.Inspector.Editor
 		public EFilterMode      IsMasterClientObjectFilter;
 		public EFilterMode      AllowStateAuthorityOverrideFilter;
 		public EFilterMode      DestroyWhenStateAuthorityLeavesFilter;
+		public int              InterestModeFilter = -1;
 		public EPrefabSortMode  SortMode = EPrefabSortMode.NameAscending;
 		public EPrefabField     VisibleFields;
 		public bool             VisibleFieldsFoldout;
@@ -25,7 +28,7 @@ namespace Fusion.Addons.Inspector.Editor
 		private HashSet<ComponentInfo> _tempComponents = new HashSet<ComponentInfo>();
 		private Dictionary<NetworkObject, PrefabInfo> _allByNO = new Dictionary<NetworkObject, PrefabInfo>();
 
-		public void GetObjects(List<PrefabInfo> objects, Type type)
+		public void GetObjects(List<PrefabInfo> objects, Type type, bool includeDerived)
 		{
 			objects.Clear();
 
@@ -33,7 +36,8 @@ namespace Fusion.Addons.Inspector.Editor
 			{
 				foreach (ComponentInfo component in prefab.Components)
 				{
-					if (type.IsAssignableFrom(component.Type) == true)
+					bool isMatch = includeDerived == true ? type.IsAssignableFrom(component.Type) : component.Type == type;
+					if (isMatch == true)
 					{
 						objects.Add(prefab);
 						break;
@@ -96,6 +100,7 @@ namespace Fusion.Addons.Inspector.Editor
 			bool hasIsMasterClientObjectFilter            = IsMasterClientObjectFilter            != EFilterMode.None;
 			bool hasAllowStateAuthorityOverrideFilter     = AllowStateAuthorityOverrideFilter     != EFilterMode.None;
 			bool hasDestroyWhenStateAuthorityLeavesFilter = DestroyWhenStateAuthorityLeavesFilter != EFilterMode.None;
+			bool hasInterestModeFilter                    = InterestModeFilter >= 0;
 			bool hasComponentFilterInclude                = ComponentFilterInclude.Count > 0;
 			bool hasComponentFilterExclude                = ComponentFilterExclude.Count > 0;
 
@@ -105,6 +110,7 @@ namespace Fusion.Addons.Inspector.Editor
 			hasAnyFilter |= hasIsMasterClientObjectFilter;
 			hasAnyFilter |= hasAllowStateAuthorityOverrideFilter;
 			hasAnyFilter |= hasDestroyWhenStateAuthorityLeavesFilter;
+			hasAnyFilter |= hasInterestModeFilter;
 			hasAnyFilter |= hasComponentFilterInclude;
 			hasAnyFilter |= hasComponentFilterExclude;
 
@@ -119,6 +125,7 @@ namespace Fusion.Addons.Inspector.Editor
 					if (hasIsMasterClientObjectFilter            == true) isFiltered &= (IsMasterClientObjectFilter            == EFilterMode.Include && prefab.IsMasterClientObject            == true) || (IsMasterClientObjectFilter            == EFilterMode.Exclude && prefab.IsMasterClientObject            == false);
 					if (hasAllowStateAuthorityOverrideFilter     == true) isFiltered &= (AllowStateAuthorityOverrideFilter     == EFilterMode.Include && prefab.AllowStateAuthorityOverride     == true) || (AllowStateAuthorityOverrideFilter     == EFilterMode.Exclude && prefab.AllowStateAuthorityOverride     == false);
 					if (hasDestroyWhenStateAuthorityLeavesFilter == true) isFiltered &= (DestroyWhenStateAuthorityLeavesFilter == EFilterMode.Include && prefab.DestroyWhenStateAuthorityLeaves == true) || (DestroyWhenStateAuthorityLeavesFilter == EFilterMode.Exclude && prefab.DestroyWhenStateAuthorityLeaves == false);
+					if (hasInterestModeFilter                    == true) isFiltered &= prefab.InterestMode == InterestModeFilter;
 					if (hasComponentFilterInclude                == true) isFiltered &= prefab.HasAnyComponentRecursive(ComponentFilterInclude) == true;
 					if (hasComponentFilterExclude                == true) isFiltered &= prefab.HasAnyComponentRecursive(ComponentFilterExclude) == false;
 				}
@@ -181,6 +188,20 @@ namespace Fusion.Addons.Inspector.Editor
 			defaultFields |= EPrefabField.StateSize;
 			defaultFields |= EPrefabField.Components;
 			VisibleFields = (EPrefabField)EditorPrefs.GetInt($"{nameof(FusionInspector)}.{nameof(Prefabs)}.{nameof(VisibleFields)}", (int)defaultFields);
+		}
+
+		public void SetVisibleFields(EPrefabField fields, bool enabled)
+		{
+			if (enabled == true)
+			{
+				VisibleFields |= fields;
+			}
+			else
+			{
+				VisibleFields &= ~fields;
+			}
+
+			EditorPrefs.SetInt($"{nameof(FusionInspector)}.{nameof(Prefabs)}.{nameof(VisibleFields)}", (int)VisibleFields);
 		}
 
 		public void ToggleVisibleField(EPrefabField field)

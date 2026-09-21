@@ -111,7 +111,7 @@ namespace Fusion.XR.Shared.Automatization
             {
                 foreach (var requiredPathElement in requiredPathElements)
                 {
-                    if (string.IsNullOrEmpty(requiredPathElement) == false && assetPath.Contains(requiredPathElement) == false)
+                    if (string.IsNullOrEmpty(requiredPathElement) == false && assetPath.Contains(requiredPathElement, System.StringComparison.CurrentCultureIgnoreCase) == false)
                     {
                         return false;
                     }

@@ -1,5 +1,19 @@
 Photon Fusion Physics Addon - Release History
 
+## 2.1.3
+
+**What's New**
+
+- Support has been added for clients to skip rolling back and resimulating objects that have not received a new state since the previous rollback. The feature has to be enabled with `NetworkProjectConfig.ClientsOnlyRollbackUpdatedObjects`.
+
+**Changes**
+
+- Removed a redundant copy of the networked state to the physics engine after a client prediction reset. The NetworkRigidbody now copies it only once per update, before the simulation ticks.
+
+**Bug fixes**
+
+- Fixed the interpolation target snapping to the rigidbody at rest instead of finishing its interpolation.
+
 ## 2.1.2
 
 **Changes**

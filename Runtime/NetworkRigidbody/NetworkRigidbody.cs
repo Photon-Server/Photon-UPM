@@ -95,12 +95,29 @@ namespace Fusion.Addons.Physics {
     private ref NetworkPhysicsData _physicsData => ref ReinterpretState<NetworkPhysicsData>(NetworkTRSPData.WORDS);
 
     private AbstractPhysicsBody _physicsBody;
+    private RunnerSimulatePhysics _simulatePhysics;
     private Transform _transform;
     private bool _aoiEnabled;
     private int _remainingSimulationsCount;
+    private bool _stateResetPending;
+
+    // Saved rigidbody state, only valid between ResimFreeze() and ResimRestore().
+    private ResimFreezeMode _resimFreezeMode;
+    private Vector3         _resimFrozenPosition;
+    private Quaternion      _resimFrozenRotation;
+    private Vector3         _resimFrozenLinearVelocity;
+    private Vector3         _resimFrozenAngularVelocity;
+    private int             _resimFrozenConstraints;
+
+    private enum ResimFreezeMode {
+      None,
+      Sleeping,
+      Constraints,
+    }
 
     public override void Spawned() {
       base.Spawned();
+      _stateResetPending = false;
       if (SetupPhysicsBody() == false) return;
       _aoiEnabled = Runner.Config.Simulation.AreaOfInterestEnabled;
       // Don't interpolate on Dedicated Server
@@ -128,29 +145,40 @@ namespace Fusion.Addons.Physics {
       if (TryGetComponent<Rigidbody>(out var rb3D)) {
         _physicsBody = new PhysicsBody3D(rb3D);
         Is3D = true;
-        if (Runner.TryGetComponent<RunnerSimulatePhysics>(out var simulatePhysics) == false) {
-          simulatePhysics = Runner.gameObject.AddComponent<RunnerSimulatePhysics>();
-          Runner.AddGlobal(simulatePhysics);
-        }
-        
-        simulatePhysics.Update3DPhysicsScene = true;
       }
       else if (TryGetComponent<Rigidbody2D>(out var rb2D)) {
         _physicsBody = new PhysicsBody2D(rb2D);
         Is3D = false;
-        if (Runner.TryGetComponent<RunnerSimulatePhysics>(out var simulatePhysics) == false) {
-          simulatePhysics = Runner.gameObject.AddComponent<RunnerSimulatePhysics>();
-          Runner.AddGlobal(simulatePhysics);
-        }
-        
-        simulatePhysics.Update2DPhysicsScene = true;
       } else {
         Debug.LogWarning($"{GetType().Name} requires a {nameof(Rigidbody)} or {nameof(Rigidbody2D)} component attached to the same object. Despawning {gameObject.name}.");
         Runner.Despawn(Object);
         return false;
       }
 
+      if (Runner.TryGetComponent<RunnerSimulatePhysics>(out var simulatePhysics) == false) {
+        simulatePhysics = Runner.gameObject.AddComponent<RunnerSimulatePhysics>();
+        Runner.AddGlobal(simulatePhysics);
+      }
+
+      if (Is3D) {
+        simulatePhysics.Update3DPhysicsScene = true;
+      } else {
+        simulatePhysics.Update2DPhysicsScene = true;
+      }
+
+      _simulatePhysics = simulatePhysics;
+      simulatePhysics.RegisterNetworkRigidbody(this);
+
       return true;
+    }
+
+    public override void Despawned(NetworkRunner runner, bool hasState) {
+      base.Despawned(runner, hasState);
+      // plain reference comparison
+      if (ReferenceEquals(_simulatePhysics, null) == false) {
+        _simulatePhysics.UnregisterNetworkRigidbody(this);
+        _simulatePhysics = null;
+      }
     }
 
     public void Teleport(Vector3? position = null, Quaternion? rotation = null) {
@@ -184,9 +212,10 @@ namespace Fusion.Addons.Physics {
       }
 
       // A dirty root should always reset at the start of the simulation loop (for both state authority and predicted).
-      // Predicted objects should always reset at the start of re-simulation.
-      if (_rootIsDirtyFromInterpolation || resimulation) {
+      // Predicted objects should always reset after a client prediction reset, with or without re-simulation ticks.
+      if (_rootIsDirtyFromInterpolation || _stateResetPending) {
         CopyToEngine();
+        _stateResetPending = false;
       }
     }
 
@@ -203,7 +232,104 @@ namespace Fusion.Addons.Physics {
     }
 
     public void AfterClientPredictionReset() {
-      CopyToEngine(forceAwake: false);
+      // Client prediction has reset, deffer copy state to engine on BeforeAllTicks.
+      _stateResetPending = true;
+    }
+
+    /// <summary>
+    /// Freezes the rigidbody during re-simulation for skipped objects using constraints to avoid 
+    /// destroying contacts. Returns true if ResimRestore() is needed.
+    /// </summary>
+    internal bool ResimFreeze() {
+      if (_physicsBody == null || _physicsBody.Valid == false || _physicsBody.Kinematic) {
+        return false;
+      }
+
+      // Render interpolation may have moved the root transform; scene steps sync dirty transforms into the
+      // engine, which would teleport the body to the render pose. Clean it back to the body pose.
+      if (_rootIsDirtyFromInterpolation) {
+        var tr = _physicsBody.Transform;
+        var bodyPosition = _physicsBody.Position;
+        if (Is3D == false) {
+          bodyPosition.z = tr.position.z;
+        }
+        
+        tr.position = bodyPosition;
+        tr.rotation = _physicsBody.Rotation;
+        _rootIsDirtyFromInterpolation = false;
+      }
+
+      if (_physicsBody.Sleeping) {
+        // The solver does not integrate sleeping bodies. Track it so ResimRestore() can put it
+        // back if a re-simulated body wakes it by contact.
+        _resimFreezeMode = ResimFreezeMode.Sleeping;
+      } else if (IsRigidbodyBelowSleepingThresholds(_physicsBody)) {
+        // Sleep the body to match the static server state. This is the only sleep path for skipped objects
+        // and also serves as the freeze mechanism.
+        _physicsBody.Sleeping = true;
+        _resimFreezeMode = ResimFreezeMode.Sleeping;
+      } else {
+        // Awake and moving object. Hold it in place with constraints to keeps the body dynamic, so its contacts survive.
+        _resimFrozenConstraints     = _physicsBody.EncodedConstraints;
+        _resimFrozenLinearVelocity  = _physicsBody.LinearVelocity;
+        _resimFrozenAngularVelocity = _physicsBody.AngularVelocity;
+        
+        _physicsBody.EncodedConstraints = Is3D ? (int)RigidbodyConstraints.FreezeAll : (int)RigidbodyConstraints2D.FreezeAll;
+        _physicsBody.LinearVelocity  = default;
+        _physicsBody.AngularVelocity = default;
+        _resimFreezeMode = ResimFreezeMode.Constraints;
+      }
+
+      _resimFrozenPosition = _physicsBody.Position;
+      _resimFrozenRotation = _physicsBody.Rotation;
+      return true;
+    }
+
+    /// <summary>
+    /// Restores constraints, position, rotation, sleeping state and velocities of a frozen body.
+    /// </summary>
+    internal void ResimRestore() {
+      var mode = _resimFreezeMode;
+      // clear
+      _resimFreezeMode = ResimFreezeMode.None;
+
+      if (mode == ResimFreezeMode.None || _physicsBody.Valid == false) {
+        return;
+      }
+
+      if (mode == ResimFreezeMode.Sleeping) {
+        if (_physicsBody.Position != _resimFrozenPosition || _physicsBody.Rotation != _resimFrozenRotation) {
+          RestoreFrozenPose();
+        }
+
+        if (_physicsBody.Sleeping == false) {
+          _physicsBody.Sleeping = true;
+        }
+
+        return;
+      }
+
+      _physicsBody.EncodedConstraints = _resimFrozenConstraints;
+      _physicsBody.LinearVelocity     = _resimFrozenLinearVelocity;
+      _physicsBody.AngularVelocity    = _resimFrozenAngularVelocity;
+
+      if (_physicsBody.Position != _resimFrozenPosition || _physicsBody.Rotation != _resimFrozenRotation) {
+        RestoreFrozenPose();
+      }
+    }
+
+    private void RestoreFrozenPose() {
+      var tr = _physicsBody.Transform;
+      var position = _resimFrozenPosition;
+      if (Is3D == false) {
+        position.z = tr.position.z;
+      }
+      
+      // Also reset the transform, the engine moved it along with the body.
+      tr.position = position;
+      tr.rotation = _resimFrozenRotation;
+      _physicsBody.Position = position;
+      _physicsBody.Rotation = _resimFrozenRotation;
     }
   }
 
@@ -573,7 +699,7 @@ namespace Fusion.Addons.Physics {
         }
 
         // Check thresholds to see if this object is coming to a rest, and stop interpolation to allow for sleep to occur.
-        if (IsStateBelowSleepingThresholds(_physicsBody, _physicsData)) {
+        if (hasInterpolationTarget == false && IsStateBelowSleepingThresholds(_physicsBody, _physicsData)) {
           return;
         }
         

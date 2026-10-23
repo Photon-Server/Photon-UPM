@@ -1,10 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
 using Fusion.Analyzer;
 using UnityEngine;
 
 namespace Fusion.Addons.Physics {
   [DefaultExecutionOrder(1000)]
-  public class RunnerSimulatePhysics : SimulationBehaviour, IBeforeTick, ISpawned, IDespawned {
+  public class RunnerSimulatePhysics : SimulationBehaviour, IBeforeTick, IBeforeAllTicks, IAfterAllTicks, ISpawned, IDespawned {
   
     /// <summary>
     /// Callback invoked prior to Simulate() being called.
@@ -47,10 +48,55 @@ namespace Fusion.Addons.Physics {
 
     public bool Update2DPhysicsScene;
     public bool Update3DPhysicsScene;
-    
+
     [SerializeField] private float _timeScale = 1f;
 
     private bool _initialized;
+
+    // Register to freeze skipped rigidbodies during re-simulation.
+    private readonly List<NetworkRigidbody> _rigidbodies = new();
+    private readonly List<NetworkRigidbody> _frozen      = new();
+
+    internal void RegisterNetworkRigidbody(NetworkRigidbody netRb) {
+      _rigidbodies.Add(netRb);
+    }
+
+    internal void UnregisterNetworkRigidbody(NetworkRigidbody netRb) {
+      _rigidbodies.Remove(netRb);
+
+      if (_frozen.Remove(netRb)) {
+        // important to not leak frozen state into pooled objects.
+        netRb.ResimRestore();
+      }
+    }
+
+    void IBeforeAllTicks.BeforeAllTicks(bool resimulation, int tickCount) {
+      // an exception can abort a simulation loop before AfterAllTicks ran the restore.
+      RestoreFrozenRigidbodies();
+
+      if (resimulation == false || Runner.Config.ClientsOnlyRollbackUpdatedObjects == false) {
+        return;
+      }
+
+      for (int i = 0; i < _rigidbodies.Count; i++) {
+        var rigidbody = _rigidbodies[i];
+        if (rigidbody.IsResimulationSkipped && rigidbody.ResimFreeze()) {
+          _frozen.Add(rigidbody);
+        }
+      }
+    }
+
+    void IAfterAllTicks.AfterAllTicks(bool resimulation, int tickCount) {
+      RestoreFrozenRigidbodies();
+    }
+
+    private void RestoreFrozenRigidbodies() {
+      for (int i = 0; i < _frozen.Count; i++) {
+        _frozen[i].ResimRestore();
+      }
+
+      _frozen.Clear();
+    }
 
     void ISpawned.Spawned() {
       Startup();
@@ -92,6 +138,9 @@ namespace Fusion.Addons.Physics {
 
       _initialized = false;
       _enabledRunnersCount--;
+
+      RestoreFrozenRigidbodies();
+      _rigidbodies.Clear();
 
       // last runner, restore auto simulate
       if (_enabledRunnersCount == 0) {
